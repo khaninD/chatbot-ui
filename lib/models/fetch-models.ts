@@ -5,7 +5,14 @@ import { LLM_LIST_MAP } from "./llm/llm-list"
 
 export const fetchHostedModels = async (profile: Tables<"profiles">) => {
   try {
-    const providers = ["google", "anthropic", "mistral", "groq", "perplexity"]
+    const providers = [
+      "google",
+      "anthropic",
+      "mistral",
+      "groq",
+      "perplexity",
+      "llamaindex"
+    ]
 
     if (profile.use_azure_openai) {
       providers.push("azure")
@@ -30,6 +37,9 @@ export const fetchHostedModels = async (profile: Tables<"profiles">) => {
         providerKey = "google_gemini_api_key"
       } else if (provider === "azure") {
         providerKey = "azure_openai_api_key"
+      } else if (provider === "llamaindex") {
+        // LlamaIndex uses OpenAI API key
+        providerKey = "openai_api_key"
       } else {
         providerKey = `${provider}_api_key` as keyof typeof profile
       }

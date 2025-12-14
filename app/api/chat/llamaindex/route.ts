@@ -5,9 +5,9 @@ import { ServerRuntime } from "next"
 
 export const runtime: ServerRuntime = "edge"
 
-// LlamaIndex Agent Server URL - can be configured via env variable
+// LlamaIndex Agent Server URL - configured via env variable
 const LLAMAINDEX_AGENT_URL =
-  process.env.LLAMAINDEX_AGENT_URL || "http://localhost:3001"
+  process.env.NEXT_PUBLIC_LLAMAINDEX_AGENT_URL || "http://localhost:3001"
 
 export async function POST(request: Request) {
   const json = await request.json()
