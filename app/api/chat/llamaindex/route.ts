@@ -32,11 +32,24 @@ export async function POST(request: Request) {
     const systemMessage = messages.find((msg: any) => msg.role === "system")
     const systemPrompt = systemMessage?.content || ""
 
+    // Build conversation history from all messages (excluding system message)
+    // This matches the approach used by other providers (OpenAI, Anthropic, etc.)
+    const conversationMessages = messages
+      .filter((msg: any) => msg.role !== "system")
+      .map((msg: any) => ({
+        role: msg.role,
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : msg.content[0]?.text || ""
+      }))
+
     console.log(
-      `[LlamaIndex] Sending request to agent server: ${LLAMAINDEX_AGENT_URL}`
+      `[LlamaIndex] Sending request to agent server: ${LLAMAINDEX_AGENT_URL} (${conversationMessages.length} messages)`
     )
 
     // Call LlamaIndex agent server
+    // Send full conversation history like other providers do
     const response = await fetch(`${LLAMAINDEX_AGENT_URL}/api/chat`, {
       method: "POST",
       headers: {
@@ -45,7 +58,8 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         query: userQuery,
         systemPrompt: systemPrompt,
-        apiKey: profile.openai_api_key // Pass API key to agent server
+        apiKey: profile.openai_api_key,
+        messages: conversationMessages // Send full history instead of relying on server-side sessions
       })
     })
 
