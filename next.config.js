@@ -1,10 +1,22 @@
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
-  enabled: process.env.ANALYZE === "true"
-})
+// Conditionally require dev dependencies only if available
+let withBundleAnalyzer = config => config
+let withPWA = config => config
 
-const withPWA = require("next-pwa")({
-  dest: "public"
-})
+try {
+  withBundleAnalyzer = require("@next/bundle-analyzer")({
+    enabled: process.env.ANALYZE === "true"
+  })
+} catch (e) {
+  // @next/bundle-analyzer not installed (production build)
+}
+
+try {
+  withPWA = require("next-pwa")({
+    dest: "public"
+  })
+} catch (e) {
+  // next-pwa not installed (production build)
+}
 
 module.exports = withBundleAnalyzer(
   withPWA({
