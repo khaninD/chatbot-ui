@@ -25,9 +25,48 @@ export async function POST(request: Request) {
       })
     })
 
+    // Преобразуем сообщения для поддержки изображений в формате AI SDK v6
+    const formattedMessages = messages.map((message: any) => {
+      if (!message.content) return message
+
+      // Если content это строка, возвращаем как есть
+      if (typeof message.content === "string") {
+        return message
+      }
+
+      // Если content это массив (multimodal сообщение с текстом и изображениями)
+      if (Array.isArray(message.content)) {
+        const formattedContent = message.content.map((part: any) => {
+          // Текстовый контент
+          if (part.type === "text" || typeof part === "string") {
+            return typeof part === "string"
+              ? { type: "text", text: part }
+              : part
+          }
+
+          // Изображение в формате OpenAI (image_url)
+          if (part.type === "image_url" && part.image_url?.url) {
+            return {
+              type: "image",
+              image: part.image_url.url
+            }
+          }
+
+          return part
+        })
+
+        return {
+          ...message,
+          content: formattedContent
+        }
+      }
+
+      return message
+    })
+
     const result = streamText({
       model: openai(chatSettings.model),
-      messages: messages,
+      messages: formattedMessages,
       temperature: chatSettings.temperature
     })
 

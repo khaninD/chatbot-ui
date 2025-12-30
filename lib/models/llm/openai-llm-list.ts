@@ -18,12 +18,12 @@ const GPT4o: LLM = {
   }
 }
 
-// GPT-4 Turbo (UPDATED 1/25/24)
+// GPT-4 Turbo (UPDATED 12/30/24)
 const GPT4Turbo: LLM = {
-  modelId: "gpt-4-turbo-preview",
+  modelId: "gpt-4-turbo",
   modelName: "GPT-4 Turbo",
   provider: "openai",
-  hostedId: "gpt-4-turbo-preview",
+  hostedId: "gpt-4-turbo",
   platformLink: OPENAI_PLATORM_LINK,
   imageInput: true,
   pricing: {
@@ -34,18 +34,19 @@ const GPT4Turbo: LLM = {
   }
 }
 
-// GPT-4 Vision (UPDATED 12/18/23)
-const GPT4Vision: LLM = {
-  modelId: "gpt-4-vision-preview",
-  modelName: "GPT-4 Vision",
+// GPT-4o Mini (UPDATED 12/30/24)
+const GPT4oMini: LLM = {
+  modelId: "gpt-4o-mini",
+  modelName: "GPT-4o Mini",
   provider: "openai",
-  hostedId: "gpt-4-vision-preview",
+  hostedId: "gpt-4o-mini",
   platformLink: OPENAI_PLATORM_LINK,
   imageInput: true,
   pricing: {
     currency: "USD",
     unit: "1M tokens",
-    inputCost: 10
+    inputCost: 0.15,
+    outputCost: 0.6
   }
 }
 
@@ -88,7 +89,7 @@ const GPT5Mini: LLM = {
   provider: "openai",
   hostedId: "gpt-5-mini",
   platformLink: OPENAI_PLATORM_LINK,
-  imageInput: false,
+  imageInput: true,
   pricing: {
     currency: "USD",
     unit: "1M tokens",
@@ -97,11 +98,28 @@ const GPT5Mini: LLM = {
   }
 }
 
+// GPT-5 Nano (Custom addition)
+const GPT5Nano: LLM = {
+  modelId: "gpt-5-nano",
+  modelName: "GPT-5 Nano",
+  provider: "openai",
+  hostedId: "gpt-5-nano",
+  platformLink: OPENAI_PLATORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.5,
+    outputCost: 1
+  }
+}
+
 export const OPENAI_LLM_LIST: LLM[] = [
   GPT4o,
+  GPT4oMini,
   GPT4Turbo,
-  GPT4Vision,
   GPT4,
   GPT3_5Turbo,
-  GPT5Mini
+  GPT5Mini,
+  GPT5Nano
 ]
