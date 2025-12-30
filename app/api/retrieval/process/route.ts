@@ -75,6 +75,8 @@ export async function POST(req: Request) {
 
     let chunks: FileItemChunk[] = []
 
+    console.log(`File extension: ${fileExtension}, blob size: ${blob.size}`)
+
     switch (fileExtension) {
       case "csv":
         chunks = await processCSV(blob)
@@ -86,7 +88,14 @@ export async function POST(req: Request) {
         chunks = await processMarkdown(blob)
         break
       case "pdf":
-        chunks = await processPdf(blob)
+        console.log("Calling processPdf with blob:", blob.size, blob.type)
+        try {
+          chunks = await processPdf(blob)
+          console.log("processPdf returned chunks:", chunks.length)
+        } catch (pdfError: any) {
+          console.error("processPdf error:", pdfError.message, pdfError.stack)
+          throw pdfError
+        }
         break
       case "txt":
         chunks = await processTxt(blob)
@@ -95,6 +104,15 @@ export async function POST(req: Request) {
         return new NextResponse("Unsupported file type", {
           status: 400
         })
+    }
+
+    console.log(`Processed ${chunks.length} chunks from ${fileExtension} file`)
+    if (chunks.length > 0) {
+      console.log(`First chunk sample:`, {
+        content: chunks[0].content?.substring(0, 100),
+        tokens: chunks[0].tokens,
+        contentType: typeof chunks[0].content
+      })
     }
 
     let embeddings: any = []
@@ -115,13 +133,37 @@ export async function POST(req: Request) {
     }
 
     if (embeddingsProvider === "openai") {
+      // Filter out empty chunks and ensure all content is valid string
+      const validChunks = chunks
+        .map((chunk, index) => ({ content: chunk.content?.trim(), index }))
+        .filter(({ content }) => content && content.length > 0)
+
+      console.log(
+        `After filtering: ${validChunks.length} valid chunks out of ${chunks.length} total`
+      )
+
+      if (validChunks.length === 0) {
+        console.error(
+          "All chunks were filtered out. Chunk details:",
+          chunks.map((c, i) => ({
+            index: i,
+            contentLength: c.content?.length || 0,
+            contentPreview: c.content?.substring(0, 50),
+            tokens: c.tokens
+          }))
+        )
+        throw new Error("No valid content found in file")
+      }
+
       const response = await openai.embeddings.create({
         model: "text-embedding-3-small",
-        input: chunks.map(chunk => chunk.content)
+        input: validChunks.map(({ content }) => content)
       })
 
-      embeddings = response.data.map((item: any) => {
-        return item.embedding
+      // Map embeddings back to original chunk indices
+      embeddings = new Array(chunks.length).fill(null)
+      validChunks.forEach(({ index }, i) => {
+        embeddings[index] = response.data[i].embedding
       })
     } else if (embeddingsProvider === "local") {
       const embeddingPromises = chunks.map(async chunk => {

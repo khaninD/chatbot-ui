@@ -1,4 +1,5 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
 import { ChatSettings } from "@/types"
 import { streamText } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
@@ -67,7 +68,14 @@ export async function POST(request: Request) {
     const result = streamText({
       model: openai(chatSettings.model),
       messages: formattedMessages,
-      temperature: chatSettings.temperature
+      temperature: chatSettings.temperature,
+      maxOutputTokens: chatSettings.contextLength
+        ? Math.min(
+            chatSettings.contextLength,
+            CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_TOKEN_OUTPUT_LENGTH ||
+              4096
+          )
+        : undefined
     })
 
     return result.toTextStreamResponse()

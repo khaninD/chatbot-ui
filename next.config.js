@@ -39,6 +39,15 @@ module.exports = withBundleAnalyzer(
     },
     experimental: {
       serverComponentsExternalPackages: ["sharp", "onnxruntime-node"]
+    },
+    webpack: (config, { isServer }) => {
+      if (isServer) {
+        // Exclude sharp from webpack bundling on server
+        config.externals.push({
+          sharp: "commonjs sharp"
+        })
+      }
+      return config
     }
   })
 )

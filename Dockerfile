@@ -6,8 +6,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (skip prepare script to avoid husky)
-RUN npm install --ignore-scripts && npm rebuild
+# Install dependencies without scripts (to skip husky) and with legacy peer deps
+# Then run only the sharp install script to let it download prebuilt binaries
+RUN npm ci --ignore-scripts --legacy-peer-deps || npm install --ignore-scripts --legacy-peer-deps && \
+    cd node_modules/sharp && npm run install || true && \
+    cd /app && \
+    if [ -d "node_modules/@xenova/transformers/node_modules/sharp" ]; then \
+      cd node_modules/@xenova/transformers/node_modules/sharp && npm run install || true; \
+    fi
 
 # Copy all source files
 COPY . .
@@ -21,11 +27,11 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files (needed for npm start)
 COPY package*.json ./
 
-# Install production dependencies only (skip prepare script)
-RUN npm install --only=production --ignore-scripts
+# Copy node_modules from builder (includes all dependencies and sharp compiled for Linux)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built files from builder
 COPY --from=builder /app/.next ./.next

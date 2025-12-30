@@ -1,13 +1,22 @@
 import { FileItemChunk } from "@/types"
 import { encode } from "gpt-tokenizer"
-import { JSONLoader } from "langchain/document_loaders/fs/json"
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters"
 import { CHUNK_OVERLAP, CHUNK_SIZE } from "."
 
 export const processJSON = async (json: Blob): Promise<FileItemChunk[]> => {
-  const loader = new JSONLoader(json)
-  const docs = await loader.load()
-  let completeText = docs.map(doc => doc.pageContent).join(" ")
+  // Parse JSON blob manually
+  const fileBuffer = Buffer.from(await json.arrayBuffer())
+  const textDecoder = new TextDecoder("utf-8")
+  const textContent = textDecoder.decode(fileBuffer)
+
+  // Pretty print JSON for better chunking
+  let completeText: string
+  try {
+    const jsonObj = JSON.parse(textContent)
+    completeText = JSON.stringify(jsonObj, null, 2)
+  } catch {
+    completeText = textContent
+  }
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: CHUNK_SIZE,
@@ -16,10 +25,6 @@ export const processJSON = async (json: Blob): Promise<FileItemChunk[]> => {
   const splitDocs = await splitter.createDocuments([completeText])
 
   let chunks: FileItemChunk[] = []
-
-  splitDocs.forEach(doc => {
-    const docTokens = encode(doc.pageContent).length
-  })
 
   for (let i = 0; i < splitDocs.length; i++) {
     const doc = splitDocs[i]
