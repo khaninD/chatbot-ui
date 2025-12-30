@@ -2,9 +2,9 @@ import { openapiToFunctions } from "@/lib/openapi-conversion"
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { Tables } from "@/supabase/types"
 import { ChatSettings } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
+import { streamText } from "ai"
+import { createOpenAI } from "@ai-sdk/openai"
 import OpenAI from "openai"
-import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
 export async function POST(request: Request) {
   const json = await request.json()
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     checkApiKey(profile.openai_api_key, "OpenAI")
 
-    const openai = new OpenAI({
+    const openaiClient = new OpenAI({
       apiKey: profile.openai_api_key || "",
       organization: profile.openai_organization_id
     })
@@ -59,8 +59,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const firstResponse = await openai.chat.completions.create({
-      model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
+    const firstResponse = await openaiClient.chat.completions.create({
+      model: chatSettings.model,
       messages,
       tools: allTools.length > 0 ? allTools : undefined
     })
@@ -79,6 +79,8 @@ export async function POST(request: Request) {
 
     if (toolCalls.length > 0) {
       for (const toolCall of toolCalls) {
+        if (toolCall.type !== "function") continue
+
         const functionCall = toolCall.function
         const functionName = functionCall.name
         const argumentsString = toolCall.function.arguments.trim()
@@ -198,15 +200,19 @@ export async function POST(request: Request) {
       }
     }
 
-    const secondResponse = await openai.chat.completions.create({
-      model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
-      messages,
-      stream: true
+    const openai = createOpenAI({
+      apiKey: profile.openai_api_key || "",
+      ...(profile.openai_organization_id && {
+        organization: profile.openai_organization_id
+      })
     })
 
-    const stream = OpenAIStream(secondResponse)
+    const result = streamText({
+      model: openai(chatSettings.model),
+      messages
+    })
 
-    return new StreamingTextResponse(stream)
+    return result.toTextStreamResponse()
   } catch (error: any) {
     console.error(error)
     const errorMessage = error.error?.message || "An unexpected error occurred"

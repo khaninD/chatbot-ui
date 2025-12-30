@@ -1,9 +1,8 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
+import { streamText } from "ai"
+import { createOpenAI } from "@ai-sdk/openai"
 import { ServerRuntime } from "next"
-import OpenAI from "openai"
-import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
 export const runtime: ServerRuntime = "edge"
 
@@ -19,26 +18,20 @@ export async function POST(request: Request) {
     console.log("profile.openai_api_key", profile.openai_api_key)
     checkApiKey(profile.openai_api_key, "OpenAI")
 
-    const openai = new OpenAI({
+    const openai = createOpenAI({
       apiKey: profile.openai_api_key || "",
-      organization: profile.openai_organization_id
+      ...(profile.openai_organization_id && {
+        organization: profile.openai_organization_id
+      })
     })
 
-    const response = await openai.chat.completions.create({
-      model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
-      messages: messages as ChatCompletionCreateParamsBase["messages"],
-      temperature: chatSettings.temperature,
-      max_tokens:
-        chatSettings.model === "gpt-4-vision-preview" ||
-        chatSettings.model === "gpt-4o"
-          ? 4096
-          : null, // TODO: Fix
-      stream: true
+    const result = streamText({
+      model: openai(chatSettings.model),
+      messages: messages,
+      temperature: chatSettings.temperature
     })
 
-    const stream = OpenAIStream(response)
-
-    return new StreamingTextResponse(stream)
+    return result.toTextStreamResponse()
   } catch (error: any) {
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500

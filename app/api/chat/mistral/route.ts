@@ -1,8 +1,8 @@
 import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
-import OpenAI from "openai"
+import { streamText } from "ai"
+import { createOpenAI } from "@ai-sdk/openai"
 
 export const runtime = "edge"
 
@@ -19,24 +19,19 @@ export async function POST(request: Request) {
     checkApiKey(profile.mistral_api_key, "Mistral")
 
     // Mistral is compatible the OpenAI SDK
-    const mistral = new OpenAI({
+    const mistral = createOpenAI({
       apiKey: profile.mistral_api_key || "",
       baseURL: "https://api.mistral.ai/v1"
     })
 
-    const response = await mistral.chat.completions.create({
-      model: chatSettings.model,
+    const result = streamText({
+      model: mistral(chatSettings.model),
       messages,
-      max_tokens:
-        CHAT_SETTING_LIMITS[chatSettings.model].MAX_TOKEN_OUTPUT_LENGTH,
-      stream: true
+      maxOutputTokens:
+        CHAT_SETTING_LIMITS[chatSettings.model].MAX_TOKEN_OUTPUT_LENGTH
     })
 
-    // Convert the response into a friendly text-stream.
-    const stream = OpenAIStream(response)
-
-    // Respond with the stream
-    return new StreamingTextResponse(stream)
+    return result.toTextStreamResponse()
   } catch (error: any) {
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
