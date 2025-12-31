@@ -1,10 +1,12 @@
 import { FileItemChunk } from "@/types"
 import { encode } from "gpt-tokenizer"
-import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf"
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters"
 import { CHUNK_OVERLAP, CHUNK_SIZE } from "."
+import { PDFParse } from "pdf-parse"
 
 export const processPdf = async (pdf: Blob): Promise<FileItemChunk[]> => {
+  let pdfParser: any = null
+
   try {
     console.log(
       "Starting PDF processing, blob size:",
@@ -13,18 +15,21 @@ export const processPdf = async (pdf: Blob): Promise<FileItemChunk[]> => {
       pdf.type
     )
 
-    // Use updated PDFLoader from @langchain/community
-    const loader = new PDFLoader(pdf)
-    console.log("PDFLoader created, loading document...")
+    // Convert Blob to Buffer for pdf-parse
+    const arrayBuffer = await pdf.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    const docs = await loader.load()
-    console.log(`Loaded ${docs.length} pages from PDF`)
+    console.log("Parsing PDF with pdf-parse...")
+    pdfParser = new PDFParse({ data: buffer })
+    const result = await pdfParser.getText()
 
-    if (docs.length === 0) {
+    console.log(`Extracted text from ${result.pages.length} pages`)
+
+    if (result.pages.length === 0) {
       throw new Error("PDF has no pages or could not be parsed")
     }
 
-    let completeText = docs.map(doc => doc.pageContent).join(" ")
+    const completeText = result.text
     console.log(`Complete text length: ${completeText.length} characters`)
 
     if (completeText.trim().length === 0) {
@@ -54,5 +59,14 @@ export const processPdf = async (pdf: Blob): Promise<FileItemChunk[]> => {
   } catch (error: any) {
     console.error("Error in processPdf:", error.message, error.stack)
     throw new Error(`Failed to process PDF: ${error.message}`)
+  } finally {
+    // Clean up PDF parser resources
+    if (pdfParser) {
+      try {
+        await pdfParser.destroy()
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
   }
 }

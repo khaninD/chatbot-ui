@@ -38,15 +38,37 @@ module.exports = withBundleAnalyzer(
       ]
     },
     experimental: {
-      serverComponentsExternalPackages: ["sharp", "onnxruntime-node"]
+      serverComponentsExternalPackages: [
+        "sharp",
+        "onnxruntime-node",
+        "pdf-parse",
+        "canvas"
+      ]
     },
     webpack: (config, { isServer }) => {
       if (isServer) {
-        // Exclude sharp from webpack bundling on server
+        // Exclude native modules from webpack bundling on server
         config.externals.push({
-          sharp: "commonjs sharp"
+          sharp: "commonjs sharp",
+          "pdf-parse": "commonjs pdf-parse",
+          canvas: "commonjs canvas"
         })
       }
+
+      // Ignore pdfjs-dist worker files in webpack
+      config.module = config.module || {}
+      config.module.rules = config.module.rules || []
+      config.module.rules.push({
+        test: /\.node$/,
+        use: "node-loader"
+      })
+
+      // Resolve pdfjs-dist properly
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        canvas: false
+      }
+
       return config
     }
   })
