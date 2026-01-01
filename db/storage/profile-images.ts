@@ -14,7 +14,7 @@ export const uploadProfileImage = async (
   }
 
   const currentPath = profile.image_path
-  let filePath = `${profile.user_id}/${Date.now()}`
+  const filePath = `${profile.user_id}/${Date.now()}`
 
   if (currentPath.length > 0) {
     const { error: deleteError } = await supabase.storage

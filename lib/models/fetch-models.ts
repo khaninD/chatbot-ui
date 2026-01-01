@@ -28,7 +28,7 @@ export const fetchHostedModels = async (profile: Tables<"profiles">) => {
 
     const data = await response.json()
 
-    let modelsToAdd: LLM[] = []
+    const modelsToAdd: LLM[] = []
 
     for (const provider of providers) {
       let providerKey: keyof typeof profile

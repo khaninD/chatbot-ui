@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     let allTools: OpenAI.Chat.Completions.ChatCompletionTool[] = []
     let allRouteMaps = {}
-    let schemaDetails = []
+    const schemaDetails = []
 
     for (const selectedTool of selectedTools) {
       try {
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
           const customHeaders = schemaDetail.headers // Moved this line up to the loop
           // Check if custom headers are set and are of type string
           if (customHeaders && typeof customHeaders === "string") {
-            let parsedCustomHeaders = JSON.parse(customHeaders) as Record<
+            const parsedCustomHeaders = JSON.parse(customHeaders) as Record<
               string,
               string
             >

@@ -259,7 +259,7 @@ export const useChatHandler = () => {
           selectedAssistant
         )
 
-      let payload: ChatPayload = {
+      const payload: ChatPayload = {
         chatSettings: chatSettings!,
         workspaceInstructions: selectedWorkspace!.instructions || "",
         chatMessages: isRegeneration

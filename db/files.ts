@@ -91,7 +91,9 @@ export const createFile = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
-  let validFilename = fileRecord.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase()
+  const validFilename = fileRecord.name
+    .replace(/[^a-z0-9.]/gi, "_")
+    .toLowerCase()
   const extension = file.name.split(".").pop()
   const extensionIndex = validFilename.lastIndexOf(".")
   const baseName = validFilename.substring(

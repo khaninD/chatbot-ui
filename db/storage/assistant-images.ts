@@ -14,7 +14,7 @@ export const uploadAssistantImage = async (
   }
 
   const currentPath = assistant.image_path
-  let filePath = `${assistant.user_id}/${assistant.id}/${Date.now()}`
+  const filePath = `${assistant.user_id}/${assistant.id}/${Date.now()}`
 
   if (currentPath.length > 0) {
     const { error: deleteError } = await supabase.storage

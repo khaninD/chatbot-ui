@@ -16,7 +16,7 @@ export const processCSV = async (csv: Blob): Promise<FileItemChunk[]> => {
   })
   const splitDocs = await splitter.createDocuments([completeText])
 
-  let chunks: FileItemChunk[] = []
+  const chunks: FileItemChunk[] = []
 
   for (let i = 0; i < splitDocs.length; i++) {
     const doc = splitDocs[i]

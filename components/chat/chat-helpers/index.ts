@@ -88,7 +88,7 @@ export const createTempMessages = (
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   selectedAssistant: Tables<"assistants"> | null
 ) => {
-  let tempUserChatMessage: ChatMessage = {
+  const tempUserChatMessage: ChatMessage = {
     message: {
       chat_id: "",
       assistant_id: null,
@@ -105,7 +105,7 @@ export const createTempMessages = (
     fileItems: []
   }
 
-  let tempAssistantChatMessage: ChatMessage = {
+  const tempAssistantChatMessage: ChatMessage = {
     message: {
       chat_id: "",
       assistant_id: selectedAssistant?.id || null,
@@ -206,7 +206,7 @@ export const handleHostedChat = async (
       ? "azure"
       : modelData.provider
 
-  let draftMessages = await buildFinalMessages(payload, profile, chatImages)
+  const draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
   let formattedMessages: any[] = []
   if (provider === "google") {
@@ -451,7 +451,7 @@ export const handleCreateMessages = async (
     const uploadPromises = newMessageImages
       .filter(obj => obj.file !== null)
       .map(obj => {
-        let filePath = `${profile.user_id}/${currentChat.id}/${
+        const filePath = `${profile.user_id}/${currentChat.id}/${
           createdMessages[0].id
         }/${uuidv4()}`
 

@@ -11,7 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint . --fix --ext .ts,.tsx,.js,.jsx",
     "analyze": "ANALYZE=true npm run build",
     "preview": "next build && next start",
@@ -96,6 +96,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
     "@next/bundle-analyzer": "^16.1.1",
     "@tailwindcss/typography": "^0.5.10",
     "@testing-library/jest-dom": "^6.2.0",
@@ -110,8 +112,8 @@
     "autoprefixer": "^10.4.16",
     "clsx": "^2.0.0",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.2",
-    "eslint-config-next": "^16.1.1",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-tailwindcss": "^3.13.0",
     "husky": "^8.0.3",

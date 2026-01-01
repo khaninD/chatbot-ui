@@ -14,7 +14,7 @@ export const uploadWorkspaceImage = async (
   }
 
   const currentPath = workspace.image_path
-  let filePath = `${workspace.user_id}/${workspace.id}/${Date.now()}`
+  const filePath = `${workspace.user_id}/${workspace.id}/${Date.now()}`
 
   if (currentPath.length > 0) {
     const { error: deleteError } = await supabase.storage
