@@ -37,14 +37,16 @@ module.exports = withBundleAnalyzer(
         }
       ]
     },
-    experimental: {
-      serverComponentsExternalPackages: [
-        "sharp",
-        "onnxruntime-node",
-        "pdf-parse",
-        "canvas"
-      ]
-    },
+    serverExternalPackages: [
+      "sharp",
+      "onnxruntime-node",
+      "pdf-parse",
+      "canvas",
+      "@langchain/core",
+      "@langchain/textsplitters",
+      "langchain"
+    ],
+    turbopack: {},
     webpack: (config, { isServer }) => {
       if (isServer) {
         // Exclude native modules from webpack bundling on server

@@ -90,7 +90,7 @@ interface SidebarUpdateItemProps {
   item: DataItemType
   contentType: ContentType
   children: React.ReactNode
-  renderInputs: (renderState: any) => JSX.Element
+  renderInputs: (renderState: any) => React.JSX.Element
   updateState: any
 }
 
