@@ -10,7 +10,7 @@ const LLAMAINDEX_AGENT_URL =
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages } = json as {
+  const { chatSettings: _chatSettings, messages } = json as {
     chatSettings: ChatSettings
     messages: any[]
   }

@@ -43,7 +43,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setPrompts,
     setTools,
     setModels,
-    selectedWorkspace,
+    selectedWorkspace: _selectedWorkspace,
     setSelectedWorkspace,
     setSelectedChat,
     setChatMessages,
