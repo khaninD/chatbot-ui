@@ -18,9 +18,15 @@ export const ToolItem: FC<ToolItemProps> = ({ tool }) => {
   const [description, setDescription] = useState(tool.description)
   const [url, setUrl] = useState(tool.url)
   const [customHeaders, setCustomHeaders] = useState(
-    tool.custom_headers as string
+    typeof tool.custom_headers === "string"
+      ? tool.custom_headers
+      : JSON.stringify(tool.custom_headers, null, 2)
   )
-  const [schema, setSchema] = useState(tool.schema as string)
+  const [schema, setSchema] = useState(
+    typeof tool.schema === "string"
+      ? tool.schema
+      : JSON.stringify(tool.schema, null, 2)
+  )
   const [schemaError, setSchemaError] = useState("")
 
   return (
