@@ -2,6 +2,7 @@ import { ChatbotUIContext } from "@/context/context"
 import { LLM, LLMID, ModelProvider } from "@/types"
 import { IconCheck, IconChevronDown } from "@tabler/icons-react"
 import { FC, useContext, useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "../ui/button"
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
   onSelectModel
 }) => {
+  const { t } = useTranslation()
   const {
     profile,
     models,
@@ -97,7 +99,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       >
         {allModels.length === 0 ? (
           <div className="rounded text-sm font-bold">
-            Unlock models by entering API keys in your profile settings.
+            {t("model.unlockModels")}
           </div>
         ) : (
           <Button
@@ -118,7 +120,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                   </div>
                 </>
               ) : (
-                <div className="flex items-center">Select a model</div>
+                <div className="flex items-center">
+                  {t("model.selectModel")}
+                </div>
               )}
             </div>
 
@@ -135,9 +139,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
         <Tabs value={tab} onValueChange={(value: any) => setTab(value)}>
           {availableLocalModels.length > 0 && (
             <TabsList defaultValue="hosted" className="grid grid-cols-2">
-              <TabsTrigger value="hosted">Hosted</TabsTrigger>
+              <TabsTrigger value="hosted">{t("model.hosted")}</TabsTrigger>
 
-              <TabsTrigger value="local">Local</TabsTrigger>
+              <TabsTrigger value="local">{t("model.local")}</TabsTrigger>
             </TabsList>
           )}
         </Tabs>
@@ -145,7 +149,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
         <Input
           ref={inputRef}
           className="w-full"
-          placeholder="Search models..."
+          placeholder={t("model.searchModels")}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />

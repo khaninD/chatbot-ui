@@ -5,6 +5,7 @@ import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
 import { ChatSettings } from "@/types"
 import { IconInfoCircle } from "@tabler/icons-react"
 import { FC, useContext } from "react"
+import { useTranslation } from "react-i18next"
 import { ModelSelect } from "../models/model-select"
 import { AdvancedSettings } from "./advanced-settings"
 import { Checkbox } from "./checkbox"
@@ -33,6 +34,7 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
   useAdvancedDropdown = true,
   showTooltip = true
 }) => {
+  const { t } = useTranslation()
   const { profile, models } = useContext(ChatbotUIContext)
 
   if (!profile) return null
@@ -40,7 +42,7 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <Label>Model</Label>
+        <Label>{t("settings.model")}</Label>
 
         <ModelSelect
           selectedModelId={chatSettings.model}
@@ -51,11 +53,11 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
       </div>
 
       <div className="space-y-1">
-        <Label>Prompt</Label>
+        <Label>{t("settings.prompt")}</Label>
 
         <TextareaAutosize
           className="border-2 border-input bg-background"
-          placeholder="You are a helpful AI assistant."
+          placeholder={t("prompt.defaultPrompt")}
           onValueChange={prompt => {
             onChangeChatSettings({ ...chatSettings, prompt })
           }}
@@ -97,6 +99,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
   onChangeChatSettings,
   showTooltip
 }) => {
+  const { t } = useTranslation()
   const { profile, selectedWorkspace, availableOpenRouterModels, models } =
     useContext(ChatbotUIContext)
 
@@ -119,7 +122,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
     <div className="mt-5">
       <div className="space-y-3">
         <Label className="flex items-center space-x-1">
-          <div>Temperature:</div>
+          <div>{t("settings.temperature")}</div>
 
           <div>{chatSettings.temperature}</div>
         </Label>
@@ -140,7 +143,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
 
       <div className="mt-6 space-y-3">
         <Label className="flex items-center space-x-1">
-          <div>Context Length:</div>
+          <div>{t("settings.contextLength")}</div>
 
           <div>{chatSettings.contextLength}</div>
         </Label>
@@ -175,14 +178,14 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
           }
         />
 
-        <Label>Chats Include Profile Context</Label>
+        <Label>{t("settings.profileContext")}</Label>
 
         {showTooltip && (
           <WithTooltip
             delayDuration={0}
             display={
               <div className="w-[400px] p-3">
-                {profile?.profile_context || "No profile context."}
+                {profile?.profile_context || t("settings.noProfileContext")}
               </div>
             }
             trigger={
@@ -203,7 +206,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
           }
         />
 
-        <Label>Chats Include Workspace Instructions</Label>
+        <Label>{t("settings.workspaceInstructions")}</Label>
 
         {showTooltip && (
           <WithTooltip
@@ -211,7 +214,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
             display={
               <div className="w-[400px] p-3">
                 {selectedWorkspace?.instructions ||
-                  "No workspace instructions."}
+                  t("settings.noWorkspaceInstructions")}
               </div>
             }
             trigger={
@@ -222,7 +225,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
       </div>
 
       <div className="mt-5">
-        <Label>Embeddings Provider</Label>
+        <Label>{t("settings.embeddingsProvider")}</Label>
 
         <Select
           value={chatSettings.embeddingsProvider}
@@ -243,7 +246,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
             </SelectItem>
 
             {window.location.hostname === "localhost" && (
-              <SelectItem value="local">Local</SelectItem>
+              <SelectItem value="local">{t("model.local")}</SelectItem>
             )}
           </SelectContent>
         </Select>

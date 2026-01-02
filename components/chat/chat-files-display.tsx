@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, useContext, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "../ui/button"
 import { FilePreview } from "../ui/file-preview"
 import { WithTooltip } from "../ui/with-tooltip"
@@ -25,6 +26,7 @@ import { ChatRetrievalSettings } from "./chat-retrieval-settings"
 interface ChatFilesDisplayProps {}
 
 export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
+  const { t } = useTranslation()
   useHotkey("f", () => setShowFilesDisplay(prev => !prev))
   useHotkey("e", () => setUseRetrieval(prev => !prev))
 
@@ -106,7 +108,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
           >
             <RetrievalToggle />
 
-            <div>Hide files</div>
+            <div>{t("chat.hideFiles")}</div>
 
             <div onClick={e => e.stopPropagation()}>
               <ChatRetrievalSettings />
@@ -131,7 +133,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
                     maxWidth: "56px"
                   }}
                   src={image.base64} // Preview images will always be base64
-                  alt="File image"
+                  alt={t("chat.fileImage")}
                   width={56}
                   height={56}
                   onClick={() => {
@@ -234,9 +236,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
           <RetrievalToggle />
 
           <div>
-            {" "}
-            View {combinedMessageFiles.length} file
-            {combinedMessageFiles.length > 1 ? "s" : ""}
+            {t("chat.viewFiles", { count: combinedMessageFiles.length })}
           </div>
 
           <div onClick={e => e.stopPropagation()}>
@@ -249,6 +249,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
 }
 
 const RetrievalToggle = ({}) => {
+  const { t } = useTranslation()
   const { useRetrieval, setUseRetrieval } = useContext(ChatbotUIContext)
 
   return (
@@ -259,8 +260,8 @@ const RetrievalToggle = ({}) => {
         display={
           <div>
             {useRetrieval
-              ? "File retrieval is enabled on the selected files for this message. Click the indicator to disable."
-              : "Click the indicator to enable file retrieval for this message."}
+              ? t("chat.fileRetrievalEnabled")
+              : t("chat.fileRetrievalDisabled")}
           </div>
         }
         trigger={

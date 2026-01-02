@@ -1,0 +1,183 @@
+{
+  "common": {
+    "cancel": "Отмена",
+    "create": "Создать",
+    "creating": "Создание...",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "save": "Сохранить",
+    "submit": "Отправить",
+    "close": "Закрыть",
+    "copy": "Копировать",
+    "search": "Поиск...",
+    "loading": "Загрузка...",
+    "noItemsFound": "Элементы не найдены.",
+    "enabled": "Включено",
+    "disabled": "Отключено",
+    "optional": "опционально",
+    "image": "Изображение",
+    "imageSizeError": "Изображение должно быть меньше 6МБ!",
+    "canvasError": "Не удалось создать контекст canvas."
+  },
+  "chat": {
+    "askAnything": "Спросите что угодно. Введите @  /  #  !",
+    "askAnythingLong": "Спросите что угодно. Введите \"/\" для промптов, \"@\" для файлов и \"#\" для инструментов.",
+    "enterMessage": "Введите сообщение...",
+    "newChat": "Новый чат",
+    "startNewChat": "Начать новый чат",
+    "focusChat": "Фокус на чате",
+    "chatInfo": "Информация о чате",
+    "hideFiles": "Скрыть файлы",
+    "viewFiles": "Показать {{count}} файл",
+    "viewFiles_plural": "Показать {{count}} файлов",
+    "fileRetrievalEnabled": "Извлечение файлов включено для выбранных файлов в этом сообщении. Нажмите индикатор для отключения.",
+    "fileRetrievalDisabled": "Нажмите индикатор для включения извлечения файлов для этого сообщения.",
+    "fileImage": "Изображение файла",
+    "regenerate": "Регенерировать",
+    "forkChat": "Разветвить чат"
+  },
+  "help": {
+    "showHelp": "Показать справку",
+    "showWorkspaces": "Показать рабочие области",
+    "toggleFiles": "Переключить файлы",
+    "toggleRetrieval": "Переключить извлечение",
+    "openSettings": "Открыть настройки",
+    "openQuickSettings": "Открыть быстрые настройки",
+    "toggleSidebar": "Переключить боковую панель"
+  },
+  "settings": {
+    "model": "Модель:",
+    "prompt": "Промпт:",
+    "temperature": "Температура:",
+    "contextLength": "Длина контекста:",
+    "profileContext": "Контекст профиля:",
+    "workspaceInstructions": "Инструкции рабочей области:",
+    "embeddingsProvider": "Провайдер эмбеддингов:",
+    "advancedSettings": "Расширенные настройки",
+    "quickSettings": "Быстрые настройки",
+    "workspaceSettings": "Настройки рабочей области",
+    "profileSettings": "Настройки профиля",
+    "modified": "Изменено ",
+    "noItemsFound": "Элементы не найдены.",
+    "search": "Поиск...",
+    "noProfileContext": "Контекст профиля отсутствует.",
+    "noWorkspaceInstructions": "Инструкции рабочей области отсутствуют."
+  },
+  "prompt": {
+    "enterPromptVariables": "Введите переменные промпта",
+    "noMatchingPrompts": "Совпадающие промпты не найдены.",
+    "enterValue": "Введите значение для {{name}}...",
+    "promptName": "Название промпта...",
+    "promptContent": "Содержимое промпта...",
+    "promptDescription": "Промпт...",
+    "defaultPrompt": "Вы - полезный AI ассистент."
+  },
+  "assistant": {
+    "noMatchingAssistants": "Совпадающие ассистенты не найдены.",
+    "loadingAssistant": "Загрузка ассистента...",
+    "assistantName": "Имя ассистента...",
+    "assistantDescription": "Описание ассистента...",
+    "searchTools": "Поиск инструментов...",
+    "talkingTo": "Общение с {{name}}"
+  },
+  "file": {
+    "noMatchingFiles": "Совпадающие файлы не найдены.",
+    "fileName": "Имя файла...",
+    "fileDescription": "Описание файла...",
+    "searchFiles": "Поиск файлов...",
+    "enterFileName": "Введите имя файла"
+  },
+  "tool": {
+    "noMatchingTools": "Совпадающие инструменты не найдены.",
+    "toolName": "Название инструмента...",
+    "toolDescription": "Описание инструмента...",
+    "toolUrl": "URL инструмента...",
+    "apiKeyExample": "{\"X-api-key\": \"1234567890\"}"
+  },
+  "preset": {
+    "presetName": "Название пресета..."
+  },
+  "collection": {
+    "collectionName": "Название коллекции...",
+    "collectionDescription": "Описание коллекции..."
+  },
+  "model": {
+    "modelName": "Название модели...",
+    "modelId": "ID модели...",
+    "baseUrl": "Базовый URL...",
+    "apiKey": "API ключ...",
+    "maxTokens": "4096",
+    "selectModel": "Выберите модель",
+    "unlockModels": "Разблокируйте модели, введя API ключи в настройках профиля.",
+    "hosted": "Облачные",
+    "local": "Локальные",
+    "searchModels": "Поиск моделей..."
+  },
+  "sidebar": {
+    "search": "Поиск {{contentType}}...",
+    "noContent": "Нет {{contentType}}.",
+    "create": "Создать {{itemType}}",
+    "delete": "Удалить {{contentType}}",
+    "deleteConfirm": "Вы уверены, что хотите удалить {{name}}?",
+    "deleteChat": "Удалить {{name}}",
+    "deleteChatConfirm": "Вы уверены, что хотите удалить этот чат?",
+    "deleteFolder": "Вы уверены, что хотите удалить эту папку?",
+    "modified": "Изменено ",
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "previousWeek": "Предыдущая неделя",
+    "older": "Старые"
+  },
+  "workspace": {
+    "name": "Название...",
+    "description": "Описание... (опционально)",
+    "instructions": "Инструкции... (опционально)",
+    "searchWorkspaces": "Поиск рабочих областей...",
+    "deleteWorkspace": "Удалить {{name}}",
+    "typeNameToConfirm": "Введите название этой рабочей области для подтверждения",
+    "settings": "Настройки рабочей области",
+    "updated": "Рабочая область обновлена!",
+    "homeWorkspaceDescription": "Это ваша домашняя рабочая область для личного использования.",
+    "main": "Основное",
+    "defaults": "По умолчанию",
+    "workspaceName": "Название рабочей области",
+    "workspaceImage": "Изображение рабочей области",
+    "aiResponseQuestion": "Как вы хотите, чтобы ИИ отвечал в этой рабочей области?",
+    "defaultsDescription": "Это настройки, с которых начинается ваша рабочая область при выборе."
+  },
+  "profile": {
+    "userSettings": "Настройки пользователя",
+    "logout": "Выйти",
+    "profile": "Профиль",
+    "apiKeys": "API ключи",
+    "username": "Имя пользователя",
+    "available": "ДОСТУПНО",
+    "unavailable": "НЕДОСТУПНО",
+    "usernamePlaceholder": "Имя пользователя...",
+    "profileImage": "Изображение профиля",
+    "chatDisplayName": "Отображаемое имя в чате",
+    "chatDisplayNamePlaceholder": "Отображаемое имя...",
+    "aiKnowledgeQuestion": "Что бы вы хотели, чтобы ИИ знал о вас для более качественных ответов?",
+    "profileContextPlaceholder": "Контекст профиля... (опционально)",
+    "updated": "Профиль обновлён!",
+    "usernameError": "Имя пользователя должно содержать только буквы, цифры или подчёркивания - другие символы или пробелы не допускаются."
+  },
+  "messages": {
+    "areYouSure": "Вы абсолютно уверены?"
+  },
+  "errors": {
+    "creatingItem": "Ошибка создания {{itemType}}. {{error}}.",
+    "chatSettingsNotFound": "Настройки чата не найдены",
+    "modelNotFound": "Модель не найдена",
+    "profileNotFound": "Профиль не найден",
+    "workspaceNotFound": "Рабочая область не найдена",
+    "messageContentNotFound": "Содержимое сообщения не найдено",
+    "modelNotFoundOllama": "Модель не найдена. Убедитесь, что она загружена через Ollama.",
+    "responseBodyNull": "Тело ответа пустое"
+  },
+  "app": {
+    "name": "Chatbot UI",
+    "title": "Chatbot UI",
+    "description": "Chatbot UI PWA"
+  }
+}

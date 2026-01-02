@@ -1,3 +1,183 @@
 {
-  "Ask anything. Type \"/\" for prompts, \"@\" for files, and \"#\" for tools.": "Ask anything. Type \"/\" for prompts, \"@\" for files, and \"#\" for tools."
+  "common": {
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating...",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "submit": "Submit",
+    "close": "Close",
+    "copy": "Copy",
+    "search": "Search...",
+    "loading": "Loading...",
+    "noItemsFound": "No items found.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "optional": "optional",
+    "image": "Image",
+    "imageSizeError": "Image must be less than 6MB!",
+    "canvasError": "Unable to create canvas context."
+  },
+  "chat": {
+    "askAnything": "Ask anything. Type @  /  #  !",
+    "askAnythingLong": "Ask anything. Type \"/\" for prompts, \"@\" for files, and \"#\" for tools.",
+    "enterMessage": "Enter message...",
+    "newChat": "New Chat",
+    "startNewChat": "Start a new chat",
+    "focusChat": "Focus Chat",
+    "chatInfo": "Chat Info",
+    "hideFiles": "Hide files",
+    "viewFiles": "View {{count}} file",
+    "viewFiles_plural": "View {{count}} files",
+    "fileRetrievalEnabled": "File retrieval is enabled on the selected files for this message. Click the indicator to disable.",
+    "fileRetrievalDisabled": "Click the indicator to enable file retrieval for this message.",
+    "fileImage": "File image",
+    "regenerate": "Regenerate",
+    "forkChat": "Fork Chat"
+  },
+  "help": {
+    "showHelp": "Show Help",
+    "showWorkspaces": "Show Workspaces",
+    "toggleFiles": "Toggle Files",
+    "toggleRetrieval": "Toggle Retrieval",
+    "openSettings": "Open Settings",
+    "openQuickSettings": "Open Quick Settings",
+    "toggleSidebar": "Toggle Sidebar"
+  },
+  "settings": {
+    "model": "Model:",
+    "prompt": "Prompt:",
+    "temperature": "Temperature:",
+    "contextLength": "Context Length:",
+    "profileContext": "Profile Context:",
+    "workspaceInstructions": "Workspace Instructions:",
+    "embeddingsProvider": "Embeddings Provider:",
+    "advancedSettings": "Advanced Settings",
+    "quickSettings": "Quick Settings",
+    "workspaceSettings": "Workspace Settings",
+    "profileSettings": "Profile Settings",
+    "modified": "Modified ",
+    "noItemsFound": "No items found.",
+    "search": "Search...",
+    "noProfileContext": "No profile context.",
+    "noWorkspaceInstructions": "No workspace instructions."
+  },
+  "prompt": {
+    "enterPromptVariables": "Enter Prompt Variables",
+    "noMatchingPrompts": "No matching prompts.",
+    "enterValue": "Enter a value for {{name}}...",
+    "promptName": "Prompt name...",
+    "promptContent": "Prompt content...",
+    "promptDescription": "Prompt...",
+    "defaultPrompt": "You are a helpful AI assistant."
+  },
+  "assistant": {
+    "noMatchingAssistants": "No matching assistants.",
+    "loadingAssistant": "Loading assistant...",
+    "assistantName": "Assistant name...",
+    "assistantDescription": "Assistant description...",
+    "searchTools": "Search tools...",
+    "talkingTo": "Talking to {{name}}"
+  },
+  "file": {
+    "noMatchingFiles": "No matching files.",
+    "fileName": "File name...",
+    "fileDescription": "File description...",
+    "searchFiles": "Search files...",
+    "enterFileName": "Enter file name"
+  },
+  "tool": {
+    "noMatchingTools": "No matching tools.",
+    "toolName": "Tool name...",
+    "toolDescription": "Tool description...",
+    "toolUrl": "Tool url...",
+    "apiKeyExample": "{\"X-api-key\": \"1234567890\"}"
+  },
+  "preset": {
+    "presetName": "Preset name..."
+  },
+  "collection": {
+    "collectionName": "Collection name...",
+    "collectionDescription": "Collection description..."
+  },
+  "model": {
+    "modelName": "Model name...",
+    "modelId": "Model ID...",
+    "baseUrl": "Base URL...",
+    "apiKey": "API Key...",
+    "maxTokens": "4096",
+    "selectModel": "Select a model",
+    "unlockModels": "Unlock models by entering API keys in your profile settings.",
+    "hosted": "Hosted",
+    "local": "Local",
+    "searchModels": "Search models..."
+  },
+  "sidebar": {
+    "search": "Search {{contentType}}...",
+    "noContent": "No {{contentType}}.",
+    "create": "Create {{itemType}}",
+    "delete": "Delete {{contentType}}",
+    "deleteConfirm": "Are you sure you want to delete {{name}}?",
+    "deleteChat": "Delete {{name}}",
+    "deleteChatConfirm": "Are you sure you want to delete this chat?",
+    "deleteFolder": "Are you sure you want to delete this folder?",
+    "modified": "Modified ",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "previousWeek": "Previous Week",
+    "older": "Older"
+  },
+  "workspace": {
+    "name": "Name...",
+    "description": "Description... (optional)",
+    "instructions": "Instructions... (optional)",
+    "searchWorkspaces": "Search workspaces...",
+    "deleteWorkspace": "Delete {{name}}",
+    "typeNameToConfirm": "Type the name of this workspace to confirm",
+    "settings": "Workspace Settings",
+    "updated": "Workspace updated!",
+    "homeWorkspaceDescription": "This is your home workspace for personal use.",
+    "main": "Main",
+    "defaults": "Defaults",
+    "workspaceName": "Workspace Name",
+    "workspaceImage": "Workspace Image",
+    "aiResponseQuestion": "How would you like the AI to respond in this workspace?",
+    "defaultsDescription": "These are the settings your workspace begins with when selected."
+  },
+  "profile": {
+    "userSettings": "User Settings",
+    "logout": "Logout",
+    "profile": "Profile",
+    "apiKeys": "API Keys",
+    "username": "Username",
+    "available": "AVAILABLE",
+    "unavailable": "UNAVAILABLE",
+    "usernamePlaceholder": "Username...",
+    "profileImage": "Profile Image",
+    "chatDisplayName": "Chat Display Name",
+    "chatDisplayNamePlaceholder": "Chat display name...",
+    "aiKnowledgeQuestion": "What would you like the AI to know about you to provide better responses?",
+    "profileContextPlaceholder": "Profile context... (optional)",
+    "updated": "Profile updated!",
+    "usernameError": "Username must be letters, numbers, or underscores only - no other characters or spacing allowed."
+  },
+  "messages": {
+    "areYouSure": "Are you sure absolutely sure?"
+  },
+  "errors": {
+    "creatingItem": "Error creating {{itemType}}. {{error}}.",
+    "chatSettingsNotFound": "Chat settings not found",
+    "modelNotFound": "Model not found",
+    "profileNotFound": "Profile not found",
+    "workspaceNotFound": "Workspace not found",
+    "messageContentNotFound": "Message content not found",
+    "modelNotFoundOllama": "Model not found. Make sure you have it downloaded via Ollama.",
+    "responseBodyNull": "Response body is null"
+  },
+  "app": {
+    "name": "Chatbot UI",
+    "title": "Chatbot UI",
+    "description": "Chatbot UI PWA"
+  }
 }

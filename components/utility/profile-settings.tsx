@@ -24,6 +24,7 @@ import {
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { FC, useCallback, useContext, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { SIDEBAR_ICON_SIZE } from "../sidebar/sidebar-switcher"
 import { Button } from "../ui/button"
@@ -46,6 +47,7 @@ import { ThemeSwitcher } from "./theme-switcher"
 interface ProfileSettingsProps {}
 
 export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
+  const { t } = useTranslation()
   const {
     profile,
     setProfile,
@@ -162,7 +164,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
     setProfile(updatedProfile)
 
-    toast.success("Profile updated!")
+    toast.success(t("profile.updated"))
 
     const providers = [
       "openai",
@@ -258,9 +260,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       const usernameRegex = /^[a-zA-Z0-9_]+$/
       if (!usernameRegex.test(username)) {
         setUsernameAvailable(false)
-        toast.error(
-          "Username must be letters, numbers, or underscores only - no other characters or spacing allowed."
-        )
+        toast.error(t("profile.usernameError"))
         return
       }
 
@@ -319,7 +319,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
         <div className="grow overflow-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center justify-between space-x-2">
-              <div>User Settings</div>
+              <div>{t("profile.userSettings")}</div>
 
               <Button
                 tabIndex={-1}
@@ -328,28 +328,32 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                 onClick={handleSignOut}
               >
                 <IconLogout className="mr-1" size={20} />
-                Logout
+                {t("profile.logout")}
               </Button>
             </SheetTitle>
           </SheetHeader>
 
           <Tabs defaultValue="profile">
             <TabsList className="mt-4 grid w-full grid-cols-2">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="keys">API Keys</TabsTrigger>
+              <TabsTrigger value="profile">{t("profile.profile")}</TabsTrigger>
+              <TabsTrigger value="keys">{t("profile.apiKeys")}</TabsTrigger>
             </TabsList>
 
             <TabsContent className="mt-4 space-y-4" value="profile">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <Label>Username</Label>
+                  <Label>{t("profile.username")}</Label>
 
                   <div className="text-xs">
                     {username !== profile.username ? (
                       usernameAvailable ? (
-                        <div className="text-green-500">AVAILABLE</div>
+                        <div className="text-green-500">
+                          {t("profile.available")}
+                        </div>
                       ) : (
-                        <div className="text-red-500">UNAVAILABLE</div>
+                        <div className="text-red-500">
+                          {t("profile.unavailable")}
+                        </div>
                       )
                     ) : null}
                   </div>
@@ -358,7 +362,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                 <div className="relative">
                   <Input
                     className="pr-10"
-                    placeholder="Username..."
+                    placeholder={t("profile.usernamePlaceholder")}
                     value={username}
                     onChange={e => {
                       setUsername(e.target.value)
@@ -388,7 +392,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
               </div>
 
               <div className="space-y-1">
-                <Label>Profile Image</Label>
+                <Label>{t("profile.profileImage")}</Label>
 
                 <ImagePicker
                   src={profileImageSrc}
@@ -401,10 +405,10 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
               </div>
 
               <div className="space-y-1">
-                <Label>Chat Display Name</Label>
+                <Label>{t("profile.chatDisplayName")}</Label>
 
                 <Input
-                  placeholder="Chat display name..."
+                  placeholder={t("profile.chatDisplayNamePlaceholder")}
                   value={displayName}
                   onChange={e => setDisplayName(e.target.value)}
                   maxLength={PROFILE_DISPLAY_NAME_MAX}
@@ -413,14 +417,13 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
               <div className="space-y-1">
                 <Label className="text-sm">
-                  What would you like the AI to know about you to provide better
-                  responses?
+                  {t("profile.aiKnowledgeQuestion")}
                 </Label>
 
                 <TextareaAutosize
                   value={profileInstructions}
                   onValueChange={setProfileInstructions}
-                  placeholder="Profile context... (optional)"
+                  placeholder={t("profile.profileContextPlaceholder")}
                   minRows={6}
                   maxRows={10}
                 />
@@ -749,11 +752,11 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
           <div className="ml-auto space-x-2">
             <Button variant="ghost" onClick={() => setIsOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
 
             <Button ref={buttonRef} onClick={handleSave}>
-              Save
+              {t("common.save")}
             </Button>
           </div>
         </div>

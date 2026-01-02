@@ -19,6 +19,7 @@ import {
   LLM,
   MessageImage
 } from "@/types"
+import i18next from "i18next"
 import React from "react"
 import { toast } from "sonner"
 import { v4 as uuidv4 } from "uuid"
@@ -31,23 +32,23 @@ export const validateChatSettings = (
   messageContent: string
 ) => {
   if (!chatSettings) {
-    throw new Error("Chat settings not found")
+    throw new Error(i18next.t("errors.chatSettingsNotFound"))
   }
 
   if (!modelData) {
-    throw new Error("Model not found")
+    throw new Error(i18next.t("errors.modelNotFound"))
   }
 
   if (!profile) {
-    throw new Error("Profile not found")
+    throw new Error(i18next.t("errors.profileNotFound"))
   }
 
   if (!selectedWorkspace) {
-    throw new Error("Workspace not found")
+    throw new Error(i18next.t("errors.workspaceNotFound"))
   }
 
   if (!messageContent) {
-    throw new Error("Message content not found")
+    throw new Error(i18next.t("errors.messageContentNotFound"))
   }
 }
 
@@ -265,9 +266,7 @@ export const fetchChatResponse = async (
 
   if (!response.ok) {
     if (response.status === 404 && !isHosted) {
-      toast.error(
-        "Model not found. Make sure you have it downloaded via Ollama."
-      )
+      toast.error(i18next.t("errors.modelNotFoundOllama"))
     }
 
     const errorData = await response.json()
@@ -342,7 +341,7 @@ export const processResponse = async (
 
     return fullText
   } else {
-    throw new Error("Response body is null")
+    throw new Error(i18next.t("errors.responseBodyNull"))
   }
 }
 
