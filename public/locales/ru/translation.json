@@ -113,6 +113,13 @@
     "local": "Локальные",
     "searchModels": "Поиск моделей..."
   },
+  "mcpServer": {
+    "mcpServerName": "Название MCP сервера...",
+    "mcpServerDescription": "Описание MCP сервера...",
+    "mcpServerUrl": "URL MCP сервера...",
+    "noMatchingMcpServers": "MCP серверы не найдены.",
+    "searchMcpServers": "Поиск MCP серверов..."
+  },
   "sidebar": {
     "search": "Поиск {{contentType}}...",
     "noContent": "Нет {{contentType}}.",

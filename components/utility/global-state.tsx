@@ -47,6 +47,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [models, setModels] = useState<Tables<"models">[]>([])
   const [presets, setPresets] = useState<Tables<"presets">[]>([])
   const [prompts, setPrompts] = useState<Tables<"prompts">[]>([])
+  const [mcpServers, setMcpServers] = useState<Tables<"mcp_servers">[]>([])
   const [tools, setTools] = useState<Tables<"tools">[]>([])
   const [workspaces, setWorkspaces] = useState<Tables<"workspaces">[]>([])
 
@@ -221,6 +222,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setPresets,
         prompts,
         setPrompts,
+        mcpServers,
+        setMcpServers,
         tools,
         setTools,
         workspaces,

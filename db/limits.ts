@@ -41,3 +41,8 @@ export const TOOL_DESCRIPTION_MAX = 500
 // Models
 export const MODEL_NAME_MAX = 100
 export const MODEL_DESCRIPTION_MAX = 500
+
+// MCP Servers
+export const MCP_SERVER_NAME_MAX = 100
+export const MCP_SERVER_DESCRIPTION_MAX = 500
+export const MCP_SERVER_URL_MAX = 500

@@ -34,6 +34,8 @@ interface ChatbotUIContext {
   setPresets: Dispatch<SetStateAction<Tables<"presets">[]>>
   prompts: Tables<"prompts">[]
   setPrompts: Dispatch<SetStateAction<Tables<"prompts">[]>>
+  mcpServers: Tables<"mcp_servers">[]
+  setMcpServers: Dispatch<SetStateAction<Tables<"mcp_servers">[]>>
   tools: Tables<"tools">[]
   setTools: Dispatch<SetStateAction<Tables<"tools">[]>>
   workspaces: Tables<"workspaces">[]
@@ -162,6 +164,8 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setPrompts: () => {},
   tools: [],
   setTools: () => {},
+  mcpServers: [],
+  setMcpServers: () => {},
   workspaces: [],
   setWorkspaces: () => {},
 

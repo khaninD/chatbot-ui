@@ -7,6 +7,7 @@ import { getChatsByWorkspaceId } from "@/db/chats"
 import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
 import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 import { getFoldersByWorkspaceId } from "@/db/folders"
+import { getMcpServerWorkspacesByWorkspaceId } from "@/db/mcp-servers"
 import { getModelWorkspacesByWorkspaceId } from "@/db/models"
 import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
@@ -41,6 +42,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setFiles,
     setPresets,
     setPrompts,
+    setMcpServers,
     setTools,
     setModels,
     selectedWorkspace: _selectedWorkspace,
@@ -149,6 +151,9 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     const promptData = await getPromptWorkspacesByWorkspaceId(workspaceId)
     setPrompts(promptData.prompts)
+
+    const mcpServerData = await getMcpServerWorkspacesByWorkspaceId(workspaceId)
+    setMcpServers(mcpServerData.mcp_servers)
 
     const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
     setTools(toolData.tools)

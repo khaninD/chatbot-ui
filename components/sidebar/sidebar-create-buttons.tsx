@@ -8,6 +8,7 @@ import { Button } from "../ui/button"
 import { CreateAssistant } from "./items/assistants/create-assistant"
 import { CreateCollection } from "./items/collections/create-collection"
 import { CreateFile } from "./items/files/create-file"
+import { CreateMcpServer } from "./items/mcp-servers/create-mcp-server"
 import { CreateModel } from "./items/models/create-model"
 import { CreatePreset } from "./items/presets/create-preset"
 import { CreatePrompt } from "./items/prompts/create-prompt"
@@ -33,6 +34,7 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false)
   const [isCreatingTool, setIsCreatingTool] = useState(false)
   const [isCreatingModel, setIsCreatingModel] = useState(false)
+  const [isCreatingMcpServer, setIsCreatingMcpServer] = useState(false)
 
   const handleCreateFolder = async () => {
     if (!profile) return
@@ -88,6 +90,11 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
       case "models":
         return async () => {
           setIsCreatingModel(true)
+        }
+
+      case "mcp_servers":
+        return async () => {
+          setIsCreatingMcpServer(true)
         }
 
       default:
@@ -150,6 +157,13 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
         <CreateModel
           isOpen={isCreatingModel}
           onOpenChange={setIsCreatingModel}
+        />
+      )}
+
+      {isCreatingMcpServer && (
+        <CreateMcpServer
+          isOpen={isCreatingMcpServer}
+          onOpenChange={setIsCreatingMcpServer}
         />
       )}
     </div>

@@ -77,6 +77,12 @@ import {
   getToolWorkspacesByToolId,
   updateTool
 } from "@/db/tools"
+import {
+  createMcpServerWorkspaces,
+  deleteMcpServerWorkspace,
+  getMcpServerWorkspacesByMcpServerId,
+  updateMcpServer
+} from "@/db/mcp-servers"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { Tables, TablesUpdate } from "@/supabase/types"
 import { CollectionFile, ContentType, DataItemType } from "@/types"
@@ -113,6 +119,7 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     setAssistants,
     setTools,
     setModels,
+    setMcpServers,
     setAssistantImages
   } = useContext(ChatbotUIContext)
 
@@ -196,7 +203,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       setSelectedAssistantTools
     },
     tools: null,
-    models: null
+    models: null,
+    mcp_servers: null
   }
 
   const fetchDataFunctions = {
@@ -226,7 +234,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       setSelectedAssistantTools([])
     },
     tools: null,
-    models: null
+    models: null,
+    mcp_servers: null
   }
 
   const fetchWorkpaceFunctions = {
@@ -257,6 +266,10 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     },
     models: async (modelId: string) => {
       const item = await getModelWorkspacesByModelId(modelId)
+      return item.workspaces
+    },
+    mcp_servers: async (mcpServerId: string) => {
+      const item = await getMcpServerWorkspacesByMcpServerId(mcpServerId)
       return item.workspaces
     }
   }
@@ -568,6 +581,23 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       )
 
       return updatedModel
+    },
+    mcp_servers: async (
+      mcpServerId: string,
+      updateState: TablesUpdate<"mcp_servers">
+    ) => {
+      const updatedMcpServer = await updateMcpServer(mcpServerId, updateState)
+
+      await handleWorkspaceUpdates(
+        startingWorkspaces,
+        selectedWorkspaces,
+        mcpServerId,
+        deleteMcpServerWorkspace,
+        createMcpServerWorkspaces as any,
+        "mcp_server_id"
+      )
+
+      return updatedMcpServer
     }
   }
 
@@ -579,7 +609,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    mcp_servers: setMcpServers
   }
 
   const handleUpdate = async () => {

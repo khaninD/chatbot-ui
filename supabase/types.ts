@@ -1128,6 +1128,89 @@ export type Database = {
           },
         ]
       }
+      mcp_servers: {
+        Row: {
+          id: string
+          user_id: string
+          created_at: string
+          updated_at: string | null
+          name: string
+          description: string
+          url: string
+          folder_id: string | null
+          sharing: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          created_at?: string
+          updated_at?: string | null
+          name: string
+          description?: string
+          url: string
+          folder_id?: string | null
+          sharing?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          created_at?: string
+          updated_at?: string | null
+          name?: string
+          description?: string
+          url?: string
+          folder_id?: string | null
+          sharing?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_servers_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_server_workspaces: {
+        Row: {
+          user_id: string
+          mcp_server_id: string
+          workspace_id: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          user_id: string
+          mcp_server_id: string
+          workspace_id: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          mcp_server_id?: string
+          workspace_id?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_server_workspaces_mcp_server_id_fkey"
+            columns: ["mcp_server_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_servers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mcp_server_workspaces_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tool_workspaces: {
         Row: {
           created_at: string

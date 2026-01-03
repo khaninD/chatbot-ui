@@ -63,7 +63,8 @@ export const SidebarItem: FC<SidebarItemProps> = ({
       return router.push(`/${selectedWorkspace.id}/chat/${createdChat.id}`)
     },
     tools: async (item: any) => {},
-    models: async (item: any) => {}
+    models: async (item: any) => {},
+    mcp_servers: async (item: any) => {}
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {

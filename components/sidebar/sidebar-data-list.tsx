@@ -3,6 +3,7 @@ import { updateAssistant } from "@/db/assistants"
 import { updateChat } from "@/db/chats"
 import { updateCollection } from "@/db/collections"
 import { updateFile } from "@/db/files"
+import { updateMcpServer } from "@/db/mcp-servers"
 import { updateModel } from "@/db/models"
 import { updatePreset } from "@/db/presets"
 import { updatePrompt } from "@/db/prompts"
@@ -18,6 +19,7 @@ import { ChatItem } from "./items/chat/chat-item"
 import { CollectionItem } from "./items/collections/collection-item"
 import { FileItem } from "./items/files/file-item"
 import { Folder } from "./items/folders/folder-item"
+import { McpServerItem } from "./items/mcp-servers/mcp-server-item"
 import { ModelItem } from "./items/models/model-item"
 import { PresetItem } from "./items/presets/preset-item"
 import { PromptItem } from "./items/prompts/prompt-item"
@@ -43,7 +45,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     setCollections,
     setAssistants,
     setTools,
-    setModels
+    setModels,
+    setMcpServers
   } = useContext(ChatbotUIContext)
 
   const divRef = useRef<HTMLDivElement>(null)
@@ -89,6 +92,14 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
       case "models":
         return <ModelItem key={item.id} model={item as Tables<"models">} />
+
+      case "mcp_servers":
+        return (
+          <McpServerItem
+            key={item.id}
+            mcpServer={item as Tables<"mcp_servers">}
+          />
+        )
 
       default:
         return null
@@ -142,7 +153,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     collections: updateCollection,
     assistants: updateAssistant,
     tools: updateTool,
-    models: updateModel
+    models: updateModel,
+    mcp_servers: updateMcpServer
   }
 
   const stateUpdateFunctions = {
@@ -153,7 +165,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    mcp_servers: setMcpServers
   }
 
   const updateFolder = async (itemId: string, folderId: string | null) => {

@@ -15,6 +15,7 @@ import { createChat } from "@/db/chats"
 import { createCollectionFiles } from "@/db/collection-files"
 import { createCollection } from "@/db/collections"
 import { createFileBasedOnExtension } from "@/db/files"
+import { createMcpServer } from "@/db/mcp-servers"
 import { createModel } from "@/db/models"
 import { createPreset } from "@/db/presets"
 import { createPrompt } from "@/db/prompts"
@@ -51,6 +52,7 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
     setChats,
     setPresets,
     setPrompts,
+    setMcpServers,
     setFiles,
     setCollections,
     setAssistants,
@@ -67,6 +69,7 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
     chats: createChat,
     presets: createPreset,
     prompts: createPrompt,
+    mcp_servers: createMcpServer,
     files: async (
       createState: { file: File } & TablesInsert<"files">,
       workspaceId: string
@@ -177,6 +180,7 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
     chats: setChats,
     presets: setPresets,
     prompts: setPrompts,
+    mcp_servers: setMcpServers,
     files: setFiles,
     collections: setCollections,
     assistants: setAssistants,
