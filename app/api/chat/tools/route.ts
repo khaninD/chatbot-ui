@@ -59,160 +59,193 @@ export async function POST(request: Request) {
       }
     }
 
-    const firstResponse = await openaiClient.chat.completions.create({
-      model: chatSettings.model,
-      messages,
-      tools: allTools.length > 0 ? allTools : undefined
-    })
+    console.log("=== TOOLS DEBUG ===")
+    console.log("allTools:", JSON.stringify(allTools, null, 2))
+    console.log("schemaDetails:", JSON.stringify(schemaDetails, null, 2))
 
-    const message = firstResponse.choices[0].message
-    messages.push(message)
-    const toolCalls = message.tool_calls || []
-
-    if (toolCalls.length === 0) {
-      return new Response(message.content, {
-        headers: {
-          "Content-Type": "application/json"
-        }
+    try {
+      const firstResponse = await openaiClient.chat.completions.create({
+        model: chatSettings.model,
+        messages,
+        tools: allTools.length > 0 ? allTools : undefined
       })
-    }
+      console.log("firstResponse", firstResponse)
+      const message = firstResponse.choices[0].message
+      messages.push(message)
+      const toolCalls = message.tool_calls || []
 
-    if (toolCalls.length > 0) {
-      for (const toolCall of toolCalls) {
-        if (toolCall.type !== "function") continue
+      console.log("=== RESPONSE DEBUG ===")
+      console.log("toolCalls:", JSON.stringify(toolCalls, null, 2))
+      console.log("message.content:", message.content)
 
-        const functionCall = toolCall.function
-        const functionName = functionCall.name
-        const argumentsString = toolCall.function.arguments.trim()
-        const parsedArgs = JSON.parse(argumentsString)
-
-        // Find the schema detail that contains the function name
-        const schemaDetail = schemaDetails.find(detail =>
-          Object.values(detail.routeMap).includes(functionName)
-        )
-
-        if (!schemaDetail) {
-          throw new Error(`Function ${functionName} not found in any schema`)
-        }
-
-        const pathTemplate = Object.keys(schemaDetail.routeMap).find(
-          key => schemaDetail.routeMap[key] === functionName
-        )
-
-        if (!pathTemplate) {
-          throw new Error(`Path for function ${functionName} not found`)
-        }
-
-        const path = pathTemplate.replace(/:(\w+)/g, (_, paramName) => {
-          const value = parsedArgs.parameters[paramName]
-          if (!value) {
-            throw new Error(
-              `Parameter ${paramName} not found for function ${functionName}`
-            )
-          }
-          return encodeURIComponent(value)
-        })
-
-        if (!path) {
-          throw new Error(`Path for function ${functionName} not found`)
-        }
-
-        // Determine if the request should be in the body or as a query
-        const isRequestInBody = schemaDetail.requestInBody
-        let data = {}
-
-        if (isRequestInBody) {
-          // If the type is set to body
-          let headers = {
+      if (toolCalls.length === 0) {
+        console.log("No tool calls, returning direct response")
+        return new Response(message.content, {
+          headers: {
             "Content-Type": "application/json"
           }
-
-          // Check if custom headers are set
-          const customHeaders = schemaDetail.headers // Moved this line up to the loop
-          // Check if custom headers are set and are of type string
-          if (customHeaders && typeof customHeaders === "string") {
-            const parsedCustomHeaders = JSON.parse(customHeaders) as Record<
-              string,
-              string
-            >
-
-            headers = {
-              ...headers,
-              ...parsedCustomHeaders
-            }
-          }
-
-          const fullUrl = schemaDetail.url + path
-
-          const bodyContent = parsedArgs.requestBody || parsedArgs
-
-          const requestInit = {
-            method: "POST",
-            headers,
-            body: JSON.stringify(bodyContent) // Use the extracted requestBody or the entire parsedArgs
-          }
-
-          const response = await fetch(fullUrl, requestInit)
-
-          if (!response.ok) {
-            data = {
-              error: response.statusText
-            }
-          } else {
-            data = await response.json()
-          }
-        } else {
-          // If the type is set to query
-          const queryParams = new URLSearchParams(
-            parsedArgs.parameters
-          ).toString()
-          const fullUrl =
-            schemaDetail.url + path + (queryParams ? "?" + queryParams : "")
-
-          let headers = {}
-
-          // Check if custom headers are set
-          const customHeaders = schemaDetail.headers
-          if (customHeaders && typeof customHeaders === "string") {
-            headers = JSON.parse(customHeaders)
-          }
-
-          const response = await fetch(fullUrl, {
-            method: "GET",
-            headers: headers
-          })
-
-          if (!response.ok) {
-            data = {
-              error: response.statusText
-            }
-          } else {
-            data = await response.json()
-          }
-        }
-
-        messages.push({
-          tool_call_id: toolCall.id,
-          role: "tool",
-          name: functionName,
-          content: JSON.stringify(data)
         })
       }
+
+      if (toolCalls.length > 0) {
+        for (const toolCall of toolCalls) {
+          if (toolCall.type !== "function") continue
+
+          const functionCall = toolCall.function
+          const functionName = functionCall.name
+          const argumentsString = toolCall.function.arguments.trim()
+          const parsedArgs = JSON.parse(argumentsString)
+          console.log("argumentsString", argumentsString)
+          console.log("=== EXECUTING TOOL ===")
+          console.log("functionName:", functionName)
+          console.log("parsedArgs:", JSON.stringify(parsedArgs, null, 2))
+
+          // Find the schema detail that contains the function name
+          const schemaDetail = schemaDetails.find(detail =>
+            Object.values(detail.routeMap).includes(functionName)
+          )
+
+          if (!schemaDetail) {
+            throw new Error(`Function ${functionName} not found in any schema`)
+          }
+
+          const pathTemplate = Object.keys(schemaDetail.routeMap).find(
+            key => schemaDetail.routeMap[key] === functionName
+          )
+
+          if (!pathTemplate) {
+            throw new Error(`Path for function ${functionName} not found`)
+          }
+
+          const path = pathTemplate.replace(/:(\w+)/g, (_, paramName) => {
+            const value = parsedArgs.parameters[paramName]
+            if (!value) {
+              throw new Error(
+                `Parameter ${paramName} not found for function ${functionName}`
+              )
+            }
+            return encodeURIComponent(value)
+          })
+
+          if (!path) {
+            throw new Error(`Path for function ${functionName} not found`)
+          }
+
+          // Determine if the request should be in the body or as a query
+          const isRequestInBody = schemaDetail.requestInBody
+          let data = {}
+
+          if (isRequestInBody) {
+            // If the type is set to body
+            let headers = {
+              "Content-Type": "application/json"
+            }
+
+            // Check if custom headers are set
+            const customHeaders = schemaDetail.headers // Moved this line up to the loop
+            // Check if custom headers are set and are of type string
+            if (customHeaders && typeof customHeaders === "string") {
+              const parsedCustomHeaders = JSON.parse(customHeaders) as Record<
+                string,
+                string
+              >
+
+              headers = {
+                ...headers,
+                ...parsedCustomHeaders
+              }
+            }
+
+            const fullUrl = schemaDetail.url + path
+
+            const bodyContent = parsedArgs.requestBody || parsedArgs
+
+            const requestInit = {
+              method: "POST",
+              headers,
+              body: JSON.stringify(bodyContent) // Use the extracted requestBody or the entire parsedArgs
+            }
+            console.log("TOOL FULL URL", fullUrl, requestInit)
+            const response = await fetch(fullUrl, requestInit)
+
+            if (!response.ok) {
+              data = {
+                error: response.statusText
+              }
+            } else {
+              data = await response.json()
+            }
+          } else {
+            console.log("parsedArgs.parameters", parsedArgs.parameters)
+            // If the type is set to query
+            const queryParams = new URLSearchParams(
+              parsedArgs.parameters
+            ).toString()
+            const fullUrl =
+              schemaDetail.url + path + (queryParams ? "?" + queryParams : "")
+
+            let headers = {}
+
+            // Check if custom headers are set
+            const customHeaders = schemaDetail.headers
+            if (customHeaders && typeof customHeaders === "string") {
+              headers = JSON.parse(customHeaders)
+            }
+
+            console.log("=== GET REQUEST ===")
+            console.log("URL:", fullUrl)
+            console.log("Headers:", JSON.stringify(headers, null, 2))
+
+            const response = await fetch(fullUrl, {
+              method: "GET",
+              headers: headers
+            })
+
+            console.log("Response status:", response.status)
+
+            if (!response.ok) {
+              const errorText = await response.text()
+              console.log("Error response:", errorText)
+              data = {
+                error: response.statusText,
+                details: errorText
+              }
+            } else {
+              data = await response.json()
+              console.log("Success response:", JSON.stringify(data, null, 2))
+            }
+          }
+
+          messages.push({
+            tool_call_id: toolCall.id,
+            role: "tool",
+            name: functionName,
+            content: JSON.stringify(data)
+          })
+        }
+      }
+    } catch (error: any) {
+      console.error("Error first tool response", error)
     }
 
-    const openai = createOpenAI({
-      apiKey: profile.openai_api_key || "",
-      ...(profile.openai_organization_id && {
-        organization: profile.openai_organization_id
-      })
+    console.log("=== FINAL MESSAGES ===")
+    console.log("messages:", JSON.stringify(messages, null, 2))
+
+    // Use native OpenAI API instead of AI SDK to avoid validation issues
+    const secondResponse = await openaiClient.chat.completions.create({
+      model: chatSettings.model,
+      messages: messages as any
     })
 
-    const result = streamText({
-      model: openai(chatSettings.model),
-      messages
-    })
+    const finalMessage = secondResponse.choices[0].message
+    console.log("=== FINAL RESPONSE ===")
+    console.log("finalMessage.content:", finalMessage.content)
 
-    return result.toTextStreamResponse()
+    return new Response(finalMessage.content, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    })
   } catch (error: any) {
     console.error(error)
     const errorMessage = error.error?.message || "An unexpected error occurred"

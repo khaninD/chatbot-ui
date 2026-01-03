@@ -1,0 +1,50 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Weather Data",
+    "description": "Real-time weather information API. Use this tool whenever the user asks about current weather, temperature, or weather conditions in any city.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+          "url": "http://api.weatherapi.com/v1/"
+    }
+  ],
+  "paths": {
+    "current.json": {
+      "get": {
+        "description": "Get current weather data including temperature, conditions, humidity, and wind for any city in the world. Use this when user asks about weather.",
+        "operationId": "getCurrentWeather",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "City name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aqi",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "no"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ru"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
