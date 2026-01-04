@@ -11,6 +11,97 @@ export const runtime: ServerRuntime = "edge"
 const LLAMAINDEX_AGENT_URL =
   process.env.NEXT_PUBLIC_LLAMAINDEX_AGENT_URL || "http://localhost:3001"
 
+// Helper function to format tool results
+function formatToolResult(toolOutput: unknown): string {
+  if (typeof toolOutput === "string") {
+    // Try to parse as JSON for better formatting
+    try {
+      const parsed = JSON.parse(toolOutput)
+      return `\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``
+    } catch {
+      // Not JSON, display as-is
+      return toolOutput
+    }
+  }
+
+  if (typeof toolOutput === "object" && toolOutput !== null) {
+    // Object - format as JSON
+    return `\`\`\`json\n${JSON.stringify(toolOutput, null, 2)}\n\`\`\``
+  }
+
+  // Primitive type
+  return String(toolOutput)
+}
+
+// Create a TransformStream to convert SSE events to text
+function createSSETransformStream(): TransformStream<Uint8Array, Uint8Array> {
+  const decoder = new TextDecoder()
+  const encoder = new TextEncoder()
+  let buffer = ""
+
+  return new TransformStream({
+    transform(chunk, controller) {
+      // Decode chunk and add to buffer
+      buffer += decoder.decode(chunk, { stream: true })
+
+      // Process complete SSE messages (ending with \n\n)
+      const lines = buffer.split("\n\n")
+      buffer = lines.pop() || ""
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue
+
+        const data = line.slice(6)
+
+        try {
+          const event = JSON.parse(data)
+
+          switch (event.type) {
+            case "text_delta":
+              controller.enqueue(encoder.encode(event.data.delta))
+              break
+
+            case "tool_call":
+              controller.enqueue(
+                encoder.encode(`\n**[Using tool: ${event.data.toolName}]**\n`)
+              )
+              break
+
+            case "tool_result": {
+              const resultText = formatToolResult(event.data.toolOutput)
+              controller.enqueue(
+                encoder.encode(
+                  `\n**[Result from ${event.data.toolName}]:**\n${resultText}\n\n`
+                )
+              )
+              break
+            }
+
+            case "error":
+              console.error("[LlamaIndex] Stream error:", event.data.error)
+              controller.error(new Error(event.data.error))
+              break
+          }
+        } catch (parseError) {
+          console.error(
+            "[LlamaIndex] Failed to parse SSE data:",
+            data,
+            parseError
+          )
+        }
+      }
+    },
+
+    flush(controller) {
+      // Process any remaining data in buffer
+      if (buffer.trim()) {
+        console.log("[LlamaIndex] Remaining buffer:", buffer)
+      }
+      controller.terminate()
+    }
+  })
+}
+
 export async function POST(request: Request) {
   const json = await request.json()
   const { chatSettings, messages } = json as {
@@ -110,97 +201,15 @@ export async function POST(request: Request) {
 
     console.log(`[LlamaIndex] Streaming response from agent server`)
 
-    // Create a transformed stream to process SSE events
-    const encoder = new TextEncoder()
-    const decoder = new TextDecoder()
+    // Create a clean SSE-to-text transform stream
+    const sseTransformer = createSSETransformStream()
+    const textStream = response.body!.pipeThrough(sseTransformer)
 
-    const transformedStream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body!.getReader()
-        let buffer = ""
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read()
-
-            if (done) {
-              controller.close()
-              break
-            }
-
-            // Decode the chunk and add to buffer
-            buffer += decoder.decode(value, { stream: true })
-
-            // Process complete SSE messages (ending with \n\n)
-            const lines = buffer.split("\n\n")
-            buffer = lines.pop() || "" // Keep incomplete message in buffer
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6) // Remove "data: " prefix
-
-                try {
-                  const event = JSON.parse(data)
-
-                  if (event.type === "text_delta") {
-                    // Stream text deltas directly to the client
-                    controller.enqueue(encoder.encode(event.data.delta))
-                  } else if (event.type === "tool_call") {
-                    // Show tool calls as formatted text with bold styling
-                    const toolInfo = `\n**[Using tool: ${event.data.toolName}]**\n`
-                    controller.enqueue(encoder.encode(toolInfo))
-                  } else if (event.type === "tool_result") {
-                    // Show tool results as formatted text with JSON syntax highlighting
-                    let resultText = ""
-
-                    if (typeof event.data.toolOutput === "string") {
-                      // Try to parse as JSON for better formatting
-                      try {
-                        const parsed = JSON.parse(event.data.toolOutput)
-                        resultText = `\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``
-                      } catch {
-                        // Not JSON, display as-is
-                        resultText = event.data.toolOutput
-                      }
-                    } else if (typeof event.data.toolOutput === "object") {
-                      // Object - format as JSON
-                      resultText = `\`\`\`json\n${JSON.stringify(event.data.toolOutput, null, 2)}\n\`\`\``
-                    } else {
-                      // Primitive type
-                      resultText = String(event.data.toolOutput)
-                    }
-
-                    const toolResult = `\n**[Result from ${event.data.toolName}]:**\n${resultText}\n\n`
-                    controller.enqueue(encoder.encode(toolResult))
-                  } else if (event.type === "error") {
-                    console.error(
-                      "[LlamaIndex] Stream error:",
-                      event.data.error
-                    )
-                    controller.error(new Error(event.data.error))
-                    break
-                  }
-                  // Ignore 'done' event, just close stream naturally
-                } catch (parseError) {
-                  console.error(
-                    "[LlamaIndex] Failed to parse SSE data:",
-                    data,
-                    parseError
-                  )
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error("[LlamaIndex] Stream error:", error)
-          controller.error(error)
-        }
-      }
-    })
-
-    return new Response(transformedStream, {
+    return new Response(textStream, {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8"
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive"
       }
     })
   } catch (error: any) {
