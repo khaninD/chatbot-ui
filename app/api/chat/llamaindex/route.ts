@@ -146,9 +146,17 @@ export async function POST(request: Request) {
                     // Stream text deltas directly to the client
                     controller.enqueue(encoder.encode(event.data.delta))
                   } else if (event.type === "tool_call") {
-                    // Optionally show tool calls as formatted text
+                    // Show tool calls as formatted text
                     const toolInfo = `\n[Using tool: ${event.data.toolName}]\n`
                     controller.enqueue(encoder.encode(toolInfo))
+                  } else if (event.type === "tool_result") {
+                    // Show tool results as formatted text
+                    const resultText =
+                      typeof event.data.toolOutput === "string"
+                        ? event.data.toolOutput
+                        : JSON.stringify(event.data.toolOutput, null, 2)
+                    const toolResult = `[Result from ${event.data.toolName}]:\n${resultText}\n\n`
+                    controller.enqueue(encoder.encode(toolResult))
                   } else if (event.type === "error") {
                     console.error(
                       "[LlamaIndex] Stream error:",
