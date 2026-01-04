@@ -61,11 +61,11 @@ function createSSETransformStream(): TransformStream<Uint8Array, Uint8Array> {
               controller.enqueue(encoder.encode(event.data.delta))
               break
 
-            case "tool_call":
-              controller.enqueue(
-                encoder.encode(`\n**[Using tool: ${event.data.toolName}]**\n`)
-              )
-              break
+            // case "tool_call":
+            //   controller.enqueue(
+            //     encoder.encode(`\n**[Using tool: ${event.data.toolName}]**\n`)
+            //   )
+            //   break
 
             case "tool_result": {
               const resultText = formatToolResult(event.data.toolOutput)
