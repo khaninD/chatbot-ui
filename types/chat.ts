@@ -9,6 +9,8 @@ export interface ChatSettings {
   includeProfileContext: boolean
   includeWorkspaceInstructions: boolean
   embeddingsProvider: "openai" | "local"
+  mcpServerIds?: string[]
+  agentModel?: string
 }
 
 export interface ChatPayload {

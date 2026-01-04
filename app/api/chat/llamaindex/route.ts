@@ -1,5 +1,8 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { Database } from "@/supabase/types"
 import { ChatSettings } from "@/types"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 import { ServerRuntime } from "next"
 
 export const runtime: ServerRuntime = "edge"
@@ -10,7 +13,7 @@ const LLAMAINDEX_AGENT_URL =
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings: _chatSettings, messages } = json as {
+  const { chatSettings, messages } = json as {
     chatSettings: ChatSettings
     messages: any[]
   }
@@ -43,12 +46,45 @@ export async function POST(request: Request) {
             : msg.content[0]?.text || ""
       }))
 
+    // Get MCP server URLs if mcpServerIds is provided
+    let mcpUrls: string[] = []
+    if (chatSettings.mcpServerIds && chatSettings.mcpServerIds.length > 0) {
+      try {
+        const cookieStore = await cookies()
+        const supabase = createServerClient<Database>(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              get(name: string) {
+                return cookieStore.get(name)?.value
+              }
+            }
+          }
+        )
+
+        const { data: mcpServers, error } = await supabase
+          .from("mcp_servers")
+          .select("*")
+          .in("id", chatSettings.mcpServerIds)
+
+        if (error) {
+          console.error("[LlamaIndex] Error fetching MCP servers:", error)
+        } else if (mcpServers) {
+          mcpUrls = mcpServers.map(server => server.url)
+        }
+      } catch (error) {
+        console.error("[LlamaIndex] Error fetching MCP servers:", error)
+      }
+    }
+
     console.log(
       `[LlamaIndex] Sending request to agent server: ${LLAMAINDEX_AGENT_URL} (${conversationMessages.length} messages)`
     )
 
     // Call LlamaIndex agent server
     // Send full conversation history like other providers do
+    console.log("MCP SERVER URLs:", mcpUrls)
     const response = await fetch(`${LLAMAINDEX_AGENT_URL}/api/chat`, {
       method: "POST",
       headers: {
@@ -58,6 +94,8 @@ export async function POST(request: Request) {
         query: userQuery,
         systemPrompt: systemPrompt,
         apiKey: profile.openai_api_key,
+        model: chatSettings.agentModel || "gpt-4o", // Pass agent model from settings, default to gpt-4o
+        mcpUrls: mcpUrls, // Pass array of MCP server URLs from selected servers
         messages: conversationMessages // Send full history instead of relying on server-side sessions
       })
     })
