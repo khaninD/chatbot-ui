@@ -146,16 +146,31 @@ export async function POST(request: Request) {
                     // Stream text deltas directly to the client
                     controller.enqueue(encoder.encode(event.data.delta))
                   } else if (event.type === "tool_call") {
-                    // Show tool calls as formatted text
-                    const toolInfo = `\n[Using tool: ${event.data.toolName}]\n`
+                    // Show tool calls as formatted text with bold styling
+                    const toolInfo = `\n**[Using tool: ${event.data.toolName}]**\n`
                     controller.enqueue(encoder.encode(toolInfo))
                   } else if (event.type === "tool_result") {
-                    // Show tool results as formatted text
-                    const resultText =
-                      typeof event.data.toolOutput === "string"
-                        ? event.data.toolOutput
-                        : JSON.stringify(event.data.toolOutput, null, 2)
-                    const toolResult = `[Result from ${event.data.toolName}]:\n${resultText}\n\n`
+                    // Show tool results as formatted text with JSON syntax highlighting
+                    let resultText = ""
+
+                    if (typeof event.data.toolOutput === "string") {
+                      // Try to parse as JSON for better formatting
+                      try {
+                        const parsed = JSON.parse(event.data.toolOutput)
+                        resultText = `\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``
+                      } catch {
+                        // Not JSON, display as-is
+                        resultText = event.data.toolOutput
+                      }
+                    } else if (typeof event.data.toolOutput === "object") {
+                      // Object - format as JSON
+                      resultText = `\`\`\`json\n${JSON.stringify(event.data.toolOutput, null, 2)}\n\`\`\``
+                    } else {
+                      // Primitive type
+                      resultText = String(event.data.toolOutput)
+                    }
+
+                    const toolResult = `\n**[Result from ${event.data.toolName}]:**\n${resultText}\n\n`
                     controller.enqueue(encoder.encode(toolResult))
                   } else if (event.type === "error") {
                     console.error(
