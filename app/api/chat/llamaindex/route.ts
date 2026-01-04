@@ -79,13 +79,12 @@ export async function POST(request: Request) {
     }
 
     console.log(
-      `[LlamaIndex] Sending request to agent server: ${LLAMAINDEX_AGENT_URL} (${conversationMessages.length} messages)`
+      `[LlamaIndex] Sending streaming request to agent server: ${LLAMAINDEX_AGENT_URL} (${conversationMessages.length} messages)`
     )
 
-    // Call LlamaIndex agent server
-    // Send full conversation history like other providers do
+    // Call LlamaIndex agent server streaming endpoint
     console.log("MCP SERVER URLs:", mcpUrls)
-    const response = await fetch(`${LLAMAINDEX_AGENT_URL}/api/chat`, {
+    const response = await fetch(`${LLAMAINDEX_AGENT_URL}/api/chat/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -94,41 +93,89 @@ export async function POST(request: Request) {
         query: userQuery,
         systemPrompt: systemPrompt,
         apiKey: profile.openai_api_key,
-        model: chatSettings.agentModel || "gpt-4o", // Pass agent model from settings, default to gpt-4o
-        mcpUrls: mcpUrls, // Pass array of MCP server URLs from selected servers
-        messages: conversationMessages // Send full history instead of relying on server-side sessions
+        model: chatSettings.agentModel || "gpt-4o",
+        mcpUrls: mcpUrls,
+        messages: conversationMessages
       })
     })
 
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || "Agent server error")
+      const errorText = await response.text()
+      throw new Error(errorText || "Agent server error")
     }
 
-    const data = await response.json()
-
-    if (!data.success) {
-      throw new Error(data.error || "Agent returned error")
+    if (!response.body) {
+      throw new Error("No response body from agent server")
     }
 
-    // Format result
-    let result = data.result
-    if (typeof result === "object") {
-      result = JSON.stringify(result, null, 2)
-    }
+    console.log(`[LlamaIndex] Streaming response from agent server`)
 
-    console.log(`[LlamaIndex] Received response from agent server`)
-
-    // Create ReadableStream for streaming response
+    // Create a transformed stream to process SSE events
     const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode(result))
-        controller.close()
+    const decoder = new TextDecoder()
+
+    const transformedStream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body!.getReader()
+        let buffer = ""
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+
+            if (done) {
+              controller.close()
+              break
+            }
+
+            // Decode the chunk and add to buffer
+            buffer += decoder.decode(value, { stream: true })
+
+            // Process complete SSE messages (ending with \n\n)
+            const lines = buffer.split("\n\n")
+            buffer = lines.pop() || "" // Keep incomplete message in buffer
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6) // Remove "data: " prefix
+
+                try {
+                  const event = JSON.parse(data)
+
+                  if (event.type === "text_delta") {
+                    // Stream text deltas directly to the client
+                    controller.enqueue(encoder.encode(event.data.delta))
+                  } else if (event.type === "tool_call") {
+                    // Optionally show tool calls as formatted text
+                    const toolInfo = `\n[Using tool: ${event.data.toolName}]\n`
+                    controller.enqueue(encoder.encode(toolInfo))
+                  } else if (event.type === "error") {
+                    console.error(
+                      "[LlamaIndex] Stream error:",
+                      event.data.error
+                    )
+                    controller.error(new Error(event.data.error))
+                    break
+                  }
+                  // Ignore 'done' event, just close stream naturally
+                } catch (parseError) {
+                  console.error(
+                    "[LlamaIndex] Failed to parse SSE data:",
+                    data,
+                    parseError
+                  )
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("[LlamaIndex] Stream error:", error)
+          controller.error(error)
+        }
       }
     })
 
-    return new Response(stream, {
+    return new Response(transformedStream, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8"
       }
