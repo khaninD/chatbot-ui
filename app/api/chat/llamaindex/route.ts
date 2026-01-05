@@ -175,6 +175,14 @@ export async function POST(request: Request) {
 
     // Call LlamaIndex agent server streaming endpoint
     console.log("MCP SERVER URLs:", mcpUrls)
+
+    // For llamaindex-sql-agent model, temperature must be 1 (default)
+    // For other models, use the temperature from chatSettings
+    const temperature =
+      chatSettings.agentModel === "llamaindex-sql-agent"
+        ? 1
+        : chatSettings.temperature || 1
+
     const response = await fetch(`${LLAMAINDEX_AGENT_URL}/api/chat/stream`, {
       method: "POST",
       headers: {
@@ -185,6 +193,7 @@ export async function POST(request: Request) {
         systemPrompt: systemPrompt,
         apiKey: profile.openai_api_key,
         model: chatSettings.agentModel || "gpt-4o",
+        temperature: temperature,
         mcpUrls: mcpUrls,
         messages: conversationMessages
       })
@@ -192,7 +201,18 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(errorText || "Agent server error")
+      console.error("[LlamaIndex] Agent server error response:", errorText)
+
+      // Try to parse error as JSON to get detailed error message
+      try {
+        const errorJson = JSON.parse(errorText)
+        const detailedError =
+          errorJson.message || errorJson.error?.message || errorText
+        throw new Error(detailedError)
+      } catch (parseError) {
+        // If not JSON, use the raw error text
+        throw new Error(errorText || "Agent server error")
+      }
     }
 
     if (!response.body) {
@@ -218,6 +238,13 @@ export async function POST(request: Request) {
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
+    // Log the full error for debugging
+    console.error("[LlamaIndex] Full error details:", {
+      message: error.message,
+      stack: error.stack,
+      status: error.status
+    })
+
     if (errorMessage.toLowerCase().includes("api key not found")) {
       errorMessage =
         "OpenAI API Key not found. Please set it in your profile settings."
@@ -230,6 +257,16 @@ export async function POST(request: Request) {
     ) {
       errorMessage =
         "LlamaIndex Agent Server is not running. Please start the agent server on port 3001."
+    }
+    // If the error message contains information about unsupported parameters (like temperature),
+    // pass it through to the user as-is
+    else if (
+      errorMessage.toLowerCase().includes("unsupported") ||
+      errorMessage.toLowerCase().includes("temperature") ||
+      errorMessage.toLowerCase().includes("invalid_request_error")
+    ) {
+      // Keep the original error message
+      errorMessage = error.message
     }
 
     return new Response(JSON.stringify({ message: errorMessage }), {
