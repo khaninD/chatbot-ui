@@ -54,10 +54,15 @@ export async function buildFinalMessages(
   const CHUNK_SIZE = chatSettings.contextLength
   const PROMPT_TOKENS = encode(chatSettings.prompt).length
 
-  let remainingTokens = CHUNK_SIZE - PROMPT_TOKENS
+  // Claude Code strategy: Reserve tokens for system prompt and response
+  const RESERVED_FOR_RESPONSE = 4000 // Reserve tokens for model response
+  const RESERVED_FOR_SYSTEM = PROMPT_TOKENS + 500 // System prompt + overhead
 
-  let usedTokens = 0
-  usedTokens += PROMPT_TOKENS
+  // Available tokens for conversation history
+  let availableTokens = CHUNK_SIZE - RESERVED_FOR_SYSTEM - RESERVED_FOR_RESPONSE
+
+  // Always include last N messages (Claude Code strategy)
+  const ALWAYS_INCLUDE_LAST_N = 6 // Last 3 exchanges (user + assistant pairs)
 
   const processedChatMessages = chatMessages.map((chatMessage, index) => {
     const nextChatMessage = chatMessages[index + 1]
@@ -90,20 +95,78 @@ export async function buildFinalMessages(
     return chatMessage
   })
 
-  let finalMessages = []
+  // Clean tool usage markers from assistant messages (Claude Code approach)
+  // Tool calls are shown in real-time during execution but not saved to history
+  const cleanedMessages = processedChatMessages.map(chatMessage => {
+    const message = chatMessage.message
 
-  for (let i = processedChatMessages.length - 1; i >= 0; i--) {
-    const message = processedChatMessages[i].message
+    if (message.role === "assistant") {
+      // Remove tool usage markers (both old and new formats)
+      let cleanContent = message.content
+        // New format: 🔧 tool_name
+        .replace(/\n🔧 [^\n]+\n/g, "\n")
+        .replace(/✓ [^\n]+\n/g, "")
+        // Old format: **[Using tool: ...]** **[Result from ...]:**
+        .replace(/\*\*\[Using tool: [^\]]+\]\*\*\s*/g, "")
+        .replace(
+          /\*\*\[Result from [^\]]+\]:\*\*\n```json\n[\s\S]*?\n```\n\n/g,
+          ""
+        )
+        .replace(/\n{3,}/g, "\n\n") // Replace multiple newlines with double
+        .trim()
+
+      if (!cleanContent) {
+        cleanContent = "[Processing...]"
+      }
+
+      return {
+        ...chatMessage,
+        message: {
+          ...message,
+          content: cleanContent
+        }
+      }
+    }
+
+    return chatMessage
+  })
+
+  let finalMessages = []
+  let usedTokens = 0
+
+  // Split messages into guaranteed (recent) and optional (older)
+  const totalMessages = cleanedMessages.length
+  const guaranteedMessages = cleanedMessages.slice(-ALWAYS_INCLUDE_LAST_N)
+  const optionalMessages = cleanedMessages.slice(0, -ALWAYS_INCLUDE_LAST_N)
+
+  // First, add optional messages from most recent to oldest
+  for (let i = optionalMessages.length - 1; i >= 0; i--) {
+    const message = optionalMessages[i].message
     const messageTokens = encode(message.content).length
 
-    if (messageTokens <= remainingTokens) {
-      remainingTokens -= messageTokens
+    if (usedTokens + messageTokens <= availableTokens) {
       usedTokens += messageTokens
       finalMessages.unshift(message)
-    } else {
-      break
     }
+    // Continue even if message doesn't fit - try older ones
   }
+
+  // Always add guaranteed recent messages (even if over limit)
+  for (const chatMessage of guaranteedMessages) {
+    const message = chatMessage.message
+    const messageTokens = encode(message.content).length
+    usedTokens += messageTokens
+    finalMessages.push(message)
+  }
+
+  // Log context management stats
+  console.log(
+    `[Context Management] Total: ${totalMessages} msgs | ` +
+      `Included: ${finalMessages.length} msgs | ` +
+      `Tokens: ${usedTokens}/${CHUNK_SIZE} | ` +
+      `Reserved: ${RESERVED_FOR_SYSTEM + RESERVED_FOR_RESPONSE} | ` +
+      `Available: ${availableTokens}`
+  )
 
   const tempSystemMessage: Tables<"messages"> = {
     chat_id: "",

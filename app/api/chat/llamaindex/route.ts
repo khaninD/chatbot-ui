@@ -33,6 +33,32 @@ function formatToolResult(toolOutput: unknown): string {
   return String(toolOutput)
 }
 
+// Create brief summary from tool result (like Claude Code)
+function getBriefToolResult(toolOutput: any, toolName: string): string {
+  try {
+    // Extract text content from tool output
+    const content = toolOutput?.content?.[0]?.text || ""
+
+    // For list/query operations, show row count
+    if (content.includes("[") || content.includes("rows")) {
+      const match = content.match(/\d+/)
+      if (match) {
+        return `✓ ${match[0]} results\n`
+      }
+    }
+
+    // For schema/table operations, show success
+    if (toolName.includes("schema") || toolName.includes("table")) {
+      return `✓ Schema info retrieved\n`
+    }
+
+    // Default: just show completion
+    return `✓ Done\n`
+  } catch {
+    return `✓ Done\n`
+  }
+}
+
 // Create a TransformStream to convert SSE events to text
 function createSSETransformStream(): TransformStream<Uint8Array, Uint8Array> {
   const decoder = new TextDecoder()
@@ -58,22 +84,28 @@ function createSSETransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
           switch (event.type) {
             case "text_delta":
+              // Send actual text response (will be saved in history)
               controller.enqueue(encoder.encode(event.data.delta))
               break
 
-            // case "tool_call":
-            //   controller.enqueue(
-            //     encoder.encode(`\n**[Using tool: ${event.data.toolName}]**\n`)
-            //   )
-            //   break
+            case "tool_call": {
+              // Show tool usage in real-time (like Claude Code)
+              const toolMessage = `\n🔧 ${event.data.toolName}\n`
+              console.log(`[LlamaIndex] 🔧 ${event.data.toolName}`)
+              controller.enqueue(encoder.encode(toolMessage))
+              break
+            }
 
             case "tool_result": {
-              const resultText = formatToolResult(event.data.toolOutput)
-              controller.enqueue(
-                encoder.encode(
-                  `\n**[Result from ${event.data.toolName}]:**\n${resultText}\n\n`
-                )
+              // Show brief result summary (like Claude Code)
+              const briefResult = getBriefToolResult(
+                event.data.toolOutput,
+                event.data.toolName
               )
+              console.log(
+                `[LlamaIndex] ✓ Tool completed: ${event.data.toolName}`
+              )
+              controller.enqueue(encoder.encode(briefResult + "\n"))
               break
             }
 
@@ -175,6 +207,15 @@ export async function POST(request: Request) {
 
     // Call LlamaIndex agent server streaming endpoint
     console.log("MCP SERVER URLs:", mcpUrls)
+
+    // Log conversation summary (first 100 chars of each message)
+    console.log("[LlamaIndex] Conversation summary:")
+    conversationMessages.forEach((msg, i) => {
+      const preview = msg.content.substring(0, 100).replace(/\n/g, " ")
+      console.log(
+        `  ${i + 1}. ${msg.role}: ${preview}${msg.content.length > 100 ? "..." : ""}`
+      )
+    })
 
     // For llamaindex-sql-agent model, temperature must be 1 (default)
     // For other models, use the temperature from chatSettings
