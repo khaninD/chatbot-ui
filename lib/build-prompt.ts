@@ -238,7 +238,7 @@ export async function buildFinalMessages(
   return finalMessages
 }
 
-function buildRetrievalText(fileItems: Tables<"file_items">[]) {
+export function buildRetrievalText(fileItems: Tables<"file_items">[]) {
   const retrievalText = fileItems
     .map(item => `<BEGIN SOURCE>\n${item.content}\n</END SOURCE>`)
     .join("\n\n")

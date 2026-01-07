@@ -1,5 +1,6 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
-import { Database } from "@/supabase/types"
+import { buildRetrievalText } from "@/lib/build-prompt"
+import { Database, Tables } from "@/supabase/types"
 import { ChatSettings } from "@/types"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
@@ -136,9 +137,11 @@ function createSSETransformStream(): TransformStream<Uint8Array, Uint8Array> {
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages } = json as {
+  const { chatSettings, messages, messageFileItems, chatFileItems } = json as {
     chatSettings: ChatSettings
     messages: any[]
+    messageFileItems?: Tables<"file_items">[]
+    chatFileItems?: Tables<"file_items">[]
   }
 
   try {
@@ -148,10 +151,19 @@ export async function POST(request: Request) {
 
     // Extract last user message
     const lastMessage = messages[messages.length - 1]
-    const userQuery =
+    let userQuery =
       typeof lastMessage.content === "string"
         ? lastMessage.content
         : lastMessage.content[0]?.text || ""
+
+    // Add RAG content if file items are provided (reusing buildRetrievalText)
+    if (messageFileItems && messageFileItems.length > 0) {
+      const retrievalText = buildRetrievalText(messageFileItems)
+      userQuery = `${userQuery}\n\n${retrievalText}`
+      console.log(
+        `[LlamaIndex] Added RAG content from ${messageFileItems.length} file items`
+      )
+    }
 
     // Extract system prompt from messages
     const systemMessage = messages.find((msg: any) => msg.role === "system")
