@@ -5,141 +5,55 @@ import { ChatSettings } from "@/types"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { ServerRuntime } from "next"
+import { runAgentStream } from "@/lib/llamaindex/agent"
 
-export const runtime: ServerRuntime = "edge"
+export const runtime: ServerRuntime = "nodejs" // Changed from "edge" to support LlamaIndex
 
-// LlamaIndex Agent Server URL - configured via env variable
-const LLAMAINDEX_AGENT_URL =
-  process.env.NEXT_PUBLIC_LLAMAINDEX_AGENT_URL || "http://localhost:3001"
-
-// Helper function to format tool results
-function formatToolResult(toolOutput: unknown): string {
-  if (typeof toolOutput === "string") {
-    // Try to parse as JSON for better formatting
-    try {
-      const parsed = JSON.parse(toolOutput)
-      return `\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``
-    } catch {
-      // Not JSON, display as-is
-      return toolOutput
-    }
-  }
-
-  if (typeof toolOutput === "object" && toolOutput !== null) {
-    // Object - format as JSON
-    return `\`\`\`json\n${JSON.stringify(toolOutput, null, 2)}\n\`\`\``
-  }
-
-  // Primitive type
-  return String(toolOutput)
+interface Message {
+  role: "system" | "user" | "assistant"
+  content: string | Array<{ text?: string }>
 }
 
-// Create brief summary from tool result (like Claude Code)
-function getBriefToolResult(toolOutput: any, toolName: string): string {
-  try {
-    // Extract text content from tool output
-    const content = toolOutput?.content?.[0]?.text || ""
-
-    // For list/query operations, show row count
-    if (content.includes("[") || content.includes("rows")) {
-      const match = content.match(/\d+/)
-      if (match) {
-        return `✓ ${match[0]} results\n`
-      }
-    }
-
-    // For schema/table operations, show success
-    if (toolName.includes("schema") || toolName.includes("table")) {
-      return `✓ Schema info retrieved\n`
-    }
-
-    // Default: just show completion
-    return `✓ Done\n`
-  } catch {
-    return `✓ Done\n`
+interface TextDeltaEvent {
+  type: "text_delta"
+  data: {
+    delta: string
   }
 }
 
-// Create a TransformStream to convert SSE events to text
-function createSSETransformStream(): TransformStream<Uint8Array, Uint8Array> {
-  const decoder = new TextDecoder()
-  const encoder = new TextEncoder()
-  let buffer = ""
-
-  return new TransformStream({
-    transform(chunk, controller) {
-      // Decode chunk and add to buffer
-      buffer += decoder.decode(chunk, { stream: true })
-
-      // Process complete SSE messages (ending with \n\n)
-      const lines = buffer.split("\n\n")
-      buffer = lines.pop() || ""
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue
-
-        const data = line.slice(6)
-
-        try {
-          const event = JSON.parse(data)
-
-          switch (event.type) {
-            case "text_delta":
-              // Send actual text response (will be saved in history)
-              controller.enqueue(encoder.encode(event.data.delta))
-              break
-
-            case "tool_call": {
-              // Show tool usage in real-time (like Claude Code)
-              const toolMessage = `\n🔧 ${event.data.toolName}\n`
-              console.log(`[LlamaIndex] 🔧 ${event.data.toolName}`)
-              controller.enqueue(encoder.encode(toolMessage))
-              break
-            }
-
-            case "tool_result": {
-              // Show brief result summary (like Claude Code)
-              const briefResult = getBriefToolResult(
-                event.data.toolOutput,
-                event.data.toolName
-              )
-              console.log(
-                `[LlamaIndex] ✓ Tool completed: ${event.data.toolName}`
-              )
-              controller.enqueue(encoder.encode(briefResult + "\n"))
-              break
-            }
-
-            case "error":
-              console.error("[LlamaIndex] Stream error:", event.data.error)
-              controller.error(new Error(event.data.error))
-              break
-          }
-        } catch (parseError) {
-          console.error(
-            "[LlamaIndex] Failed to parse SSE data:",
-            data,
-            parseError
-          )
-        }
-      }
-    },
-
-    flush(controller) {
-      // Process any remaining data in buffer
-      if (buffer.trim()) {
-        console.log("[LlamaIndex] Remaining buffer:", buffer)
-      }
-      controller.terminate()
-    }
-  })
+interface ToolCallEvent {
+  type: "tool_call"
+  data: {
+    toolName: string
+    toolInput: Record<string, unknown>
+  }
 }
+
+interface ToolResultEvent {
+  type: "tool_result"
+  data: {
+    toolName: string
+    toolOutput: unknown
+  }
+}
+
+interface DoneEvent {
+  type: "done"
+  data: Record<string, never>
+}
+
+type AgentEvent = TextDeltaEvent | ToolCallEvent | ToolResultEvent | DoneEvent
 
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages, messageFileItems, chatFileItems } = json as {
+  const {
+    chatSettings,
+    messages,
+    messageFileItems,
+    chatFileItems: _chatFileItems
+  } = json as {
     chatSettings: ChatSettings
-    messages: any[]
+    messages: Message[]
     messageFileItems?: Tables<"file_items">[]
     chatFileItems?: Tables<"file_items">[]
   }
@@ -166,15 +80,18 @@ export async function POST(request: Request) {
     }
 
     // Extract system prompt from messages
-    const systemMessage = messages.find((msg: any) => msg.role === "system")
-    const systemPrompt = systemMessage?.content || ""
+    const systemMessage = messages.find(msg => msg.role === "system")
+    const systemPrompt =
+      typeof systemMessage?.content === "string"
+        ? systemMessage.content
+        : systemMessage?.content?.[0]?.text || ""
 
-    // Build conversation history from all messages (excluding system message)
-    // This matches the approach used by other providers (OpenAI, Anthropic, etc.)
+    // Build conversation history from all messages (excluding system message and last user message)
     const conversationMessages = messages
-      .filter((msg: any) => msg.role !== "system")
-      .map((msg: any) => ({
-        role: msg.role,
+      .filter(msg => msg.role !== "system")
+      .slice(0, -1) // Remove last message as it's the query
+      .map(msg => ({
+        role: msg.role as "user" | "assistant",
         content:
           typeof msg.content === "string"
             ? msg.content
@@ -214,11 +131,9 @@ export async function POST(request: Request) {
     }
 
     console.log(
-      `[LlamaIndex] Sending streaming request to agent server: ${LLAMAINDEX_AGENT_URL} (${conversationMessages.length} messages)`
+      `[LlamaIndex] Starting agent with ${conversationMessages.length} history messages`
     )
-
-    // Call LlamaIndex agent server streaming endpoint
-    console.log("MCP SERVER URLs:", mcpUrls)
+    console.log(`[LlamaIndex] MCP Server URLs:`, mcpUrls)
 
     // Log conversation summary (first 100 chars of each message)
     console.log("[LlamaIndex] Conversation summary:")
@@ -228,6 +143,7 @@ export async function POST(request: Request) {
         `  ${i + 1}. ${msg.role}: ${preview}${msg.content.length > 100 ? "..." : ""}`
       )
     })
+    console.log(`Query: ${userQuery.substring(0, 100)}...`)
 
     // For llamaindex-sql-agent model, temperature must be 1 (default)
     // For other models, use the temperature from chatSettings
@@ -236,67 +152,157 @@ export async function POST(request: Request) {
         ? 1
         : chatSettings.temperature || 1
 
-    const response = await fetch(`${LLAMAINDEX_AGENT_URL}/api/chat/stream`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        query: userQuery,
-        systemPrompt: systemPrompt,
-        apiKey: profile.openai_api_key,
-        model: chatSettings.agentModel || "gpt-4o",
-        temperature: temperature,
-        mcpUrls: mcpUrls,
-        messages: conversationMessages
-      })
+    // Create a readable stream from the agent generator
+    const encoder = new TextEncoder()
+    let contentBlockIndex = 0
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          // Helper to send SSE event
+          const sendSSE = (event: Record<string, unknown>) => {
+            const sseData = `data: ${JSON.stringify(event)}\n\n`
+            controller.enqueue(encoder.encode(sseData))
+          }
+
+          // Run the agent and stream events
+          const events = runAgentStream(
+            userQuery,
+            systemPrompt,
+            profile.openai_api_key || undefined,
+            chatSettings.agentModel || "gpt-4o",
+            mcpUrls,
+            temperature,
+            conversationMessages
+          )
+
+          for await (const event of events) {
+            switch (event.type) {
+              case "text_delta": {
+                const textEvent = event as TextDeltaEvent
+                // Send text delta event (Anthropic-style)
+                sendSSE({
+                  type: "content_block_delta",
+                  index: contentBlockIndex,
+                  delta: {
+                    type: "text_delta",
+                    text: textEvent.data.delta
+                  }
+                })
+                break
+              }
+
+              case "tool_call": {
+                const toolCallEvent = event as ToolCallEvent
+                // Log tool call with request details (like Claude Code)
+                console.log(`\n[LlamaIndex] 🔧 ${toolCallEvent.data.toolName}`)
+                if (toolCallEvent.data.toolInput) {
+                  console.log("Request:")
+                  console.log(
+                    JSON.stringify(toolCallEvent.data.toolInput, null, 2)
+                  )
+                }
+
+                // Send tool_use content block start (Anthropic-style)
+                sendSSE({
+                  type: "content_block_start",
+                  index: contentBlockIndex++,
+                  content_block: {
+                    type: "tool_use",
+                    id: `tool_${Date.now()}_${contentBlockIndex}`,
+                    name: toolCallEvent.data.toolName,
+                    input: toolCallEvent.data.toolInput
+                  }
+                })
+
+                // Send content block stop
+                sendSSE({
+                  type: "content_block_stop",
+                  index: contentBlockIndex - 1
+                })
+                break
+              }
+
+              case "tool_result": {
+                const toolResultEvent = event as ToolResultEvent
+                // Log tool result with response details (like Claude Code)
+                console.log("Response:")
+                if (typeof toolResultEvent.data.toolOutput === "string") {
+                  try {
+                    const parsed = JSON.parse(toolResultEvent.data.toolOutput)
+                    console.log(JSON.stringify(parsed, null, 2))
+                  } catch {
+                    console.log(toolResultEvent.data.toolOutput)
+                  }
+                } else {
+                  console.log(
+                    JSON.stringify(toolResultEvent.data.toolOutput, null, 2)
+                  )
+                }
+                console.log(
+                  `[LlamaIndex] ✓ Tool completed: ${toolResultEvent.data.toolName}\n`
+                )
+
+                // Tool results will be handled by the model internally
+                // Just send a message delta to indicate tool use completion
+                sendSSE({
+                  type: "message_delta",
+                  delta: {
+                    stop_reason: "tool_use"
+                  }
+                })
+                break
+              }
+
+              case "done":
+                // Agent finished
+                console.log("[LlamaIndex] Agent completed")
+                break
+            }
+          }
+
+          controller.close()
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Agent error"
+          console.error("[LlamaIndex] Agent error:", error)
+          const sseData = `data: ${JSON.stringify({
+            type: "error",
+            error: errorMessage
+          })}\n\n`
+          controller.enqueue(encoder.encode(sseData))
+          controller.close()
+        }
+      }
     })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[LlamaIndex] Agent server error response:", errorText)
-
-      // Try to parse error as JSON to get detailed error message
-      try {
-        const errorJson = JSON.parse(errorText)
-        const detailedError =
-          errorJson.message || errorJson.error?.message || errorText
-        throw new Error(detailedError)
-      } catch (parseError) {
-        // If not JSON, use the raw error text
-        throw new Error(errorText || "Agent server error")
-      }
-    }
-
-    if (!response.body) {
-      throw new Error("No response body from agent server")
-    }
-
-    console.log(`[LlamaIndex] Streaming response from agent server`)
-
-    // Create a clean SSE-to-text transform stream
-    const sseTransformer = createSSETransformStream()
-    const textStream = response.body!.pipeThrough(sseTransformer)
-
-    return new Response(textStream, {
+    return new Response(stream, {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive"
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no" // Disable nginx buffering
       }
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("[LlamaIndex] Error:", error)
 
-    let errorMessage = error.message || "An unexpected error occurred"
-    const errorCode = error.status || 500
+    let errorMessage = "An unexpected error occurred"
+    let errorCode = 500
 
-    // Log the full error for debugging
-    console.error("[LlamaIndex] Full error details:", {
-      message: error.message,
-      stack: error.stack,
-      status: error.status
-    })
+    if (error instanceof Error) {
+      errorMessage = error.message
+      // Log the full error for debugging
+      console.error("[LlamaIndex] Full error details:", {
+        message: error.message,
+        stack: error.stack
+      })
+    }
+
+    // Check if error has status property
+    if (typeof error === "object" && error !== null && "status" in error) {
+      errorCode = (error as { status: number }).status
+    }
 
     if (errorMessage.toLowerCase().includes("api key not found")) {
       errorMessage =
@@ -304,22 +310,6 @@ export async function POST(request: Request) {
     } else if (errorMessage.toLowerCase().includes("incorrect api key")) {
       errorMessage =
         "OpenAI API Key is incorrect. Please fix it in your profile settings."
-    } else if (
-      errorMessage.toLowerCase().includes("fetch failed") ||
-      errorMessage.toLowerCase().includes("econnrefused")
-    ) {
-      errorMessage =
-        "LlamaIndex Agent Server is not running. Please start the agent server on port 3001."
-    }
-    // If the error message contains information about unsupported parameters (like temperature),
-    // pass it through to the user as-is
-    else if (
-      errorMessage.toLowerCase().includes("unsupported") ||
-      errorMessage.toLowerCase().includes("temperature") ||
-      errorMessage.toLowerCase().includes("invalid_request_error")
-    ) {
-      // Keep the original error message
-      errorMessage = error.message
     }
 
     return new Response(JSON.stringify({ message: errorMessage }), {

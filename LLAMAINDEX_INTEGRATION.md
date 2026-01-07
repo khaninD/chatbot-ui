@@ -1,444 +1,225 @@
-# Интеграция LlamaIndex SQL Agent в Chatbot UI
+# LlamaIndex Agent Integration
 
-Этот документ описывает интеграцию пользовательского LlamaIndex агента с MCP (Model Context Protocol) в проект Chatbot UI через отдельный HTTP сервер.
+## Обзор
+
+LlamaIndex агент интегрирован непосредственно в chatbot-ui, устраняя необходимость в отдельном agent-server. Теперь агент запускается прямо в Next.js API route.
+
+## Изменения
+
+### 1. Новый модуль агента (`lib/llamaindex/agent.ts`)
+
+Создан модуль, содержащий логику агента:
+
+- **`createAgent()`** - создаёт LlamaIndex агента с MCP инструментами
+- **`runAgentStream()`** - запускает агента в режиме стриминга, возвращая async generator с событиями
+
+**Особенности:**
+- Поддержка нескольких MCP серверов одновременно
+- Автоматическая очистка ресурсов (cleanup) после завершения
+- Поддержка истории чата (chat history)
+- Настраиваемые system prompt, model, temperature
+
+### 2. Обновлённый API Route (`app/api/chat/llamaindex/route.ts`)
+
+**Ключевые изменения:**
+- Runtime изменён с `"edge"` на `"nodejs"` (требуется для LlamaIndex)
+- Удалён fetch к внешнему agent-server
+- Прямой вызов `runAgentStream()` из встроенного модуля
+- Создание ReadableStream для SSE событий
+
+**Поток данных:**
+```
+Request → runAgentStream() → AsyncGenerator<Event> → SSE Stream → Frontend
+```
+
+### 3. Установленные зависимости
+
+Добавлены в `package.json`:
+```json
+{
+  "@llamaindex/openai": "^0.4.22",
+  "@llamaindex/tools": "^0.2.0",
+  "@llamaindex/workflow": "^1.1.24",
+  "@modelcontextprotocol/sdk": "^1.24.3"
+}
+```
 
 ## Архитектура
 
+### До изменений:
 ```
-┌─────────────────┐      HTTP Request       ┌──────────────────────┐
-│   Chatbot UI    │─────────────────────────▶│  Agent Server        │
-│   (Next.js)     │                          │  (Express + Node.js) │
-└─────────────────┘◀─────────────────────────└──────────────────────┘
-                       HTTP Response                    │
-                                                         │
-                                                         ▼
-                                              ┌──────────────────────┐
-                                              │   MCP Server         │
-                                              │   (SQL Tools)        │
-                                              └──────────────────────┘
-                                                         │
-                                                         ▼
-                                              ┌──────────────────────┐
-                                              │   PostgreSQL DB      │
-                                              └──────────────────────┘
+chatbot-ui → HTTP Request → agent-server:3001 → LlamaIndex Agent
+                ↓
+            SSE Response
 ```
 
-## Компоненты
-
-### 1. Agent Server (Отдельный сервис)
-
-**Расположение**: `D:\LlamaIndexTS\examples\mcp\agent-server\`
-
-**Функционал**:
-- Standalone Express HTTP сервер
-- Запуск LlamaIndex агента с MCP инструментами
-- REST API для обработки запросов
-- Docker поддержка
-- Health check endpoint
-
-**Файлы**:
-- `src/server.ts` - Express сервер
-- `src/agent.ts` - Логика агента
-- `Dockerfile` - Docker образ
-- `docker-compose.yml` - Оркестрация
-- `package.json` - Зависимости
-
-### 2. Chatbot UI Integration
-
-**Файл**: `app/api/chat/llamaindex/route.ts`
-
-**Функционал**:
-- Edge Runtime совместимый endpoint
-- HTTP клиент для обращения к Agent Server
-- Обработка ошибок и форматирование результатов
-- Передача OpenAI API ключа
-
-### 3. Типы и модели
-
-**Обновленные файлы**:
-- `types/models.ts` - провайдер "llamaindex"
-- `types/llms.ts` - тип LlamaIndexLLMID
-- `lib/models/llm/llamaindex-llm-list.ts` - список моделей
-- `lib/chat-setting-limits.ts` - лимиты модели
-
-## Установка и настройка
-
-### Шаг 1: Сборка MCP сервера
-
-```bash
-cd D:\LlamaIndexTS\examples\mcp
-npm run build
+### После изменений:
+```
+chatbot-ui API Route → LlamaIndex Agent (встроенный)
+           ↓
+       SSE Response
 ```
 
-Это создаст `dist/server.bundle.js`
+## Преимущества
 
-### Шаг 2: Настройка Agent Server
-
-```bash
-cd D:\LlamaIndexTS\examples\mcp\agent-server
-npm install
-```
-
-Создайте `.env` файл:
-```env
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-key-here
-OPENAI_MODEL=gpt-4o
-
-# Server Configuration
-PORT=3001
-VERBOSE=false
-
-# MCP Server Path
-MCP_SERVER_PATH=D:\LlamaIndexTS\examples\dist\server.bundle.js
-
-# PostgreSQL Configuration
-PGHOST=localhost
-PGPORT=5432
-PGDATABASE=your_database
-PGUSER=your_user
-PGPASSWORD=your_password
-```
-
-### Шаг 3: Запуск Agent Server
-
-**Локально (development)**:
-```bash
-npm run dev
-```
-
-**Production**:
-```bash
-npm run build
-npm start
-```
-
-**Docker**:
-```bash
-docker-compose up -d
-```
-
-Сервер запустится на `http://localhost:3001`
-
-### Шаг 4: Настройка Chatbot UI
-
-В `.env` файле chatbot-ui добавьте (опционально):
-```env
-LLAMAINDEX_AGENT_URL=http://localhost:3001
-```
-
-Если не указан, будет использоваться `http://localhost:3001` по умолчанию.
-
-### Шаг 5: Запуск Chatbot UI
-
-```bash
-cd D:\my_programs\chatbot-ui
-npm run dev
-```
+1. **Упрощённая архитектура** - один сервис вместо двух
+2. **Меньше latency** - нет HTTP overhead между сервисами
+3. **Проще деплой** - не нужно разворачивать отдельный agent-server
+4. **Единая кодовая база** - легче поддерживать и обновлять
+5. **Shared resources** - использование одного API ключа, БД соединений и т.д.
 
 ## Использование
 
-### В UI
+### API Endpoint
 
-1. Откройте Chatbot UI
-2. В настройках модели выберите **LlamaIndex SQL Agent**
-3. Задайте вопрос, например: "Какой самый дорогой билет?"
+**POST** `/api/chat/llamaindex`
 
-### API запросы
-
-**Health Check**:
-```bash
-curl http://localhost:3001/health
-```
-
-**Прямой запрос к агенту**:
-```bash
-curl -X POST http://localhost:3001/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "Покажи все таблицы",
-    "apiKey": "sk-your-openai-key"
-  }'
-```
-
-**Через Chatbot UI API**:
-```bash
-curl -X POST http://localhost:3000/api/chat/llamaindex \
-  -H "Content-Type: application/json" \
-  -d '{
-    "chatSettings": {
-      "model": "llamaindex-sql-agent",
-      "temperature": 0.7
-    },
-    "messages": [
-      {
-        "role": "user",
-        "content": "Какой самый дорогой билет?"
-      }
-    ]
-  }'
-```
-
-## Docker Deployment
-
-### Сборка и запуск
-
-```bash
-cd D:\LlamaIndexTS\examples\mcp\agent-server
-
-# Сборка образа
-docker-compose build
-
-# Запуск
-docker-compose up -d
-
-# Просмотр логов
-docker-compose logs -f llamaindex-agent
-
-# Остановка
-docker-compose down
-```
-
-### Volumes
-
-Docker compose монтирует MCP server bundle:
-```yaml
-volumes:
-  - ../dist/server.bundle.js:/app/mcp-server/server.bundle.js:ro
-```
-
-Убедитесь, что файл существует перед запуском Docker.
-
-### Environment Variables
-
-Передаются через `.env` файл или `docker-compose.yml`.
-
-## Преимущества этого подхода
-
-1. **Изоляция**: Агент работает отдельно от Next.js
-2. **Edge Runtime**: Нет проблем с совместимостью Node.js модулей
-3. **Масштабируемость**: Можно запустить несколько инстансов агента
-4. **Докеризация**: Легко развернуть в контейнере
-5. **Переиспользование**: Другие приложения могут использовать тот же API
-6. **Гибкость**: API ключи передаются в запросе (опционально)
-7. **Мониторинг**: Health check для проверки статуса
-
-## API Endpoints
-
-### Agent Server
-
-#### GET /health
-Health check endpoint
-
-**Response**:
-```json
+**Request Body:**
+```typescript
 {
-  "status": "ok",
-  "timestamp": "2024-01-01T00:00:00.000Z"
-}
-```
-
-#### POST /api/chat
-Main agent endpoint
-
-**Request**:
-```json
-{
-  "query": "Какой самый дорогой билет?",
-  "systemPrompt": "Optional custom system prompt",
-  "apiKey": "Optional OpenAI API key"
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "result": {
-    // Agent response
+  chatSettings: {
+    model: string
+    agentModel: string
+    temperature: number
+    mcpServerIds: string[] // IDs MCP серверов из БД
   },
-  "timestamp": "2024-01-01T00:00:00.000Z"
+  messages: Array<{
+    role: "system" | "user" | "assistant"
+    content: string
+  }>,
+  messageFileItems?: Array<FileItem>, // RAG контент
+  chatFileItems?: Array<FileItem>
 }
 ```
 
-**Error Response**:
+**Response:** Server-Sent Events stream
+
+### Пример событий:
+
 ```json
+// Tool call
 {
-  "success": false,
-  "error": "Error message",
-  "timestamp": "2024-01-01T00:00:00.000Z"
+  "type": "content_block_start",
+  "index": 0,
+  "content_block": {
+    "type": "tool_use",
+    "id": "tool_1704067200000_1",
+    "name": "list_schemas",
+    "input": { "database": "bookings" }
+  }
+}
+
+// Text delta
+{
+  "type": "content_block_delta",
+  "index": 1,
+  "delta": {
+    "type": "text_delta",
+    "text": "Нашёл 3 схемы в базе данных..."
+  }
+}
+
+// Tool completion
+{
+  "type": "message_delta",
+  "delta": {
+    "stop_reason": "tool_use"
+  }
 }
 ```
 
-### Chatbot UI
+## Миграция с agent-server
 
-#### POST /api/chat/llamaindex
-Proxy endpoint for LlamaIndex agent
+### Что удалить:
 
-Использует стандартный формат Chatbot UI:
-```json
+1. **Переменные окружения** (необязательно):
+   - `NEXT_PUBLIC_LLAMAINDEX_AGENT_URL`
+   - `MCP_SERVER_URL` (в agent-server)
+
+2. **agent-server** (если больше не нужен):
+   - Папка `agent-server/` может быть удалена или оставлена как standalone решение
+
+### Что оставить:
+
+- **MCP серверы** - продолжают работать отдельно (например, на порту 3002)
+- **База данных** - таблица `mcp_servers` используется для хранения URL серверов
+
+## Консольный вывод
+
+Логирование в стиле Claude Code сохранено:
+
+```
+[LlamaIndex] Starting agent with 2 history messages
+[LlamaIndex] MCP Server URLs: [ 'http://localhost:3002' ]
+[LlamaIndex] Conversation summary:
+  1. user: Привет
+  2. assistant: Здравствуйте! Чем могу помочь?
+Query: Покажи таблицы в базе данных...
+
+[LlamaIndex Agent] Loading MCP tools from http://localhost:3002
+[LlamaIndex Agent] Loaded 4 MCP tools from http://localhost:3002
+[LlamaIndex Agent] Total tools loaded: 4
+
+[LlamaIndex] 🔧 list_schemas
+Request:
 {
-  "chatSettings": {
-    "model": "llamaindex-sql-agent",
-    "temperature": 0.7
-  },
-  "messages": [...]
+  "database": "bookings"
 }
+Response:
+{
+  "schemas": ["bookings", "pg_toast", "public"]
+}
+[LlamaIndex] ✓ Tool completed: list_schemas
+
+[LlamaIndex] Agent completed
 ```
 
 ## Конфигурация
 
-### Agent Server (.env)
+### Runtime Requirements
 
-```env
-# Required
-OPENAI_API_KEY=sk-...
-PGHOST=localhost
-PGDATABASE=mydb
-PGUSER=postgres
-PGPASSWORD=password
+**Important:** API route использует `runtime = "nodejs"` вместо `"edge"` из-за ограничений LlamaIndex SDK.
 
-# Optional
-PORT=3001
-OPENAI_MODEL=gpt-4o
-VERBOSE=false
-MCP_SERVER_PATH=/path/to/server.bundle.js
-```
+### Environment Variables
 
-### Chatbot UI (.env)
+Необходимые переменные:
+- `OPENAI_API_KEY` - используется профилем пользователя (profile.openai_api_key)
+- `NEXT_PUBLIC_SUPABASE_URL` - для доступа к БД с MCP серверами
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-```env
-# Optional - defaults to http://localhost:3001
-LLAMAINDEX_AGENT_URL=http://localhost:3001
-```
+Опциональные:
+- `NODE_ENV=development` - включает verbose режим для agent и MCP
 
 ## Troubleshooting
 
-### Agent Server не запускается
+### Ошибка: "Cannot use import statement outside a module"
 
-**Ошибка**: `MCP_SERVER_PATH not found`
+LlamaIndex SDK использует ES modules. Убедитесь что:
+- `runtime = "nodejs"` в route.ts
+- Зависимости установлены корректно
 
-**Решение**: Убедитесь, что MCP сервер собран:
-```bash
-cd D:\LlamaIndexTS\examples\mcp
-npm run build
-```
+### Ошибка: "MCP server connection failed"
 
-### Chatbot UI не может подключиться к агенту
+Проверьте:
+- MCP сервер запущен (например, на http://localhost:3002)
+- URL в БД таблице `mcp_servers` корректен
+- Нет firewall блокировок
 
-**Ошибка**: `LlamaIndex Agent Server is not running`
+### Медленный ответ агента
 
-**Решение**:
-1. Проверьте, что Agent Server запущен:
-```bash
-curl http://localhost:3001/health
-```
+Причины:
+- Первый запуск загружает MCP tools (может занять 2-3 сек)
+- Сложные SQL запросы занимают время
+- Модель делает несколько tool calls последовательно
 
-2. Проверьте `LLAMAINDEX_AGENT_URL` в `.env`
-
-### OpenAI API ошибки
-
-**Ошибка**: `OPENAI_API_KEY is required`
-
-**Решение**:
-- Установите API ключ в Chatbot UI профиле
-- Или добавьте в `.env` Agent Server
-
-### Database connection issues
-
-**Решение**: Проверьте PostgreSQL credentials в `.env` Agent Server
-
-### Docker health check failing
-
-**Решение**:
-```bash
-# Проверьте логи
-docker-compose logs llamaindex-agent
-
-# Проверьте health check
-docker inspect llamaindex-agent-server | grep -A 10 Health
-```
-
-## Производительность
-
-### Оптимизация
-
-- MCP сервер создается при каждом запросе и очищается после
-- HTTP запросы асинхронные
-- Edge Runtime в Chatbot UI обеспечивает низкую латентность
-- Docker health checks контролируют статус
-
-### Рекомендации
-
-- Используйте connection pooling для PostgreSQL
-- Кешируйте часто используемые запросы (можно добавить Redis)
-- Оптимизируйте SQL запросы с индексами
-- Ограничивайте размер результатов LIMIT
-- Мониторьте использование памяти в Docker
-
-## Безопасность
-
-### Важные меры
-
-- API ключи передаются через HTTPS (в production)
-- Agent server должен быть за firewall/VPN
-- Используйте environment variables для секретов
-- База данных - только read-only доступ для агента
-- Docker изолирует процессы
-
-### Рекомендации
-
-- Используйте reverse proxy (nginx) перед Agent Server
-- Добавьте rate limiting
-- Логируйте все запросы
-- Регулярно обновляйте зависимости
-- Используйте CORS только для trusted domains
-
-## Мониторинг
-
-### Логирование
-
-Agent Server логирует:
-- Входящие запросы с timestamp
-- Ошибки выполнения
-- MCP server статус
-
-Просмотр логов:
-```bash
-# Docker
-docker-compose logs -f llamaindex-agent
-
-# Local
-npm run dev  # показывает логи в консоли
-```
-
-### Метрики
-
-Health check endpoint:
-```bash
-curl http://localhost:3001/health
-```
-
-Docker health status:
-```bash
-docker ps | grep llamaindex-agent
-```
+Решения:
+- Используйте более быстрые модели (gpt-3.5-turbo)
+- Оптимизируйте system prompt для меньшего количества tool calls
 
 ## Дальнейшие улучшения
 
-Возможные направления развития:
-
-1. **Streaming**: Реализовать Server-Sent Events для streaming ответов
-2. **Кеширование**: Добавить Redis для кеша результатов
-3. **Rate Limiting**: Защита от DDoS
-4. **Аутентификация**: JWT токены для безопасного доступа
-5. **Мультиязычность**: Поддержка разных БД (MySQL, MongoDB)
-6. **Metrics**: Prometheus + Grafana для мониторинга
-7. **Logging**: Centralized logging (ELK stack)
-8. **CI/CD**: Автоматический деплой через GitHub Actions
-
-## Контакты и поддержка
-
-- **Chatbot UI**: [GitHub](https://github.com/mckaywrigley/chatbot-ui)
-- **LlamaIndex**: [Documentation](https://www.llamaindex.ai)
-- **Agent Server**: См. `agent-server/README.md`
+- [ ] Кэширование MCP tools между запросами
+- [ ] Поддержка parallel tool calls
+- [ ] Rate limiting для защиты от злоупотреблений
+- [ ] Metrics и monitoring (latency, token usage)
+- [ ] Graceful shutdown MCP соединений

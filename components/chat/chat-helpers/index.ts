@@ -10,7 +10,7 @@ import {
   adaptMessagesForGoogleGemini
 } from "@/lib/build-prompt"
 import { consumeReadableStream } from "@/lib/consume-stream"
-import { Tables, TablesInsert } from "@/supabase/types"
+import { Json, Tables, TablesInsert } from "@/supabase/types"
 import {
   ChatFile,
   ChatMessage,
@@ -296,6 +296,11 @@ export const processResponse = async (
 ) => {
   let fullText = ""
   let contentToAdd = ""
+  let contentBlocks: any[] = []
+
+  // Check if response is Server-Sent Events (Anthropic-style)
+  const contentType = response.headers.get("Content-Type") || ""
+  const isSSE = contentType.includes("text/event-stream")
 
   if (response.body) {
     await consumeReadableStream(
@@ -305,22 +310,67 @@ export const processResponse = async (
         setToolInUse("none")
 
         try {
-          contentToAdd = isHosted
-            ? chunk
-            : // Ollama's streaming endpoint returns new-line separated JSON
-              // objects. A chunk may have more than one of these objects, so we
-              // need to split the chunk by new-lines and handle each one
-              // separately.
-              chunk
-                .trimEnd()
-                .split("\n")
-                .reduce(
-                  (acc, line) => acc + JSON.parse(line).message.content,
-                  ""
-                )
-          fullText += contentToAdd
+          if (isSSE) {
+            // Parse SSE events (Anthropic-style structured responses)
+            const lines = chunk.split("\n")
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const eventData = JSON.parse(line.slice(6))
+
+                switch (eventData.type) {
+                  case "content_block_start":
+                    // New content block started (text or tool_use)
+                    contentBlocks.push(eventData.content_block)
+                    if (eventData.content_block.type === "tool_use") {
+                      setToolInUse(eventData.content_block.name)
+                    }
+                    break
+
+                  case "content_block_delta":
+                    // Content delta (text or tool input)
+                    if (eventData.delta.type === "text_delta") {
+                      contentToAdd = eventData.delta.text
+                      fullText += contentToAdd
+                    }
+                    break
+
+                  case "content_block_stop":
+                    // Content block ended
+                    setToolInUse("none")
+                    break
+
+                  case "message_delta":
+                    // Message ended
+                    if (eventData.delta.stop_reason === "tool_use") {
+                      setToolInUse("none")
+                    }
+                    break
+
+                  case "error":
+                    console.error("[SSE] Error:", eventData.error)
+                    throw new Error(eventData.error)
+                }
+              }
+            }
+          } else {
+            // Original text-based response handling
+            contentToAdd = isHosted
+              ? chunk
+              : // Ollama's streaming endpoint returns new-line separated JSON
+                // objects. A chunk may have more than one of these objects, so we
+                // need to split the chunk by new-lines and handle each one
+                // separately.
+                chunk
+                  .trimEnd()
+                  .split("\n")
+                  .reduce(
+                    (acc, line) => acc + JSON.parse(line).message.content,
+                    ""
+                  )
+            fullText += contentToAdd
+          }
         } catch (error) {
-          console.error("Error parsing JSON:", error)
+          console.error("Error parsing response:", error)
         }
 
         setChatMessages(prev =>
@@ -331,7 +381,9 @@ export const processResponse = async (
                   ...chatMessage.message,
                   content: fullText
                 },
-                fileItems: chatMessage.fileItems
+                fileItems: chatMessage.fileItems,
+                contentBlocks:
+                  contentBlocks.length > 0 ? contentBlocks : undefined
               }
 
               return updatedChatMessage
@@ -408,6 +460,16 @@ export const handleCreateMessages = async (
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
   selectedAssistant: Tables<"assistants"> | null
 ) => {
+  // Get contentBlocks from the temporary assistant message
+  const tempAssistantMessage = chatMessages[chatMessages.length - 1]
+  const contentBlocks = tempAssistantMessage?.contentBlocks
+
+  // Debug: log contentBlocks to see if they exist
+  console.log(
+    "[handleCreateMessages] contentBlocks:",
+    contentBlocks ? `Found ${contentBlocks.length} blocks` : "None"
+  )
+
   const finalUserMessage: TablesInsert<"messages"> = {
     chat_id: currentChat.id,
     assistant_id: null,
@@ -419,7 +481,9 @@ export const handleCreateMessages = async (
     image_paths: []
   }
 
-  const finalAssistantMessage: TablesInsert<"messages"> = {
+  const finalAssistantMessage: TablesInsert<"messages"> & {
+    content_blocks?: Json | null
+  } = {
     chat_id: currentChat.id,
     assistant_id: selectedAssistant?.id || null,
     user_id: profile.user_id,
@@ -427,7 +491,8 @@ export const handleCreateMessages = async (
     model: modelData.modelId,
     role: "assistant",
     sequence_number: chatMessages.length + 1,
-    image_paths: []
+    image_paths: [],
+    content_blocks: contentBlocks ? (contentBlocks as unknown as Json) : null
   }
 
   let finalChatMessages: ChatMessage[] = []
@@ -437,10 +502,12 @@ export const handleCreateMessages = async (
 
     const updatedMessage = await updateMessage(lastStartingMessage.id, {
       ...lastStartingMessage,
-      content: generatedText
-    })
+      content: generatedText,
+      content_blocks: contentBlocks ? (contentBlocks as unknown as Json) : null
+    } as any)
 
     chatMessages[chatMessages.length - 1].message = updatedMessage
+    chatMessages[chatMessages.length - 1].contentBlocks = contentBlocks
 
     finalChatMessages = [...chatMessages]
 
@@ -494,14 +561,15 @@ export const handleCreateMessages = async (
     )
 
     finalChatMessages = [
-      ...chatMessages,
+      ...chatMessages.slice(0, -1), // Remove temporary messages
       {
         message: updatedMessage,
         fileItems: []
       },
       {
         message: createdMessages[1],
-        fileItems: retrievedFileItems.map(fileItem => fileItem.id)
+        fileItems: retrievedFileItems.map(fileItem => fileItem.id),
+        contentBlocks: contentBlocks
       }
     ]
 

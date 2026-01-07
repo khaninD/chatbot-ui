@@ -9,6 +9,7 @@ import { getMessagesByChatId } from "@/db/messages"
 import { getMessageImageFromStorage } from "@/db/storage/message-images"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import useHotkey from "@/lib/hooks/use-hotkey"
+import { ContentBlock } from "@/types/content-blocks"
 import { LLMID, MessageImage } from "@/types"
 import { useParams } from "next/navigation"
 import { FC, useContext, useEffect, useState } from "react"
@@ -143,7 +144,10 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
           .filter(messageFileItem => messageFileItem.id === message.id)
           .flatMap(messageFileItem =>
             messageFileItem.file_items.map(fileItem => fileItem.id)
-          )
+          ),
+        contentBlocks: (message as any).content_blocks
+          ? ((message as any).content_blocks as unknown as ContentBlock[])
+          : undefined
       }
     })
 

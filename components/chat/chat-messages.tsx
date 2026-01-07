@@ -32,6 +32,7 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
           onStartEdit={setEditingMessage}
           onCancelEdit={() => setEditingMessage(undefined)}
           onSubmitEdit={handleSendEdit}
+          contentBlocks={chatMessage.contentBlocks}
         />
       )
     })

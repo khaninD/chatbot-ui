@@ -23,6 +23,7 @@ import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
 import { MessageActions } from "./message-actions"
 import { MessageMarkdown } from "./message-markdown"
+import { ToolCallBlock } from "./tool-call-block"
 
 const ICON_SIZE = 32
 
@@ -34,6 +35,7 @@ interface MessageProps {
   onStartEdit: (message: Tables<"messages">) => void
   onCancelEdit: () => void
   onSubmitEdit: (value: string, sequenceNumber: number) => void
+  contentBlocks?: any[] // Anthropic-style content blocks
 }
 
 export const Message: FC<MessageProps> = ({
@@ -43,7 +45,8 @@ export const Message: FC<MessageProps> = ({
   isLast,
   onStartEdit,
   onCancelEdit,
-  onSubmitEdit
+  onSubmitEdit,
+  contentBlocks
 }) => {
   const {
     assistants,
@@ -305,7 +308,29 @@ export const Message: FC<MessageProps> = ({
               maxRows={20}
             />
           ) : (
-            <MessageMarkdown content={message.content} />
+            <>
+              {/* Render content blocks if available (Anthropic-style) */}
+              {contentBlocks && contentBlocks.length > 0 ? (
+                <div className="space-y-2">
+                  {contentBlocks.map((block, index) => {
+                    if (block.type === "tool_use") {
+                      return <ToolCallBlock key={index} toolBlock={block} />
+                    } else if (block.type === "text") {
+                      return (
+                        <MessageMarkdown key={index} content={block.text} />
+                      )
+                    }
+                    return null
+                  })}
+                  {/* Also render the accumulated text content */}
+                  {message.content && (
+                    <MessageMarkdown content={message.content} />
+                  )}
+                </div>
+              ) : (
+                <MessageMarkdown content={message.content} />
+              )}
+            </>
           )}
         </div>
 

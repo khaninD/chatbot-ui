@@ -95,26 +95,17 @@ export async function buildFinalMessages(
     return chatMessage
   })
 
-  // Clean tool usage markers from assistant messages (Claude Code approach)
-  // Tool calls are shown in real-time during execution but not saved to history
+  // Clean messages - with structured content blocks, we only need text content
+  // Tool calls are stored separately in contentBlocks and don't pollute message.content
   const cleanedMessages = processedChatMessages.map(chatMessage => {
     const message = chatMessage.message
 
     if (message.role === "assistant") {
-      // Remove tool usage markers (both old and new formats)
-      let cleanContent = message.content
-        // New format: 🔧 tool_name
-        .replace(/\n🔧 [^\n]+\n/g, "\n")
-        .replace(/✓ [^\n]+\n/g, "")
-        // Old format: **[Using tool: ...]** **[Result from ...]:**
-        .replace(/\*\*\[Using tool: [^\]]+\]\*\*\s*/g, "")
-        .replace(
-          /\*\*\[Result from [^\]]+\]:\*\*\n```json\n[\s\S]*?\n```\n\n/g,
-          ""
-        )
-        .replace(/\n{3,}/g, "\n\n") // Replace multiple newlines with double
-        .trim()
+      // With Anthropic-style content blocks, message.content contains only text
+      // No need to remove tool markers as they're in separate blocks
+      let cleanContent = message.content.trim()
 
+      // Fallback for empty content
       if (!cleanContent) {
         cleanContent = "[Processing...]"
       }

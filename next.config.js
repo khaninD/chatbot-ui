@@ -45,7 +45,15 @@ module.exports = withBundleAnalyzer(
       "canvas",
       "@langchain/core",
       "@langchain/textsplitters",
-      "langchain"
+      "langchain",
+      "@llamaindex/openai",
+      "@llamaindex/tools",
+      "@llamaindex/workflow",
+      "@llamaindex/core",
+      "@modelcontextprotocol/sdk",
+      "ajv",
+      "ajv-draft-04",
+      "@apidevtools/swagger-parser"
     ],
     turbopack: {},
     webpack: (config, { isServer }) => {
@@ -54,7 +62,12 @@ module.exports = withBundleAnalyzer(
         config.externals.push({
           sharp: "commonjs sharp",
           "pdf-parse": "commonjs pdf-parse",
-          canvas: "commonjs canvas"
+          canvas: "commonjs canvas",
+          "@llamaindex/openai": "commonjs @llamaindex/openai",
+          "@llamaindex/tools": "commonjs @llamaindex/tools",
+          "@llamaindex/workflow": "commonjs @llamaindex/workflow",
+          "@llamaindex/core": "commonjs @llamaindex/core",
+          "@modelcontextprotocol/sdk": "commonjs @modelcontextprotocol/sdk"
         })
       }
 
