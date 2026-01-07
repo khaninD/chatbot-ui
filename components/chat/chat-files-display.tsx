@@ -103,7 +103,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
       <div className="space-y-2">
         <div className="flex w-full items-center justify-center">
           <Button
-            className="flex h-[32px] w-[140px] space-x-2"
+            className="flex h-[32px] w-auto space-x-2"
             onClick={() => setShowFilesDisplay(false)}
           >
             <RetrievalToggle />
@@ -230,7 +230,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
     combinedMessageFiles.length > 0 && (
       <div className="flex w-full items-center justify-center space-x-2">
         <Button
-          className="flex h-[32px] w-[140px] space-x-2"
+          className="flex h-[32px] w-auto space-x-2"
           onClick={() => setShowFilesDisplay(true)}
         >
           <RetrievalToggle />

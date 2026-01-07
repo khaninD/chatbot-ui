@@ -225,7 +225,12 @@ export const handleHostedChat = async (
   const requestBody = {
     chatSettings: payload.chatSettings,
     messages: formattedMessages,
-    customModelId: provider === "custom" ? modelData.hostedId : ""
+    customModelId: provider === "custom" ? modelData.hostedId : "",
+    // Pass RAG file items to LlamaIndex (and other providers that may need it)
+    ...(provider === "llamaindex" && {
+      messageFileItems: payload.messageFileItems,
+      chatFileItems: payload.chatFileItems
+    })
   }
 
   const response = await fetchChatResponse(
