@@ -248,6 +248,9 @@ export const useChatHandler = () => {
         )
       }
 
+      // Save the original length before adding temp messages
+      const originalMessagesLength = chatMessages.length
+
       const { tempUserChatMessage, tempAssistantChatMessage } =
         createTempMessages(
           messageContent,
@@ -271,6 +274,7 @@ export const useChatHandler = () => {
       }
 
       let generatedText = ""
+      let contentBlocks: any[] = []
 
       if (selectedTools.length > 0) {
         setToolInUse("Tools")
@@ -295,7 +299,7 @@ export const useChatHandler = () => {
 
         setToolInUse("none")
 
-        generatedText = await processResponse(
+        const result = await processResponse(
           response,
           isRegeneration
             ? payload.chatMessages[payload.chatMessages.length - 1]
@@ -306,9 +310,11 @@ export const useChatHandler = () => {
           setChatMessages,
           setToolInUse
         )
+        generatedText = result.text
+        contentBlocks = result.contentBlocks
       } else {
         if (modelData!.provider === "ollama") {
-          generatedText = await handleLocalChat(
+          const result = await handleLocalChat(
             payload,
             profile!,
             chatSettings!,
@@ -320,8 +326,10 @@ export const useChatHandler = () => {
             setChatMessages,
             setToolInUse
           )
+          generatedText = result.text
+          contentBlocks = result.contentBlocks
         } else {
-          generatedText = await handleHostedChat(
+          const result = await handleHostedChat(
             payload,
             profile!,
             modelData!,
@@ -335,6 +343,8 @@ export const useChatHandler = () => {
             setChatMessages,
             setToolInUse
           )
+          generatedText = result.text
+          contentBlocks = result.contentBlocks
         }
       }
 
@@ -377,7 +387,9 @@ export const useChatHandler = () => {
         setChatMessages,
         setChatFileItems,
         setChatImages,
-        selectedAssistant
+        selectedAssistant,
+        contentBlocks,
+        originalMessagesLength
       )
 
       setIsGenerating(false)

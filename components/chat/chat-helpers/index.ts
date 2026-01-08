@@ -320,6 +320,10 @@ export const processResponse = async (
                 switch (eventData.type) {
                   case "content_block_start":
                     // New content block started (text or tool_use)
+                    console.log(
+                      "[SSE] content_block_start:",
+                      eventData.content_block
+                    )
                     contentBlocks.push(eventData.content_block)
                     if (eventData.content_block.type === "tool_use") {
                       setToolInUse(eventData.content_block.name)
@@ -376,6 +380,10 @@ export const processResponse = async (
         setChatMessages(prev =>
           prev.map(chatMessage => {
             if (chatMessage.message.id === lastChatMessage.message.id) {
+              console.log(
+                "[processResponse] Updating message with contentBlocks:",
+                contentBlocks.length
+              )
               const updatedChatMessage: ChatMessage = {
                 message: {
                   ...chatMessage.message,
@@ -396,7 +404,7 @@ export const processResponse = async (
       controller.signal
     )
 
-    return fullText
+    return { text: fullText, contentBlocks }
   } else {
     throw new Error(i18next.t("errors.responseBodyNull"))
   }
@@ -458,12 +466,10 @@ export const handleCreateMessages = async (
     React.SetStateAction<Tables<"file_items">[]>
   >,
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
-  selectedAssistant: Tables<"assistants"> | null
+  selectedAssistant: Tables<"assistants"> | null,
+  contentBlocks?: any[],
+  originalMessagesLength?: number
 ) => {
-  // Get contentBlocks from the temporary assistant message
-  const tempAssistantMessage = chatMessages[chatMessages.length - 1]
-  const contentBlocks = tempAssistantMessage?.contentBlocks
-
   // Debug: log contentBlocks to see if they exist
   console.log(
     "[handleCreateMessages] contentBlocks:",
@@ -560,18 +566,29 @@ export const handleCreateMessages = async (
       })
     )
 
-    finalChatMessages = [
-      ...chatMessages.slice(0, -1), // Remove temporary messages
-      {
-        message: updatedMessage,
-        fileItems: []
-      },
-      {
-        message: createdMessages[1],
-        fileItems: retrievedFileItems.map(fileItem => fileItem.id),
-        contentBlocks: contentBlocks
-      }
-    ]
+    // Use setChatMessages with a function to get the current state
+    setChatMessages(currentMessages => {
+      // Keep only the original messages (before temp messages were added)
+      const originalMessages =
+        originalMessagesLength !== undefined
+          ? currentMessages.slice(0, originalMessagesLength)
+          : currentMessages.slice(0, -2)
+
+      finalChatMessages = [
+        ...originalMessages,
+        {
+          message: updatedMessage,
+          fileItems: []
+        },
+        {
+          message: createdMessages[1],
+          fileItems: retrievedFileItems.map(fileItem => fileItem.id),
+          contentBlocks: contentBlocks
+        }
+      ]
+
+      return finalChatMessages
+    })
 
     setChatFileItems(prevFileItems => {
       const newFileItems = retrievedFileItems.filter(
@@ -580,7 +597,5 @@ export const handleCreateMessages = async (
 
       return [...prevFileItems, ...newFileItems]
     })
-
-    setChatMessages(finalChatMessages)
   }
 }
