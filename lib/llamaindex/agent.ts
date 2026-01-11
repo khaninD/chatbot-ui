@@ -15,7 +15,8 @@ export async function createAgent(
   apiKey?: string,
   model?: string,
   toolUrls?: string[],
-  temperature?: number
+  temperature?: number,
+  useCometAPI?: boolean
 ): Promise<{
   agent: ReturnType<typeof agent>
   servers: Array<{ cleanup: () => Promise<void> }>
@@ -46,12 +47,24 @@ export async function createAgent(
 
     const finalSystemPrompt = customSystemPrompt || ""
 
-    // Create LLM with API key
-    const llm = openai({
+    // Create LLM with API key and conditionally add baseURL for Comet
+    const llmConfig: {
+      model: string
+      apiKey: string
+      temperature: number
+      baseURL?: string
+    } = {
       model: model || "gpt-4o",
-      apiKey: apiKey || process.env.OPENAI_API_KEY,
+      apiKey: apiKey || process.env.OPENAI_API_KEY || "",
       temperature: temperature !== undefined ? temperature : 1
-    })
+    }
+
+    // Only add baseURL if using Comet API
+    if (useCometAPI) {
+      llmConfig.baseURL = "https://api.cometapi.com/v1"
+    }
+
+    const llm = openai(llmConfig)
 
     // Create agent
     const sqlAgent = agent({
@@ -88,14 +101,16 @@ export async function* runAgentStream(
   model?: string,
   toolUrls?: string[],
   temperature?: number,
-  chatHistory?: Array<{ role: "user" | "assistant"; content: string }>
+  chatHistory?: Array<{ role: "user" | "assistant"; content: string }>,
+  useCometAPI?: boolean
 ) {
   const { agent: sqlAgent, servers } = await createAgent(
     systemPrompt,
     apiKey,
     model,
     toolUrls,
-    temperature
+    temperature,
+    useCometAPI
   )
 
   try {

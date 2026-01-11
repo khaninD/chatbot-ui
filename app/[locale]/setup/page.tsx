@@ -60,6 +60,7 @@ export default function SetupPage() {
   const [groqAPIKey, setGroqAPIKey] = useState("")
   const [perplexityAPIKey, setPerplexityAPIKey] = useState("")
   const [openrouterAPIKey, setOpenrouterAPIKey] = useState("")
+  const [cometAPIKey, setCometAPIKey] = useState("")
 
   useEffect(() => {
     ;(async () => {
@@ -133,6 +134,7 @@ export default function SetupPage() {
       groq_api_key: groqAPIKey,
       perplexity_api_key: perplexityAPIKey,
       openrouter_api_key: openrouterAPIKey,
+      comet_api_key: cometAPIKey,
       use_azure_openai: useAzureOpenai,
       azure_openai_api_key: azureOpenaiAPIKey,
       azure_openai_endpoint: azureOpenaiEndpoint,
@@ -221,6 +223,8 @@ export default function SetupPage() {
               onUseAzureOpenaiChange={setUseAzureOpenai}
               openrouterAPIKey={openrouterAPIKey}
               onOpenrouterAPIKeyChange={setOpenrouterAPIKey}
+              cometAPIKey={cometAPIKey}
+              onCometAPIKeyChange={setCometAPIKey}
             />
           </StepContainer>
         )

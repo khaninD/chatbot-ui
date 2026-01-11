@@ -56,7 +56,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     setAvailableOpenRouterModels,
     availableOpenRouterModels
   } = useContext(ChatbotUIContext)
-
+  console.log("envKeyMap", envKeyMap)
   const router = useRouter()
 
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -120,6 +120,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     profile?.openrouter_api_key || ""
   )
 
+  const [cometAPIKey, setCometAPIKey] = useState(profile?.comet_api_key || "")
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/login")
@@ -159,7 +161,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       azure_openai_45_turbo_id: azureOpenai45TurboID,
       azure_openai_45_vision_id: azureOpenai45VisionID,
       azure_openai_embeddings_id: azureEmbeddingsID,
-      openrouter_api_key: openrouterAPIKey
+      openrouter_api_key: openrouterAPIKey,
+      comet_api_key: cometAPIKey
     })
 
     setProfile(updatedProfile)
@@ -722,6 +725,22 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                       type="password"
                       value={openrouterAPIKey}
                       onChange={e => setOpenrouterAPIKey(e.target.value)}
+                    />
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                {envKeyMap["comet"] ? (
+                  <Label>Comet API key set by admin.</Label>
+                ) : (
+                  <>
+                    <Label>Comet API Key</Label>
+                    <Input
+                      placeholder="Comet API Key"
+                      type="password"
+                      value={cometAPIKey}
+                      onChange={e => setCometAPIKey(e.target.value)}
                     />
                   </>
                 )}

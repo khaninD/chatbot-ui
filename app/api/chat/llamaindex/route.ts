@@ -42,8 +42,6 @@ interface DoneEvent {
   data: Record<string, never>
 }
 
-type AgentEvent = TextDeltaEvent | ToolCallEvent | ToolResultEvent | DoneEvent
-
 export async function POST(request: Request) {
   const json = await request.json()
   const {
@@ -61,7 +59,19 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
-    checkApiKey(profile.openai_api_key, "OpenAI")
+    // Determine which API key to use - prefer Comet if available, fallback to OpenAI
+    const cometApiKey = profile.comet_api_key || process.env.COMET_API_KEY
+    const apiKeyToUse =
+      cometApiKey || profile.openai_api_key || process.env.OPENAI_API_KEY
+
+    if (cometApiKey) {
+      checkApiKey(cometApiKey, "Comet")
+    } else {
+      checkApiKey(
+        profile.openai_api_key || process.env.OPENAI_API_KEY || null,
+        "OpenAI"
+      )
+    }
 
     // Extract last user message
     const lastMessage = messages[messages.length - 1]
@@ -155,6 +165,8 @@ export async function POST(request: Request) {
     // Create a readable stream from the agent generator
     const encoder = new TextEncoder()
     let contentBlockIndex = 0
+    // Map to store tool_use IDs for matching with tool_results
+    const toolUseIdMap = new Map<string, string>()
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -169,11 +181,12 @@ export async function POST(request: Request) {
           const events = runAgentStream(
             userQuery,
             systemPrompt,
-            profile.openai_api_key || undefined,
+            apiKeyToUse || undefined,
             chatSettings.agentModel || "gpt-4o",
             mcpUrls,
             temperature,
-            conversationMessages
+            conversationMessages,
+            !!cometApiKey
           )
 
           for await (const event of events) {
@@ -203,13 +216,17 @@ export async function POST(request: Request) {
                   )
                 }
 
+                // Generate unique tool_use ID and store it
+                const toolUseId = `tool_${Date.now()}_${contentBlockIndex}`
+                toolUseIdMap.set(toolCallEvent.data.toolName, toolUseId)
+
                 // Send tool_use content block start (Anthropic-style)
                 sendSSE({
                   type: "content_block_start",
                   index: contentBlockIndex++,
                   content_block: {
                     type: "tool_use",
-                    id: `tool_${Date.now()}_${contentBlockIndex}`,
+                    id: toolUseId,
                     name: toolCallEvent.data.toolName,
                     input: toolCallEvent.data.toolInput
                   }
@@ -243,14 +260,40 @@ export async function POST(request: Request) {
                   `[LlamaIndex] ✓ Tool completed: ${toolResultEvent.data.toolName}\n`
                 )
 
-                // Tool results will be handled by the model internally
-                // Just send a message delta to indicate tool use completion
+                // Get the matching tool_use_id from the map
+                const toolUseId = toolUseIdMap.get(
+                  toolResultEvent.data.toolName
+                )
+
+                // Send tool_result content block to frontend
+                sendSSE({
+                  type: "content_block_start",
+                  index: contentBlockIndex++,
+                  content_block: {
+                    type: "tool_result",
+                    tool_use_id:
+                      toolUseId || `tool_unknown_${contentBlockIndex}`,
+                    tool_name: toolResultEvent.data.toolName,
+                    content: toolResultEvent.data.toolOutput
+                  }
+                })
+
+                // Send content block stop
+                sendSSE({
+                  type: "content_block_stop",
+                  index: contentBlockIndex - 1
+                })
+
+                // Also send a message delta to indicate tool use completion
                 sendSSE({
                   type: "message_delta",
                   delta: {
                     stop_reason: "tool_use"
                   }
                 })
+
+                // Clean up the map entry after use
+                toolUseIdMap.delete(toolResultEvent.data.toolName)
                 break
               }
 
