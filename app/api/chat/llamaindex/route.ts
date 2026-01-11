@@ -94,7 +94,8 @@ export async function POST(request: Request) {
             messageFileItems,
             apiKeyToUse,
             chatSettings.agentModel || "gpt-4o",
-            !!cometApiKey
+            !!cometApiKey,
+            chatSettings.useReranking || false
           )
 
           const ragResult = await queryRAG(ragQueryEngine, userQuery)

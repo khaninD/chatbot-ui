@@ -1,13 +1,68 @@
 import {
   Document,
+  MetadataMode,
   RouterQueryEngine,
   SentenceSplitter,
   Settings,
   SummaryIndex,
   VectorStoreIndex
 } from "llamaindex"
+import type { BaseNodePostprocessor, NodeWithScore } from "llamaindex"
 import { openai, OpenAIEmbedding } from "@llamaindex/openai"
 import { Tables } from "@/supabase/types"
+
+/**
+ * Custom LLM-based reranker that uses the LLM to score chunk relevance
+ */
+class LLMReranker implements BaseNodePostprocessor {
+  private topN: number
+  private llm: any
+
+  constructor({ topN = 5, llm }: { topN?: number; llm: any }) {
+    this.topN = topN
+    this.llm = llm
+  }
+
+  async postprocessNodes(
+    nodes: NodeWithScore[],
+    query?: string
+  ): Promise<NodeWithScore[]> {
+    if (!query || nodes.length === 0) {
+      return nodes.slice(0, this.topN)
+    }
+
+    // Score each node using the LLM
+    const scoredNodes = await Promise.all(
+      nodes.map(async node => {
+        const prompt = `Given the following question and text chunk, rate the relevance of the text to the question on a scale of 0-10.
+Only respond with a single number between 0 and 10.
+
+Question: ${query}
+
+Text: ${node.node.getContent(MetadataMode.LLM)}
+
+Relevance score (0-10):`
+
+        try {
+          const response = await this.llm.complete({ prompt })
+          const score = parseFloat(response.text.trim())
+          return {
+            ...node,
+            score: isNaN(score) ? 0 : score / 10 // Normalize to 0-1
+          }
+        } catch (error) {
+          console.error("[LLMReranker] Error scoring node:", error)
+          return { ...node, score: node.score || 0 }
+        }
+      })
+    )
+
+    // Sort by score (descending) and return top N
+    return scoredNodes
+      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .slice(0, this.topN)
+  }
+}
 
 /**
  * Create a LlamaIndex RouterQueryEngine for advanced RAG
@@ -17,7 +72,8 @@ export async function createRAGQueryEngine(
   fileItems: Tables<"file_items">[],
   apiKey?: string,
   model?: string,
-  useCometAPI?: boolean
+  useCometAPI?: boolean,
+  useReranking?: boolean
 ) {
   if (fileItems.length === 0) {
     throw new Error("No file items provided for RAG")
@@ -86,9 +142,25 @@ export async function createRAGQueryEngine(
   // Create Summary Index for summarization questions
   const summaryIndex = await SummaryIndex.fromDocuments(documents)
 
-  // Create query engines
-  const vectorQueryEngine = vectorIndex.asQueryEngine()
-  const summaryQueryEngine = summaryIndex.asQueryEngine()
+  // Optionally create LLM Reranker for improving search quality
+  let nodePostprocessors = undefined
+  if (useReranking) {
+    console.log("[LlamaIndex RAG] Enabling LLM Reranking")
+    nodePostprocessors = [
+      new LLMReranker({
+        topN: 5, // Return top 5 most relevant chunks after reranking
+        llm: Settings.llm
+      })
+    ]
+  }
+
+  // Create query engines with optional reranking
+  const vectorQueryEngine = vectorIndex.asQueryEngine({
+    nodePostprocessors
+  })
+  const summaryQueryEngine = summaryIndex.asQueryEngine({
+    nodePostprocessors
+  })
 
   // Create Router Query Engine
   const queryEngine = RouterQueryEngine.fromDefaults({

@@ -12,6 +12,7 @@ export interface ChatSettings {
   mcpServerIds?: string[]
   agentModel?: string
   useAdvancedRAG?: boolean
+  useReranking?: boolean
 }
 
 export interface ChatPayload {
