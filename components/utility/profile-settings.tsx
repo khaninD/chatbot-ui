@@ -33,6 +33,13 @@ import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { LimitDisplay } from "../ui/limit-display"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "../ui/select"
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -122,6 +129,10 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
   const [cometAPIKey, setCometAPIKey] = useState(profile?.comet_api_key || "")
 
+  const [openaiEmbeddingModel, setOpenaiEmbeddingModel] = useState(
+    profile?.openai_embedding_model || "text-embedding-3-small"
+  )
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/login")
@@ -148,6 +159,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       image_url: profileImageUrl,
       image_path: profileImagePath,
       openai_api_key: openaiAPIKey,
+      openai_embedding_model: openaiEmbeddingModel,
       openai_organization_id: openaiOrgID,
       anthropic_api_key: anthropicAPIKey,
       google_gemini_api_key: googleGeminiAPIKey,
@@ -629,6 +641,29 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                           />
                         </>
                       )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label>OpenAI Embedding Model</Label>
+                      <Select
+                        value={openaiEmbeddingModel}
+                        onValueChange={setOpenaiEmbeddingModel}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select embedding model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text-embedding-3-small">
+                            text-embedding-3-small (Fast, 1536 dim)
+                          </SelectItem>
+                          <SelectItem value="text-embedding-3-large">
+                            text-embedding-3-large (Best, 3072 dim)
+                          </SelectItem>
+                          <SelectItem value="text-embedding-ada-002">
+                            text-embedding-ada-002 (Legacy, 1536 dim)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 )}

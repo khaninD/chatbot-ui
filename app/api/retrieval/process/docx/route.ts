@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
     if (embeddingsProvider === "openai") {
       const response = await openai.embeddings.create({
-        model: "text-embedding-3-small",
+        model: profile.openai_embedding_model || "text-embedding-3-small",
         input: chunks.map(chunk => chunk.content)
       })
 

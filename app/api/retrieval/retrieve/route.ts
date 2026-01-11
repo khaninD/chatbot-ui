@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     if (embeddingsProvider === "openai") {
       const response = await openai.embeddings.create({
-        model: "text-embedding-3-small",
+        model: profile.openai_embedding_model || "text-embedding-3-small",
         input: userInput
       })
 

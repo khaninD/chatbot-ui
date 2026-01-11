@@ -73,7 +73,8 @@ export async function createRAGQueryEngine(
   apiKey?: string,
   model?: string,
   useCometAPI?: boolean,
-  useReranking?: boolean
+  useReranking?: boolean,
+  embeddingModel?: string
 ) {
   if (fileItems.length === 0) {
     throw new Error("No file items provided for RAG")
@@ -103,7 +104,7 @@ export async function createRAGQueryEngine(
     baseURL?: string
   } = {
     apiKey: apiKey || process.env.OPENAI_API_KEY || "",
-    model: "text-embedding-3-small"
+    model: embeddingModel || "text-embedding-3-small"
   }
 
   // Add baseURL for embeddings if using Comet API

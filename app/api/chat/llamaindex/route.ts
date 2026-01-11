@@ -95,7 +95,8 @@ export async function POST(request: Request) {
             apiKeyToUse,
             chatSettings.agentModel || "gpt-4o",
             !!cometApiKey,
-            chatSettings.useReranking || false
+            chatSettings.useReranking || false,
+            profile.openai_embedding_model
           )
 
           const ragResult = await queryRAG(ragQueryEngine, userQuery)

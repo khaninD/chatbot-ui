@@ -982,6 +982,7 @@ export type Database = {
           image_url: string
           mistral_api_key: string | null
           openai_api_key: string | null
+          openai_embedding_model: string
           openai_organization_id: string | null
           openrouter_api_key: string | null
           perplexity_api_key: string | null
@@ -1011,6 +1012,7 @@ export type Database = {
           image_url: string
           mistral_api_key?: string | null
           openai_api_key?: string | null
+          openai_embedding_model?: string
           openai_organization_id?: string | null
           openrouter_api_key?: string | null
           perplexity_api_key?: string | null
@@ -1040,6 +1042,7 @@ export type Database = {
           image_url?: string
           mistral_api_key?: string | null
           openai_api_key?: string | null
+          openai_embedding_model?: string
           openai_organization_id?: string | null
           openrouter_api_key?: string | null
           perplexity_api_key?: string | null
