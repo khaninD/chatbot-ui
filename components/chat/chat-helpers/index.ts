@@ -202,35 +202,23 @@ export const handleHostedChat = async (
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  const provider =
-    modelData.provider === "openai" && profile.use_azure_openai
-      ? "azure"
-      : modelData.provider
-
   const draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
-  let formattedMessages: any[] = []
-  if (provider === "google") {
-    formattedMessages = await adaptMessagesForGoogleGemini(
-      payload,
-      draftMessages
-    )
-  } else {
-    formattedMessages = draftMessages
-  }
+  // All requests now go through LlamaIndex agent
+  const apiEndpoint = "/api/chat/llamaindex"
 
-  const apiEndpoint =
-    provider === "custom" ? "/api/chat/custom" : `/api/chat/${provider}`
+  // Use the selected model as the agent model
+  const agentModel = modelData.hostedId || modelData.modelId
 
   const requestBody = {
-    chatSettings: payload.chatSettings,
-    messages: formattedMessages,
-    customModelId: provider === "custom" ? modelData.hostedId : "",
-    // Pass RAG file items to LlamaIndex (and other providers that may need it)
-    ...(provider === "llamaindex" && {
-      messageFileItems: payload.messageFileItems,
-      chatFileItems: payload.chatFileItems
-    })
+    chatSettings: {
+      ...payload.chatSettings,
+      agentModel: agentModel // Pass selected model to LlamaIndex
+    },
+    messages: draftMessages,
+    // Always pass file items for RAG support
+    messageFileItems: payload.messageFileItems,
+    chatFileItems: payload.chatFileItems
   }
 
   const response = await fetchChatResponse(

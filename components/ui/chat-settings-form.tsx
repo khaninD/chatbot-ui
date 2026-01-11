@@ -113,25 +113,9 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
     model => model.model_id === chatSettings.model
   )
 
-  const isLlamaIndexModel = chatSettings.model === "llamaindex-sql-agent"
-
   function findOpenRouterModel(modelId: string) {
     return availableOpenRouterModels.find(model => model.modelId === modelId)
   }
-
-  // Get all available models for agent (excluding llamaindex models)
-  const agentModels = [
-    ...models.map(model => ({
-      modelId: model.model_id,
-      modelName: model.name
-    })),
-    ...availableHostedModels
-      .filter(model => model.provider !== "llamaindex")
-      .map(model => ({
-        modelId: model.modelId,
-        modelName: model.modelName
-      }))
-  ]
 
   const MODEL_LIMITS = CHAT_SETTING_LIMITS[chatSettings.model] || {
     MIN_TEMPERATURE: 0,
@@ -274,136 +258,99 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
         </Select>
       </div>
 
-      {isLlamaIndexModel && (
-        <>
-          <div className="mt-5">
-            <Label>Agent Model</Label>
-
-            <Select
-              value={chatSettings.agentModel || "gpt-4o"}
-              onValueChange={(agentModel: string) => {
-                onChangeChatSettings({
-                  ...chatSettings,
-                  agentModel
-                })
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Agent Model" />
-              </SelectTrigger>
-
-              <SelectContent className="max-h-[300px] overflow-y-auto">
-                {agentModels.map(model => (
-                  <SelectItem key={model.modelId} value={model.modelId}>
-                    {model.modelName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="mt-5">
-            <Label>MCP Servers</Label>
-            <div className="mt-2 max-h-[200px] space-y-2 overflow-y-auto rounded-md border-2 border-input p-3">
-              {mcpServers.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No MCP servers available
-                </div>
-              ) : (
-                mcpServers.map(server => (
-                  <div key={server.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={
-                        chatSettings.mcpServerIds?.includes(server.id) || false
-                      }
-                      onCheckedChange={(checked: boolean) => {
-                        const currentIds = chatSettings.mcpServerIds || []
-                        const newIds = checked
-                          ? [...currentIds, server.id]
-                          : currentIds.filter(id => id !== server.id)
-                        onChangeChatSettings({
-                          ...chatSettings,
-                          mcpServerIds: newIds.length > 0 ? newIds : undefined
-                        })
-                      }}
-                    />
-                    <Label className="cursor-pointer font-normal">
-                      {server.name}
-                    </Label>
-                  </div>
-                ))
-              )}
+      <div className="mt-5">
+        <Label>MCP Servers</Label>
+        <div className="mt-2 max-h-[200px] space-y-2 overflow-y-auto rounded-md border-2 border-input p-3">
+          {mcpServers.length === 0 ? (
+            <div className="text-sm text-muted-foreground">
+              No MCP servers available
             </div>
-          </div>
+          ) : (
+            mcpServers.map(server => (
+              <div key={server.id} className="flex items-center space-x-2">
+                <Checkbox
+                  checked={
+                    chatSettings.mcpServerIds?.includes(server.id) || false
+                  }
+                  onCheckedChange={(checked: boolean) => {
+                    const currentIds = chatSettings.mcpServerIds || []
+                    const newIds = checked
+                      ? [...currentIds, server.id]
+                      : currentIds.filter(id => id !== server.id)
+                    onChangeChatSettings({
+                      ...chatSettings,
+                      mcpServerIds: newIds.length > 0 ? newIds : undefined
+                    })
+                  }}
+                />
+                <Label className="cursor-pointer font-normal">
+                  {server.name}
+                </Label>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
-          <div className="mt-4 flex items-center space-x-2">
-            <Checkbox
-              checked={chatSettings.useAdvancedRAG || false}
-              onCheckedChange={(value: boolean) =>
-                onChangeChatSettings({
-                  ...chatSettings,
-                  useAdvancedRAG: value
-                })
-              }
-            />
+      <div className="mt-4 flex items-center space-x-2">
+        <Checkbox
+          checked={chatSettings.useAdvancedRAG || false}
+          onCheckedChange={(value: boolean) =>
+            onChangeChatSettings({
+              ...chatSettings,
+              useAdvancedRAG: value
+            })
+          }
+        />
 
-            <Label>Advanced RAG (RouterQueryEngine)</Label>
+        <Label>Advanced RAG (RouterQueryEngine)</Label>
 
-            {showTooltip && (
-              <WithTooltip
-                delayDuration={0}
-                display={
-                  <div className="w-[400px] p-3">
-                    Uses LlamaIndex RouterQueryEngine with VectorStoreIndex and
-                    SummaryIndex for intelligent query routing. Better for
-                    complex questions and summarization tasks.
-                  </div>
-                }
-                trigger={
-                  <IconInfoCircle
-                    className="cursor-hover:opacity-50"
-                    size={16}
-                  />
-                }
-              />
-            )}
-          </div>
+        {showTooltip && (
+          <WithTooltip
+            delayDuration={0}
+            display={
+              <div className="w-[400px] p-3">
+                Uses LlamaIndex RouterQueryEngine with VectorStoreIndex and
+                SummaryIndex for intelligent query routing. Better for complex
+                questions and summarization tasks.
+              </div>
+            }
+            trigger={
+              <IconInfoCircle className="cursor-hover:opacity-50" size={16} />
+            }
+          />
+        )}
+      </div>
 
-          <div className="mt-4 flex items-center space-x-2">
-            <Checkbox
-              checked={chatSettings.useReranking || false}
-              onCheckedChange={(value: boolean) =>
-                onChangeChatSettings({
-                  ...chatSettings,
-                  useReranking: value
-                })
-              }
-            />
+      <div className="mt-4 flex items-center space-x-2">
+        <Checkbox
+          checked={chatSettings.useReranking || false}
+          onCheckedChange={(value: boolean) =>
+            onChangeChatSettings({
+              ...chatSettings,
+              useReranking: value
+            })
+          }
+        />
 
-            <Label>LLM Reranking</Label>
+        <Label>LLM Reranking</Label>
 
-            {showTooltip && (
-              <WithTooltip
-                delayDuration={0}
-                display={
-                  <div className="w-[400px] p-3">
-                    Uses LLM-based reranking to improve search quality.
-                    Retrieved chunks are reranked by an LLM to find the most
-                    relevant results, improving accuracy by 20-40% compared to
-                    vector search alone.
-                  </div>
-                }
-                trigger={
-                  <IconInfoCircle
-                    className="cursor-hover:opacity-50"
-                    size={16}
-                  />
-                }
-              />
-            )}
-          </div>
-        </>
-      )}
+        {showTooltip && (
+          <WithTooltip
+            delayDuration={0}
+            display={
+              <div className="w-[400px] p-3">
+                Uses LLM-based reranking to improve search quality. Retrieved
+                chunks are reranked by an LLM to find the most relevant results,
+                improving accuracy by 20-40% compared to vector search alone.
+              </div>
+            }
+            trigger={
+              <IconInfoCircle className="cursor-hover:opacity-50" size={16} />
+            }
+          />
+        )}
+      </div>
     </div>
   )
 }
