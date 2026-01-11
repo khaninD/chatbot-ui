@@ -11,6 +11,7 @@ export interface ChatSettings {
   embeddingsProvider: "openai" | "local"
   mcpServerIds?: string[]
   agentModel?: string
+  useAdvancedRAG?: boolean
 }
 
 export interface ChatPayload {

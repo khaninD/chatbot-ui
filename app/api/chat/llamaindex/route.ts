@@ -6,6 +6,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { ServerRuntime } from "next"
 import { runAgentStream } from "@/lib/llamaindex/agent"
+import { createRAGQueryEngine, queryRAG } from "@/lib/llamaindex/rag"
 
 export const runtime: ServerRuntime = "nodejs" // Changed from "edge" to support LlamaIndex
 
@@ -80,13 +81,47 @@ export async function POST(request: Request) {
         ? lastMessage.content
         : lastMessage.content[0]?.text || ""
 
-    // Add RAG content if file items are provided (reusing buildRetrievalText)
+    // Handle RAG - choose between Advanced RAG (LlamaIndex) or Simple RAG
     if (messageFileItems && messageFileItems.length > 0) {
-      const retrievalText = buildRetrievalText(messageFileItems)
-      userQuery = `${userQuery}\n\n${retrievalText}`
-      console.log(
-        `[LlamaIndex] Added RAG content from ${messageFileItems.length} file items`
-      )
+      if (chatSettings.useAdvancedRAG) {
+        // Use LlamaIndex RouterQueryEngine for advanced RAG
+        console.log(
+          `[LlamaIndex] Using Advanced RAG with ${messageFileItems.length} file items`
+        )
+
+        try {
+          const ragQueryEngine = await createRAGQueryEngine(
+            messageFileItems,
+            apiKeyToUse,
+            chatSettings.agentModel || "gpt-4o",
+            !!cometApiKey
+          )
+
+          const ragResult = await queryRAG(ragQueryEngine, userQuery)
+
+          // For Advanced RAG, we replace the user query with the RAG result
+          userQuery = `Original question: ${userQuery}\n\nContext from documents: ${ragResult.response}`
+
+          if (ragResult.metadata?.selectorResult) {
+            console.log(
+              `[LlamaIndex] Router selected: ${ragResult.metadata.selectorResult.selections?.[0]?.reason || "Unknown"}`
+            )
+          }
+        } catch (error) {
+          console.error("[LlamaIndex] Advanced RAG error:", error)
+          // Fallback to simple RAG on error
+          const retrievalText = buildRetrievalText(messageFileItems)
+          userQuery = `${userQuery}\n\n${retrievalText}`
+          console.log(`[LlamaIndex] Fell back to simple RAG due to error`)
+        }
+      } else {
+        // Use simple RAG (original approach)
+        const retrievalText = buildRetrievalText(messageFileItems)
+        userQuery = `${userQuery}\n\n${retrievalText}`
+        console.log(
+          `[LlamaIndex] Using simple RAG with ${messageFileItems.length} file items`
+        )
+      }
     }
 
     // Extract system prompt from messages

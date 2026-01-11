@@ -50,6 +50,7 @@ module.exports = withBundleAnalyzer(
       "@llamaindex/tools",
       "@llamaindex/workflow",
       "@llamaindex/core",
+      "llamaindex",
       "@modelcontextprotocol/sdk",
       "ajv",
       "ajv-draft-04",
@@ -67,6 +68,7 @@ module.exports = withBundleAnalyzer(
           "@llamaindex/tools": "commonjs @llamaindex/tools",
           "@llamaindex/workflow": "commonjs @llamaindex/workflow",
           "@llamaindex/core": "commonjs @llamaindex/core",
+          llamaindex: "commonjs llamaindex",
           "@modelcontextprotocol/sdk": "commonjs @modelcontextprotocol/sdk"
         })
       }
