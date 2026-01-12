@@ -1,4 +1,5 @@
 import { openai } from "@llamaindex/openai"
+import { anthropic } from "@llamaindex/anthropic"
 import { mcp } from "@llamaindex/tools"
 import {
   agent,
@@ -47,6 +48,9 @@ export async function createAgent(
 
     const finalSystemPrompt = customSystemPrompt || ""
 
+    const modelId = model || "gpt-4o"
+    const isClaudeModel = modelId.toLowerCase().startsWith("claude-")
+
     // Create LLM with API key and conditionally add baseURL for Comet
     const llmConfig: {
       model: string
@@ -54,17 +58,47 @@ export async function createAgent(
       temperature: number
       baseURL?: string
     } = {
-      model: model || "gpt-4o",
+      model: modelId,
       apiKey: apiKey || process.env.OPENAI_API_KEY || "",
       temperature: temperature !== undefined ? temperature : 1
     }
 
-    // Only add baseURL if using Comet API
+    // Determine which provider to use
+    // IMPORTANT: Comet API is OpenAI-compatible, so always use OpenAI provider with Comet
+    let useAnthropicProvider = false
+
     if (useCometAPI) {
+      // Comet API - always use OpenAI provider (OpenAI-compatible)
       llmConfig.baseURL = "https://api.cometapi.com/v1"
+      console.log(
+        `[LlamaIndex Agent] Using Comet API (OpenAI-compatible) with model: ${llmConfig.model}`
+      )
+    } else {
+      // Direct API access - use native provider
+      if (isClaudeModel) {
+        useAnthropicProvider = true
+        console.log(
+          `[LlamaIndex Agent] Using native Anthropic API with model: ${llmConfig.model}`
+        )
+      } else {
+        console.log(
+          `[LlamaIndex Agent] Using native OpenAI API with model: ${llmConfig.model}`
+        )
+      }
     }
 
-    const llm = openai(llmConfig)
+    console.log(`[LlamaIndex Agent] LLM Config:`, {
+      model: llmConfig.model,
+      provider: useAnthropicProvider ? "anthropic" : "openai",
+      temperature: llmConfig.temperature,
+      baseURL: llmConfig.baseURL || "default",
+      apiKeyLength: llmConfig.apiKey.length,
+      usingCometAPI: useCometAPI
+    })
+
+    // Use Anthropic provider only for direct Anthropic API access
+    // For Comet API (OpenAI-compatible), always use OpenAI provider
+    const llm = useAnthropicProvider ? anthropic(llmConfig) : openai(llmConfig)
 
     // Create agent
     const sqlAgent = agent({
@@ -128,36 +162,42 @@ export async function* runAgentStream(
     // Stream events to the caller
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for await (const event of events as any) {
-      if (agentToolCallEvent.include(event)) {
-        // Yield tool call information
-        yield {
-          type: "tool_call",
-          data: {
-            toolName: event.data.toolName,
-            toolInput: event.data.toolKwargs
+      try {
+        if (agentToolCallEvent.include(event)) {
+          // Yield tool call information
+          yield {
+            type: "tool_call",
+            data: {
+              toolName: event.data.toolName,
+              toolInput: event.data.toolKwargs
+            }
           }
         }
-      }
 
-      if (agentToolCallResultEvent.include(event)) {
-        // Yield tool call result
-        yield {
-          type: "tool_result",
-          data: {
-            toolName: event.data.toolName,
-            toolOutput: event.data.toolOutput
+        if (agentToolCallResultEvent.include(event)) {
+          // Yield tool call result
+          yield {
+            type: "tool_result",
+            data: {
+              toolName: event.data.toolName,
+              toolOutput: event.data.toolOutput
+            }
           }
         }
-      }
 
-      if (agentStreamEvent.include(event)) {
-        // Yield text delta
-        yield {
-          type: "text_delta",
-          data: {
-            delta: event.data.delta
+        if (agentStreamEvent.include(event)) {
+          // Yield text delta
+          yield {
+            type: "text_delta",
+            data: {
+              delta: event.data.delta
+            }
           }
         }
+      } catch (eventError) {
+        console.error(`[LlamaIndex Agent] Error processing event:`, eventError)
+        console.error(`[LlamaIndex Agent] Event data:`, event)
+        // Continue processing other events
       }
     }
 

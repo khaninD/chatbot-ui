@@ -214,6 +214,11 @@ export async function POST(request: Request) {
             controller.enqueue(encoder.encode(sseData))
           }
 
+          console.log(
+            `[LlamaIndex] Creating agent stream with model: ${chatSettings.agentModel || "gpt-4o"}`
+          )
+          console.log(`[LlamaIndex] Using Comet API: ${!!cometApiKey}`)
+
           // Run the agent and stream events
           const events = runAgentStream(
             userQuery,
@@ -283,10 +288,20 @@ export async function POST(request: Request) {
                 console.log("Response:")
                 if (typeof toolResultEvent.data.toolOutput === "string") {
                   try {
-                    const parsed = JSON.parse(toolResultEvent.data.toolOutput)
-                    console.log(JSON.stringify(parsed, null, 2))
-                  } catch {
-                    console.log(toolResultEvent.data.toolOutput)
+                    // Check if string is empty or whitespace only
+                    if (!toolResultEvent.data.toolOutput.trim()) {
+                      console.log("[LlamaIndex] Empty tool output")
+                    } else {
+                      const parsed = JSON.parse(toolResultEvent.data.toolOutput)
+                      console.log(JSON.stringify(parsed, null, 2))
+                    }
+                  } catch (error) {
+                    console.log(
+                      `[LlamaIndex] Tool output (non-JSON): ${toolResultEvent.data.toolOutput}`
+                    )
+                    console.log(
+                      `[LlamaIndex] Parse error: ${error instanceof Error ? error.message : "Unknown error"}`
+                    )
                   }
                 } else {
                   console.log(

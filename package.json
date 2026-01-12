@@ -33,6 +33,7 @@
     "@google/generative-ai": "^0.11.4",
     "@langchain/core": "^1.1.8",
     "@langchain/textsplitters": "^1.0.1",
+    "@llamaindex/anthropic": "^0.3.26",
     "@llamaindex/core": "^0.6.22",
     "@llamaindex/openai": "^0.4.22",
     "@llamaindex/tools": "^0.2.0",

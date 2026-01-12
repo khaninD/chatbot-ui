@@ -7,6 +7,7 @@ export type LLMID =
   | MistralLLMID
   | GroqLLMID
   | PerplexityLLMID
+  | CometLLMID
   | LlamaIndexLLMID
 
 // OpenAI Models (UPDATED 12/30/24)
@@ -66,6 +67,25 @@ export type PerplexityLLMID =
 
 // LlamaIndex Models
 export type LlamaIndexLLMID = "llamaindex-sql-agent" // LlamaIndex SQL Agent with MCP
+
+// Comet API Models - aggregator for multiple providers (январь 2026)
+export type CometLLMID =
+  // OpenAI models via Comet
+  | "gpt-4o"
+  | "gpt-4o-mini"
+  | "gpt-4-turbo"
+  | "gpt-3.5-turbo"
+  | "o1"
+  | "o1-mini"
+  // Anthropic Claude models via Comet
+  | "claude-3-5-sonnet-20241022"
+  | "claude-opus-4-5-20251101"
+  | "claude-sonnet-4-5-20250929"
+  | "claude-haiku-4-5-20251001"
+  // Google Gemini models via Comet
+  | "gemini-2.5-pro"
+  | "gemini-2.5-flash"
+  | "gemini-2.5-flash-lite"
 
 export interface LLM {
   modelId: LLMID
