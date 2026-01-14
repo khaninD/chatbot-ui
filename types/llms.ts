@@ -86,6 +86,12 @@ export type CometLLMID =
   | "gemini-2.5-pro"
   | "gemini-2.5-flash"
   | "gemini-2.5-flash-lite"
+  // DeepSeek models via Comet
+  | "deepseek-v3"
+  | "deepseek-v3.1"
+  | "deepseek-v3.2"
+  | "deepseek-reasoner"
+  | "deepseek-r1t2-chimera"
 
 export interface LLM {
   modelId: LLMID

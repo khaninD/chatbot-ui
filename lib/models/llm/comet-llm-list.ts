@@ -202,6 +202,82 @@ const CometGemini25FlashLite: LLM = {
   }
 }
 
+// ========== DeepSeek Models ==========
+const CometDeepSeekV3: LLM = {
+  modelId: "deepseek-v3",
+  modelName: "DeepSeek-V3 (Comet)",
+  provider: "comet",
+  hostedId: "deepseek-v3",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: false,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.216,
+    outputCost: 0.88
+  }
+}
+
+const CometDeepSeekV31: LLM = {
+  modelId: "deepseek-v3.1",
+  modelName: "DeepSeek-V3.1 (Comet)",
+  provider: "comet",
+  hostedId: "deepseek-v3.1",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: false,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.44,
+    outputCost: 1.32
+  }
+}
+
+const CometDeepSeekV32: LLM = {
+  modelId: "deepseek-v3.2",
+  modelName: "DeepSeek-V3.2 (Comet)",
+  provider: "comet",
+  hostedId: "deepseek-v3.2",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: false,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.216,
+    outputCost: 0.346
+  }
+}
+
+const CometDeepSeekReasoner: LLM = {
+  modelId: "deepseek-reasoner",
+  modelName: "DeepSeek-Reasoner (Comet)",
+  provider: "comet",
+  hostedId: "deepseek-reasoner",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: false,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.44,
+    outputCost: 1.752
+  }
+}
+
+const CometDeepSeekR1T2Chimera: LLM = {
+  modelId: "deepseek-r1t2-chimera",
+  modelName: "DeepSeek-R1T2-Chimera (Comet)",
+  provider: "comet",
+  hostedId: "deepseek-r1t2-chimera",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: false,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.2416,
+    outputCost: 0.2416
+  }
+}
+
 export const COMET_LLM_LIST: LLM[] = [
   // OpenAI models
   CometGPT4o,
@@ -218,5 +294,11 @@ export const COMET_LLM_LIST: LLM[] = [
   // Google Gemini models
   CometGemini25Pro,
   CometGemini25Flash,
-  CometGemini25FlashLite
+  CometGemini25FlashLite,
+  // DeepSeek models
+  CometDeepSeekV3,
+  CometDeepSeekV31,
+  CometDeepSeekV32,
+  CometDeepSeekReasoner,
+  CometDeepSeekR1T2Chimera
 ]
