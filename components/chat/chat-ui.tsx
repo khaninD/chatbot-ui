@@ -181,7 +181,13 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
       contextLength: chat.context_length,
       includeProfileContext: chat.include_profile_context,
       includeWorkspaceInstructions: chat.include_workspace_instructions,
-      embeddingsProvider: chat.embeddings_provider as "openai" | "local"
+      embeddingsProvider: chat.embeddings_provider as "openai" | "local",
+      mcpServerIds: chat.mcp_server_ids?.length
+        ? chat.mcp_server_ids
+        : undefined,
+      agentModel: chat.agent_model || undefined,
+      useAdvancedRAG: chat.use_advanced_rag || false,
+      useReranking: chat.use_reranking || false
     })
   }
 

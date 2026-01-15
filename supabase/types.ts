@@ -312,6 +312,10 @@ export type Database = {
           updated_at: string | null
           user_id: string
           workspace_id: string
+          mcp_server_ids: string[]
+          agent_model: string | null
+          use_advanced_rag: boolean
+          use_reranking: boolean
         }
         Insert: {
           assistant_id?: string | null
@@ -330,6 +334,10 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           workspace_id: string
+          mcp_server_ids?: string[]
+          agent_model?: string | null
+          use_advanced_rag?: boolean
+          use_reranking?: boolean
         }
         Update: {
           assistant_id?: string | null
@@ -348,6 +356,10 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           workspace_id?: string
+          mcp_server_ids?: string[]
+          agent_model?: string | null
+          use_advanced_rag?: boolean
+          use_reranking?: boolean
         }
         Relationships: [
           {

@@ -362,7 +362,19 @@ export const useChatHandler = () => {
         )
       } else {
         const updatedChat = await updateChat(currentChat.id, {
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          model: chatSettings!.model,
+          prompt: chatSettings!.prompt,
+          temperature: chatSettings!.temperature,
+          context_length: chatSettings!.contextLength,
+          include_profile_context: chatSettings!.includeProfileContext,
+          include_workspace_instructions:
+            chatSettings!.includeWorkspaceInstructions,
+          embeddings_provider: chatSettings!.embeddingsProvider,
+          mcp_server_ids: chatSettings!.mcpServerIds || [],
+          agent_model: chatSettings!.agentModel || null,
+          use_advanced_rag: chatSettings!.useAdvancedRAG || false,
+          use_reranking: chatSettings!.useReranking || false
         })
 
         setChats(prevChats => {

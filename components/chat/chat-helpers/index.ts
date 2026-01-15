@@ -420,7 +420,11 @@ export const handleCreateChat = async (
     name: messageContent.substring(0, 100),
     prompt: chatSettings.prompt,
     temperature: chatSettings.temperature,
-    embeddings_provider: chatSettings.embeddingsProvider
+    embeddings_provider: chatSettings.embeddingsProvider,
+    mcp_server_ids: chatSettings.mcpServerIds || [],
+    agent_model: chatSettings.agentModel || null,
+    use_advanced_rag: chatSettings.useAdvancedRAG || false,
+    use_reranking: chatSettings.useReranking || false
   })
 
   setSelectedChat(createdChat)
