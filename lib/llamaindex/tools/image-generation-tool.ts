@@ -1,4 +1,5 @@
 import { FunctionTool } from "@llamaindex/core/tools"
+import { uploadGeneratedImage } from "@/db/storage/generated-images"
 
 interface ImageGenerationInput {
   prompt: string
@@ -11,6 +12,7 @@ interface ImageGenerationConfig {
   apiKey: string
   baseURL?: string
   model?: string
+  userId?: string // User ID for storage
 }
 
 // API response types
@@ -57,7 +59,7 @@ const imageGenerationSchema = {
  * Returns base64 data URL for reliable image display
  */
 export function createImageGenerationTool(config: ImageGenerationConfig) {
-  const { apiKey, baseURL, model = "gpt-image-1.5" } = config
+  const { apiKey, baseURL, model = "gpt-image-1.5", userId } = config
 
   async function generateImage(input: ImageGenerationInput): Promise<string> {
     const {
@@ -129,13 +131,34 @@ export function createImageGenerationTool(config: ImageGenerationConfig) {
         throw new Error("No image URL or base64 data returned from API")
       }
 
-      // Include revised prompt if API modified it
-      const revisedPromptNote = imageData.revised_prompt
+      // Upload image to Supabase Storage to get public URL
+      // CRITICAL: Don't return base64 in tool result - it will exceed context limits!
+      let finalImageUrl = imageSource
+
+      if (userId && imageSource.startsWith("data:image")) {
+        // Upload base64 to storage and get public URL
+        try {
+          finalImageUrl = await uploadGeneratedImage(
+            imageSource,
+            userId,
+            "generate_image"
+          )
+          console.log(
+            `[ImageGenerationTool] Uploaded to storage: ${finalImageUrl}`
+          )
+        } catch (uploadError) {
+          console.error(`[ImageGenerationTool] Upload failed:`, uploadError)
+          // Fallback: return success without URL
+          return `Image generated successfully, but failed to save. Size: ${size}, Quality: ${quality}, Style: ${style}.`
+        }
+      }
+
+      // Return markdown with public URL (safe for context)
+      const revisedInfo = imageData.revised_prompt
         ? `\n\n*Revised prompt: ${imageData.revised_prompt}*`
         : ""
 
-      // Return markdown image with data URL for display in chat
-      return `![Generated Image](${imageSource})\n\n**Prompt:** ${prompt}${revisedPromptNote}\n**Size:** ${size} | **Quality:** ${quality} | **Style:** ${style}`
+      return `![Generated Image](${finalImageUrl})\n\n**Prompt:** ${prompt}${revisedInfo}\n**Size:** ${size} | **Quality:** ${quality} | **Style:** ${style}`
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error"

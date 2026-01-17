@@ -24,7 +24,8 @@ export async function createAgent(
   toolUrls?: string[],
   temperature?: number,
   useCometAPI?: boolean,
-  enableImageGeneration?: boolean
+  enableImageGeneration?: boolean,
+  userId?: string
 ): Promise<{
   agent: ReturnType<typeof agent>
   servers: Array<{ cleanup: () => Promise<void> }>
@@ -58,7 +59,8 @@ export async function createAgent(
       const imageGenTool = createImageGenerationTool({
         apiKey,
         baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
-        model: "gpt-image-1.5"
+        model: "gpt-image-1.5",
+        userId
       })
       allTools.push(imageGenTool)
       console.log(`[LlamaIndex Agent] Image generation tool enabled`)
@@ -67,7 +69,8 @@ export async function createAgent(
       const imageEditTool = createImageEditTool({
         apiKey,
         baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
-        model: "gpt-image-1.5"
+        model: "gpt-image-1.5",
+        userId
       })
       allTools.push(imageEditTool)
       console.log(`[LlamaIndex Agent] Image editing tool enabled`)
@@ -167,7 +170,8 @@ export async function* runAgentStream(
   chatHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   useCometAPI?: boolean,
   enableImageGeneration?: boolean,
-  images?: string[]
+  images?: string[],
+  userId?: string
 ) {
   const { agent: sqlAgent, servers } = await createAgent(
     systemPrompt,
@@ -176,7 +180,8 @@ export async function* runAgentStream(
     toolUrls,
     temperature,
     useCometAPI,
-    enableImageGeneration
+    enableImageGeneration,
+    userId
   )
 
   try {

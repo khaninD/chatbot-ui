@@ -256,7 +256,8 @@ export async function POST(request: Request) {
             conversationMessages,
             !!cometApiKey,
             chatSettings.enableImageGeneration,
-            userImages
+            userImages,
+            profile.user_id // Pass userId for image storage
           )
 
           for await (const event of events) {
@@ -378,8 +379,21 @@ export async function POST(request: Request) {
               }
 
               case "done":
-                // Agent finished
+                // Agent finished - send final events
                 console.log("[LlamaIndex] Agent completed")
+
+                // Send message_delta with stop_reason
+                sendSSE({
+                  type: "message_delta",
+                  delta: {
+                    stop_reason: "end_turn"
+                  }
+                })
+
+                // Send message_stop event (Anthropic-style completion)
+                sendSSE({
+                  type: "message_stop"
+                })
                 break
             }
           }

@@ -1,4 +1,5 @@
 import { FunctionTool } from "@llamaindex/core/tools"
+import { uploadGeneratedImage } from "@/db/storage/generated-images"
 
 interface ImageEditInput {
   prompt: string
@@ -9,6 +10,7 @@ interface ImageEditConfig {
   apiKey: string
   baseURL?: string
   model?: string
+  userId?: string // User ID for storage
 }
 
 // API response types
@@ -70,7 +72,7 @@ export function getUserImages(): string[] {
  * Edits user-uploaded images based on text prompts
  */
 export function createImageEditTool(config: ImageEditConfig) {
-  const { apiKey, baseURL, model = "gpt-image-1.5" } = config
+  const { apiKey, baseURL, model = "gpt-image-1.5", userId } = config
 
   async function editImage(input: ImageEditInput): Promise<string> {
     const { prompt, size = "1024x1024" } = input
@@ -164,13 +166,32 @@ export function createImageEditTool(config: ImageEditConfig) {
       // Clear pending images after successful edit
       clearUserImages()
 
-      // Include revised prompt if API modified it
-      const revisedPromptNote = imageData.revised_prompt
+      // Upload image to Supabase Storage to get public URL
+      // CRITICAL: Don't return base64 in tool result - it will exceed context limits!
+      let finalImageUrl = imageSource
+
+      if (userId && imageSource.startsWith("data:image")) {
+        // Upload base64 to storage and get public URL
+        try {
+          finalImageUrl = await uploadGeneratedImage(
+            imageSource,
+            userId,
+            "edit_image"
+          )
+          console.log(`[ImageEditTool] Uploaded to storage: ${finalImageUrl}`)
+        } catch (uploadError) {
+          console.error(`[ImageEditTool] Upload failed:`, uploadError)
+          // Fallback: return success without URL
+          return `Image edited successfully, but failed to save. Size: ${size}.`
+        }
+      }
+
+      // Return markdown with public URL (safe for context)
+      const revisedInfo = imageData.revised_prompt
         ? `\n\n*Revised prompt: ${imageData.revised_prompt}*`
         : ""
 
-      // Return markdown image for display in chat
-      return `![Edited Image](${imageSource})\n\n**Edit prompt:** ${prompt}${revisedPromptNote}\n**Size:** ${size}`
+      return `![Edited Image](${finalImageUrl})\n\n**Edit prompt:** ${prompt}${revisedInfo}\n**Size:** ${size}`
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error"
