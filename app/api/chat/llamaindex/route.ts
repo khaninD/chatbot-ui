@@ -10,9 +10,15 @@ import { createRAGQueryEngine, queryRAG } from "@/lib/llamaindex/rag"
 
 export const runtime: ServerRuntime = "nodejs" // Changed from "edge" to support LlamaIndex
 
+interface MessageContentPart {
+  type: string
+  text?: string
+  image_url?: { url: string }
+}
+
 interface Message {
   role: "system" | "user" | "assistant"
-  content: string | Array<{ text?: string }>
+  content: string | MessageContentPart[]
 }
 
 interface TextDeltaEvent {
@@ -74,12 +80,29 @@ export async function POST(request: Request) {
       )
     }
 
-    // Extract last user message
+    // Extract last user message and images
     const lastMessage = messages[messages.length - 1]
-    let userQuery =
-      typeof lastMessage.content === "string"
-        ? lastMessage.content
-        : lastMessage.content[0]?.text || ""
+    let userQuery = ""
+    let userImages: string[] = []
+
+    if (typeof lastMessage.content === "string") {
+      userQuery = lastMessage.content
+    } else if (Array.isArray(lastMessage.content)) {
+      // Extract text and images from multimodal content
+      for (const part of lastMessage.content) {
+        if (part.type === "text" && part.text) {
+          userQuery += part.text
+        } else if (part.type === "image_url" && part.image_url?.url) {
+          userImages.push(part.image_url.url)
+        }
+      }
+    }
+
+    if (userImages.length > 0) {
+      console.log(
+        `[LlamaIndex] Found ${userImages.length} images in user message`
+      )
+    }
 
     // Handle RAG - choose between Advanced RAG (LlamaIndex) or Simple RAG
     if (messageFileItems && messageFileItems.length > 0) {
@@ -218,6 +241,9 @@ export async function POST(request: Request) {
             `[LlamaIndex] Creating agent stream with model: ${chatSettings.agentModel || "gpt-4o"}`
           )
           console.log(`[LlamaIndex] Using Comet API: ${!!cometApiKey}`)
+          console.log(
+            `[LlamaIndex] Image generation: ${chatSettings.enableImageGeneration ? "enabled" : "disabled"}`
+          )
 
           // Run the agent and stream events
           const events = runAgentStream(
@@ -228,7 +254,9 @@ export async function POST(request: Request) {
             mcpUrls,
             temperature,
             conversationMessages,
-            !!cometApiKey
+            !!cometApiKey,
+            chatSettings.enableImageGeneration,
+            userImages
           )
 
           for await (const event of events) {

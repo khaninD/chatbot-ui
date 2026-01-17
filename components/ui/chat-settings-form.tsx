@@ -351,6 +351,36 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
           />
         )}
       </div>
+
+      <div className="mt-4 flex items-center space-x-2">
+        <Checkbox
+          checked={chatSettings.enableImageGeneration || false}
+          onCheckedChange={(value: boolean) =>
+            onChangeChatSettings({
+              ...chatSettings,
+              enableImageGeneration: value
+            })
+          }
+        />
+
+        <Label>Image Generation</Label>
+
+        {showTooltip && (
+          <WithTooltip
+            delayDuration={0}
+            display={
+              <div className="w-[400px] p-3">
+                Enables the agent to generate images using GPT Image 1.5 model.
+                When enabled, you can ask the agent to create, draw, or generate
+                images based on text descriptions.
+              </div>
+            }
+            trigger={
+              <IconInfoCircle className="cursor-hover:opacity-50" size={16} />
+            }
+          />
+        )}
+      </div>
     </div>
   )
 }

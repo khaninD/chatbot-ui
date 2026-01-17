@@ -117,6 +117,11 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                   />
                   <div className="ml-2 flex items-center">
                     {selectedModel?.modelName}
+                    {selectedModel?.provider === "comet" && (
+                      <span className="ml-2 rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-500">
+                        Comet
+                      </span>
+                    )}
                   </div>
                 </>
               ) : (

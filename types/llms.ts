@@ -70,13 +70,29 @@ export type LlamaIndexLLMID = "llamaindex-sql-agent" // LlamaIndex SQL Agent wit
 
 // Comet API Models - aggregator for multiple providers (январь 2026)
 export type CometLLMID =
-  // OpenAI models via Comet
+  // OpenAI GPT-4 models via Comet
   | "gpt-4o"
   | "gpt-4o-mini"
   | "gpt-4-turbo"
   | "gpt-3.5-turbo"
   | "o1"
   | "o1-mini"
+  // OpenAI GPT-5 models via Comet
+  | "gpt-5"
+  | "gpt-5-chat-latest"
+  | "gpt-5-mini"
+  | "gpt-5-nano"
+  | "gpt-5-codex"
+  // OpenAI GPT-5.1 models via Comet
+  | "gpt-5.1"
+  | "gpt-5.1-chat-latest"
+  | "gpt-5.1-codex"
+  | "gpt-5.1-codex-max"
+  // OpenAI GPT-5.2 models via Comet
+  | "gpt-5.2"
+  | "gpt-5.2-chat-latest"
+  | "gpt-5.2-pro"
+  // NOTE: gpt-image-1.5 is NOT a chat model - it's used as a tool only
   // Anthropic Claude models via Comet
   | "claude-3-5-sonnet-20241022"
   | "claude-opus-4-5-20251101"

@@ -95,6 +95,193 @@ const CometO1Mini: LLM = {
   }
 }
 
+// ========== GPT-5 Models ==========
+const CometGPT5: LLM = {
+  modelId: "gpt-5",
+  modelName: "GPT-5 (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+const CometGPT5Chat: LLM = {
+  modelId: "gpt-5-chat-latest",
+  modelName: "GPT-5 Chat (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5-chat-latest",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+const CometGPT5Mini: LLM = {
+  modelId: "gpt-5-mini",
+  modelName: "GPT-5 Mini (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5-mini",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.2,
+    outputCost: 1.6
+  }
+}
+
+const CometGPT5Nano: LLM = {
+  modelId: "gpt-5-nano",
+  modelName: "GPT-5 Nano (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5-nano",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 0.04,
+    outputCost: 0.32
+  }
+}
+
+const CometGPT5Codex: LLM = {
+  modelId: "gpt-5-codex",
+  modelName: "GPT-5 Codex (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5-codex",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+// ========== GPT-5.1 Models ==========
+const CometGPT51: LLM = {
+  modelId: "gpt-5.1",
+  modelName: "GPT-5.1 (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.1",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+const CometGPT51Chat: LLM = {
+  modelId: "gpt-5.1-chat-latest",
+  modelName: "GPT-5.1 Chat (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.1-chat-latest",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+const CometGPT51Codex: LLM = {
+  modelId: "gpt-5.1-codex",
+  modelName: "GPT-5.1 Codex (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.1-codex",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+const CometGPT51CodexMax: LLM = {
+  modelId: "gpt-5.1-codex-max",
+  modelName: "GPT-5.1 Codex Max (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.1-codex-max",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1,
+    outputCost: 8
+  }
+}
+
+// ========== GPT-5.2 Models ==========
+const CometGPT52: LLM = {
+  modelId: "gpt-5.2",
+  modelName: "GPT-5.2 (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.2",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1.4,
+    outputCost: 11.2
+  }
+}
+
+const CometGPT52Chat: LLM = {
+  modelId: "gpt-5.2-chat-latest",
+  modelName: "GPT-5.2 Chat (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.2-chat-latest",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 1.4,
+    outputCost: 11.2
+  }
+}
+
+const CometGPT52Pro: LLM = {
+  modelId: "gpt-5.2-pro",
+  modelName: "GPT-5.2 Pro (Comet)",
+  provider: "comet",
+  hostedId: "gpt-5.2-pro",
+  platformLink: COMET_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 16.8,
+    outputCost: 134.4
+  }
+}
+
+// NOTE: GPT Image 1.5 is a specialized image generation model
+// It's used only as a tool in the LlamaIndex agent, not as a chat model
+// See lib/llamaindex/tools/image-generation-tool.ts
+
 // ========== Anthropic Claude Models ==========
 const CometClaude35Sonnet: LLM = {
   modelId: "claude-3-5-sonnet-20241022",
@@ -279,13 +466,29 @@ const CometDeepSeekR1T2Chimera: LLM = {
 }
 
 export const COMET_LLM_LIST: LLM[] = [
-  // OpenAI models
+  // OpenAI GPT-4 models
   CometGPT4o,
   CometGPT4oMini,
   CometGPT4Turbo,
   CometGPT35Turbo,
   CometO1,
   CometO1Mini,
+  // OpenAI GPT-5 models
+  CometGPT5,
+  CometGPT5Chat,
+  CometGPT5Mini,
+  CometGPT5Nano,
+  CometGPT5Codex,
+  // OpenAI GPT-5.1 models
+  CometGPT51,
+  CometGPT51Chat,
+  CometGPT51Codex,
+  CometGPT51CodexMax,
+  // OpenAI GPT-5.2 models
+  CometGPT52,
+  CometGPT52Chat,
+  CometGPT52Pro,
+  // NOTE: GPT Image 1.5 is NOT included here - it's used as a tool, not as a chat model
   // Anthropic Claude models
   CometClaude35Sonnet,
   CometClaudeOpus45,

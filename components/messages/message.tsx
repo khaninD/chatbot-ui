@@ -24,6 +24,7 @@ import { WithTooltip } from "../ui/with-tooltip"
 import { MessageActions } from "./message-actions"
 import { MessageMarkdown } from "./message-markdown"
 import { ToolCallBlock } from "./tool-call-block"
+import { ToolResultBlock } from "./tool-result-block"
 
 const ICON_SIZE = 32
 
@@ -315,6 +316,8 @@ export const Message: FC<MessageProps> = ({
                   {contentBlocks.map((block, index) => {
                     if (block.type === "tool_use") {
                       return <ToolCallBlock key={index} toolBlock={block} />
+                    } else if (block.type === "tool_result") {
+                      return <ToolResultBlock key={index} resultBlock={block} />
                     } else if (block.type === "text") {
                       return (
                         <MessageMarkdown key={index} content={block.text} />

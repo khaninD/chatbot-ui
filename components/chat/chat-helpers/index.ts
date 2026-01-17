@@ -285,6 +285,8 @@ export const processResponse = async (
   let fullText = ""
   let contentToAdd = ""
   let contentBlocks: any[] = []
+  // Buffer for incomplete SSE data (chunks may split across boundaries)
+  let sseBuffer = ""
 
   // Check if response is Server-Sent Events (Anthropic-style)
   const contentType = response.headers.get("Content-Type") || ""
@@ -299,48 +301,69 @@ export const processResponse = async (
 
         try {
           if (isSSE) {
-            // Parse SSE events (Anthropic-style structured responses)
-            const lines = chunk.split("\n")
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const eventData = JSON.parse(line.slice(6))
+            // Accumulate buffer with new chunk
+            sseBuffer += chunk
 
-                switch (eventData.type) {
-                  case "content_block_start":
-                    // New content block started (text or tool_use)
-                    console.log(
-                      "[SSE] content_block_start:",
-                      eventData.content_block
+            // Process complete SSE events (each ends with \n\n)
+            const events = sseBuffer.split("\n\n")
+            // Keep the last incomplete event in buffer
+            sseBuffer = events.pop() || ""
+
+            for (const event of events) {
+              const lines = event.split("\n")
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const jsonStr = line.slice(6)
+                  if (!jsonStr.trim()) continue
+
+                  let eventData: any
+                  try {
+                    eventData = JSON.parse(jsonStr)
+                  } catch (parseError) {
+                    console.warn(
+                      "[SSE] Failed to parse JSON, skipping:",
+                      jsonStr.substring(0, 100)
                     )
-                    contentBlocks.push(eventData.content_block)
-                    if (eventData.content_block.type === "tool_use") {
-                      setToolInUse(eventData.content_block.name)
-                    }
-                    break
+                    continue
+                  }
 
-                  case "content_block_delta":
-                    // Content delta (text or tool input)
-                    if (eventData.delta.type === "text_delta") {
-                      contentToAdd = eventData.delta.text
-                      fullText += contentToAdd
-                    }
-                    break
+                  switch (eventData.type) {
+                    case "content_block_start":
+                      // New content block started (text or tool_use)
+                      console.log(
+                        "[SSE] content_block_start:",
+                        eventData.content_block
+                      )
+                      contentBlocks.push(eventData.content_block)
+                      if (eventData.content_block.type === "tool_use") {
+                        setToolInUse(eventData.content_block.name)
+                      }
+                      break
 
-                  case "content_block_stop":
-                    // Content block ended
-                    setToolInUse("none")
-                    break
+                    case "content_block_delta":
+                      // Content delta (text or tool input)
+                      if (eventData.delta.type === "text_delta") {
+                        contentToAdd = eventData.delta.text
+                        fullText += contentToAdd
+                      }
+                      break
 
-                  case "message_delta":
-                    // Message ended
-                    if (eventData.delta.stop_reason === "tool_use") {
+                    case "content_block_stop":
+                      // Content block ended
                       setToolInUse("none")
-                    }
-                    break
+                      break
 
-                  case "error":
-                    console.error("[SSE] Error:", eventData.error)
-                    throw new Error(eventData.error)
+                    case "message_delta":
+                      // Message ended
+                      if (eventData.delta.stop_reason === "tool_use") {
+                        setToolInUse("none")
+                      }
+                      break
+
+                    case "error":
+                      console.error("[SSE] Error:", eventData.error)
+                      throw new Error(eventData.error)
+                  }
                 }
               }
             }

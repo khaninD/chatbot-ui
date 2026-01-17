@@ -13,6 +13,7 @@ export interface ChatSettings {
   agentModel?: string
   useAdvancedRAG?: boolean
   useReranking?: boolean
+  enableImageGeneration?: boolean
 }
 
 export interface ChatPayload {

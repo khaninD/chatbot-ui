@@ -15,7 +15,18 @@ export interface ToolUseContentBlock {
   input: Record<string, any>
 }
 
-export type ContentBlock = TextContentBlock | ToolUseContentBlock
+export interface ToolResultContentBlock {
+  type: "tool_result"
+  tool_use_id: string
+  tool_name: string
+  content: string | Record<string, any>
+  is_error?: boolean
+}
+
+export type ContentBlock =
+  | TextContentBlock
+  | ToolUseContentBlock
+  | ToolResultContentBlock
 
 // Tool result that gets sent back to the model
 export interface ToolResult {

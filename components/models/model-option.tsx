@@ -41,6 +41,11 @@ export const ModelOption: FC<ModelOptionProps> = ({ model, onSelect }) => {
           <div className="flex items-center space-x-2">
             <ModelIcon provider={model.provider} width={28} height={28} />
             <div className="text-sm font-semibold">{model.modelName}</div>
+            {model.provider === "comet" && (
+              <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-500">
+                Comet
+              </span>
+            )}
           </div>
         </div>
       }

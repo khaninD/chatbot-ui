@@ -63,7 +63,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     setAvailableOpenRouterModels,
     availableOpenRouterModels
   } = useContext(ChatbotUIContext)
-  console.log("envKeyMap", envKeyMap)
+
   const router = useRouter()
 
   const buttonRef = useRef<HTMLButtonElement>(null)

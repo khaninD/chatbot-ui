@@ -7,6 +7,12 @@ import {
   agentToolCallEvent,
   agentToolCallResultEvent
 } from "@llamaindex/workflow"
+import { createImageGenerationTool } from "./tools/image-generation-tool"
+import {
+  createImageEditTool,
+  setUserImages,
+  clearUserImages
+} from "./tools/image-edit-tool"
 
 /**
  * Create a LlamaIndex agent with MCP tools
@@ -17,7 +23,8 @@ export async function createAgent(
   model?: string,
   toolUrls?: string[],
   temperature?: number,
-  useCometAPI?: boolean
+  useCometAPI?: boolean,
+  enableImageGeneration?: boolean
 ): Promise<{
   agent: ReturnType<typeof agent>
   servers: Array<{ cleanup: () => Promise<void> }>
@@ -42,6 +49,28 @@ export async function createAgent(
           `[LlamaIndex Agent] Loaded ${tools.length} MCP tools from ${url}`
         )
       }
+    }
+
+    console.log(`[LlamaIndex Agent] MCP tools loaded: ${allTools.length}`)
+
+    // Add image generation tool if enabled
+    if (enableImageGeneration && apiKey) {
+      const imageGenTool = createImageGenerationTool({
+        apiKey,
+        baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
+        model: "gpt-image-1.5"
+      })
+      allTools.push(imageGenTool)
+      console.log(`[LlamaIndex Agent] Image generation tool enabled`)
+
+      // Also add image editing tool
+      const imageEditTool = createImageEditTool({
+        apiKey,
+        baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
+        model: "gpt-image-1.5"
+      })
+      allTools.push(imageEditTool)
+      console.log(`[LlamaIndex Agent] Image editing tool enabled`)
     }
 
     console.log(`[LlamaIndex Agent] Total tools loaded: ${allTools.length}`)
@@ -136,7 +165,9 @@ export async function* runAgentStream(
   toolUrls?: string[],
   temperature?: number,
   chatHistory?: Array<{ role: "user" | "assistant"; content: string }>,
-  useCometAPI?: boolean
+  useCometAPI?: boolean,
+  enableImageGeneration?: boolean,
+  images?: string[]
 ) {
   const { agent: sqlAgent, servers } = await createAgent(
     systemPrompt,
@@ -144,7 +175,8 @@ export async function* runAgentStream(
     model,
     toolUrls,
     temperature,
-    useCometAPI
+    useCometAPI,
+    enableImageGeneration
   )
 
   try {
@@ -154,8 +186,29 @@ export async function* runAgentStream(
       content: msg.content
     }))
 
+    // If images are provided, make them available to image editing tool
+    // IMPORTANT: Don't add image data to query - it would exceed token limits
+    let finalQuery = query
+
+    if (images && images.length > 0) {
+      console.log(
+        `[LlamaIndex Agent] Setting ${images.length} user images for editing tools`
+      )
+      // Set images for the edit tool to use (stored separately, not in context)
+      setUserImages(images)
+
+      // Add SHORT context to the query so the agent knows images are available
+      // Don't include the actual image data!
+      finalQuery =
+        query +
+        " [IMAGE_ATTACHED: User uploaded an image. Use edit_image tool to modify it.]"
+    } else {
+      // Clear any previously set images
+      clearUserImages()
+    }
+
     // Get the stream of events with chat history
-    const events = sqlAgent.runStream(query, {
+    const events = sqlAgent.runStream(finalQuery, {
       chatHistory: formattedHistory
     })
 
