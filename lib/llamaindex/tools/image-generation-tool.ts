@@ -64,7 +64,7 @@ export function createImageGenerationTool(config: ImageGenerationConfig) {
   async function generateImage(input: ImageGenerationInput): Promise<string> {
     const {
       prompt,
-      size = "1024x1024",
+      size = "auto",
       quality = "standard",
       style = "vivid"
     } = input

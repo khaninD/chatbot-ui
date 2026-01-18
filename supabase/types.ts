@@ -316,6 +316,7 @@ export type Database = {
           agent_model: string | null
           use_advanced_rag: boolean
           use_reranking: boolean
+          enable_image_generation: boolean
         }
         Insert: {
           assistant_id?: string | null
@@ -338,6 +339,7 @@ export type Database = {
           agent_model?: string | null
           use_advanced_rag?: boolean
           use_reranking?: boolean
+          enable_image_generation?: boolean
         }
         Update: {
           assistant_id?: string | null
@@ -360,6 +362,7 @@ export type Database = {
           agent_model?: string | null
           use_advanced_rag?: boolean
           use_reranking?: boolean
+          enable_image_generation?: boolean
         }
         Relationships: [
           {

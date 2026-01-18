@@ -146,13 +146,24 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
                   className="absolute right-[-6px] top-[-2px] flex size-5 cursor-pointer items-center justify-center rounded-full border-DEFAULT border-primary bg-muted-foreground text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
                   onClick={e => {
                     e.stopPropagation()
+                    // Filter by both messageId AND base64 to handle multiple images in same message
                     setNewMessageImages(
                       newMessageImages.filter(
-                        f => f.messageId !== image.messageId
+                        f =>
+                          !(
+                            f.messageId === image.messageId &&
+                            f.base64 === image.base64
+                          )
                       )
                     )
                     setChatImages(
-                      chatImages.filter(f => f.messageId !== image.messageId)
+                      chatImages.filter(
+                        f =>
+                          !(
+                            f.messageId === image.messageId &&
+                            f.base64 === image.base64
+                          )
+                      )
                     )
                   }}
                 />

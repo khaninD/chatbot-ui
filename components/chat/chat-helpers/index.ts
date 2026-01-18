@@ -447,7 +447,8 @@ export const handleCreateChat = async (
     mcp_server_ids: chatSettings.mcpServerIds || [],
     agent_model: chatSettings.agentModel || null,
     use_advanced_rag: chatSettings.useAdvancedRAG || false,
-    use_reranking: chatSettings.useReranking || false
+    use_reranking: chatSettings.useReranking || false,
+    enable_image_generation: chatSettings.enableImageGeneration || false
   })
 
   setSelectedChat(createdChat)

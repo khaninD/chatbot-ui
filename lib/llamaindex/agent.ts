@@ -25,7 +25,8 @@ export async function createAgent(
   temperature?: number,
   useCometAPI?: boolean,
   enableImageGeneration?: boolean,
-  userId?: string
+  userId?: string,
+  enableImageEditTool?: boolean
 ): Promise<{
   agent: ReturnType<typeof agent>
   servers: Array<{ cleanup: () => Promise<void> }>
@@ -64,8 +65,10 @@ export async function createAgent(
       })
       allTools.push(imageGenTool)
       console.log(`[LlamaIndex Agent] Image generation tool enabled`)
+    }
 
-      // Also add image editing tool
+    // Add image editing tool if needed (when images are in conversation history)
+    if (enableImageEditTool && apiKey) {
       const imageEditTool = createImageEditTool({
         apiKey,
         baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
@@ -173,15 +176,34 @@ export async function* runAgentStream(
   images?: string[],
   userId?: string
 ) {
+  // Determine if we have images from conversation history
+  const hasImages = images && images.length > 0
+
+  // Prepare system prompt with image context if images are present
+  let finalSystemPrompt = systemPrompt || ""
+  if (hasImages) {
+    const imageContext =
+      images!.length === 1
+        ? "\n\nIMPORTANT: The user has uploaded 1 image in this conversation. You have access to the edit_image tool. When the user asks to edit, modify, change, or transform the image, you MUST call the edit_image tool with image_index=0."
+        : `\n\nIMPORTANT: The user has uploaded ${images!.length} images in this conversation (numbered 0 to ${images!.length - 1}). You have access to the edit_image tool. When the user asks to edit, modify, change, or transform images, you MUST call the edit_image tool with the appropriate image_index parameter. If the user doesn't specify which image, ask them or default to image_index=0.`
+
+    finalSystemPrompt = finalSystemPrompt + imageContext
+    console.log(
+      `[LlamaIndex Agent] System prompt includes image context for ${images!.length} images`
+    )
+  }
+
+  // Create agent with image edit tool enabled if images are present
   const { agent: sqlAgent, servers } = await createAgent(
-    systemPrompt,
+    finalSystemPrompt,
     apiKey,
     model,
     toolUrls,
     temperature,
     useCometAPI,
     enableImageGeneration,
-    userId
+    userId,
+    hasImages // Enable image edit tool if images are in conversation
   )
 
   try {
@@ -191,30 +213,17 @@ export async function* runAgentStream(
       content: msg.content
     }))
 
-    // If images are provided, make them available to image editing tool
-    // IMPORTANT: Don't add image data to query - it would exceed token limits
-    let finalQuery = query
+    // Set user images for the edit tool if available
+    const finalQuery = query
 
-    if (images && images.length > 0) {
+    if (hasImages) {
       console.log(
-        `[LlamaIndex Agent] Setting ${images.length} user images for editing tools`
+        `[LlamaIndex Agent] Setting ${images!.length} user images for editing tools`
       )
       // Set images for the edit tool to use (stored separately, not in context)
-      setUserImages(images)
-
-      // Add SHORT context to the query so the agent knows images are available
-      // Don't include the actual image data!
-      if (images.length === 1) {
-        finalQuery =
-          query +
-          " [IMAGE_ATTACHED: User uploaded 1 image. Use edit_image tool to modify it.]"
-      } else {
-        finalQuery =
-          query +
-          ` [IMAGES_ATTACHED: User uploaded ${images.length} images (numbered 0-${images.length - 1}). Use edit_image tool with image_index parameter to modify a specific image. If user doesn't specify which image, ask them or default to image 0.]`
-      }
+      setUserImages(images!)
     } else {
-      // Clear any previously set images
+      // No images in history - clear any previously set images
       clearUserImages()
     }
 
