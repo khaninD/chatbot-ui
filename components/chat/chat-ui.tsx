@@ -188,7 +188,8 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
       agentModel: chat.agent_model || undefined,
       useAdvancedRAG: chat.use_advanced_rag || false,
       useReranking: chat.use_reranking || false,
-      enableImageGeneration: chat.enable_image_generation || false
+      enableImageGeneration: chat.enable_image_generation || false,
+      imageModel: chat.image_model || undefined
     })
   }
 

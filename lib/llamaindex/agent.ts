@@ -26,7 +26,8 @@ export async function createAgent(
   useCometAPI?: boolean,
   enableImageGeneration?: boolean,
   userId?: string,
-  enableImageEditTool?: boolean
+  enableImageEditTool?: boolean,
+  imageModel?: string
 ): Promise<{
   agent: ReturnType<typeof agent>
   servers: Array<{ cleanup: () => Promise<void> }>
@@ -60,11 +61,13 @@ export async function createAgent(
       const imageGenTool = createImageGenerationTool({
         apiKey,
         baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
-        model: "gpt-image-1.5",
+        model: imageModel || "gpt-image-1.5",
         userId
       })
       allTools.push(imageGenTool)
-      console.log(`[LlamaIndex Agent] Image generation tool enabled`)
+      console.log(
+        `[LlamaIndex Agent] Image generation tool enabled with model: ${imageModel || "gpt-image-1.5"}`
+      )
     }
 
     // Add image editing tool if needed (when images are in conversation history)
@@ -72,11 +75,13 @@ export async function createAgent(
       const imageEditTool = createImageEditTool({
         apiKey,
         baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
-        model: "gpt-image-1.5",
+        model: imageModel || "gpt-image-1.5",
         userId
       })
       allTools.push(imageEditTool)
-      console.log(`[LlamaIndex Agent] Image editing tool enabled`)
+      console.log(
+        `[LlamaIndex Agent] Image editing tool enabled with model: ${imageModel || "gpt-image-1.5"}`
+      )
     }
 
     console.log(`[LlamaIndex Agent] Total tools loaded: ${allTools.length}`)
@@ -174,7 +179,8 @@ export async function* runAgentStream(
   useCometAPI?: boolean,
   enableImageGeneration?: boolean,
   images?: string[],
-  userId?: string
+  userId?: string,
+  imageModel?: string
 ) {
   // Determine if we have images from conversation history
   const hasImages = images && images.length > 0
@@ -203,7 +209,8 @@ export async function* runAgentStream(
     useCometAPI,
     enableImageGeneration,
     userId,
-    hasImages // Enable image edit tool if images are in conversation
+    hasImages, // Enable image edit tool if images are in conversation
+    imageModel
   )
 
   try {

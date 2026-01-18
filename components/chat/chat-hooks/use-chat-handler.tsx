@@ -375,7 +375,8 @@ export const useChatHandler = () => {
           agent_model: chatSettings!.agentModel || null,
           use_advanced_rag: chatSettings!.useAdvancedRAG || false,
           use_reranking: chatSettings!.useReranking || false,
-          enable_image_generation: chatSettings!.enableImageGeneration || false
+          enable_image_generation: chatSettings!.enableImageGeneration || false,
+          image_model: chatSettings!.imageModel || null
         })
 
         setChats(prevChats => {

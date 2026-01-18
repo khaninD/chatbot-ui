@@ -267,7 +267,8 @@ export async function POST(request: Request) {
             !!cometApiKey,
             chatSettings.enableImageGeneration,
             userImages,
-            profile.user_id // Pass userId for image storage
+            profile.user_id, // Pass userId for image storage
+            chatSettings.imageModel // Pass selected image model
           )
 
           for await (const event of events) {

@@ -317,6 +317,7 @@ export type Database = {
           use_advanced_rag: boolean
           use_reranking: boolean
           enable_image_generation: boolean
+          image_model: string | null
         }
         Insert: {
           assistant_id?: string | null
@@ -340,6 +341,7 @@ export type Database = {
           use_advanced_rag?: boolean
           use_reranking?: boolean
           enable_image_generation?: boolean
+          image_model?: string | null
         }
         Update: {
           assistant_id?: string | null
@@ -363,6 +365,7 @@ export type Database = {
           use_advanced_rag?: boolean
           use_reranking?: boolean
           enable_image_generation?: boolean
+          image_model?: string | null
         }
         Relationships: [
           {

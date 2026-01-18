@@ -24,6 +24,21 @@ interface ImageGenerationResponse {
   }>
 }
 
+// Nano Banana (Gemini) API response types
+interface NanoBananaResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text?: string
+        inlineData?: {
+          mimeType: string
+          data: string
+        }
+      }>
+    }
+  }>
+}
+
 const imageGenerationSchema = {
   type: "object" as const,
   properties: {
@@ -54,9 +69,84 @@ const imageGenerationSchema = {
 }
 
 /**
+ * Generate image using Nano Banana (Gemini) API
+ */
+async function generateImageNanoBanana(
+  apiKey: string,
+  prompt: string,
+  userId?: string
+): Promise<string> {
+  const apiUrl =
+    "https://api.cometapi.com/v1beta/models/gemini-3-pro-image:generateContent"
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: apiKey
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseModalities: ["IMAGE"]
+      }
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: { message: response.statusText } }))
+    throw new Error(
+      `Nano Banana image generation failed: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  const data: NanoBananaResponse = await response.json()
+  const imagePart = data.candidates?.[0]?.content?.parts?.find(
+    part => part.inlineData
+  )
+
+  if (!imagePart?.inlineData?.data) {
+    throw new Error("No image data returned from Nano Banana API")
+  }
+
+  const base64Data = imagePart.inlineData.data
+  const imageSource = `data:image/png;base64,${base64Data}`
+
+  console.log(
+    `[ImageGenerationTool] Nano Banana image generated successfully (${Math.round(base64Data.length / 1024)}KB)`
+  )
+
+  // Upload to Supabase Storage
+  if (userId) {
+    try {
+      const finalImageUrl = await uploadGeneratedImage(
+        imageSource,
+        userId,
+        "generate_image_nanobanana"
+      )
+      return finalImageUrl
+    } catch (uploadError) {
+      console.error(`[ImageGenerationTool] Upload failed:`, uploadError)
+      return imageSource // Fallback to base64
+    }
+  }
+
+  return imageSource
+}
+
+/**
  * Creates an image generation tool for LlamaIndex agent
- * Uses OpenAI-compatible API (works with Comet API)
- * Returns base64 data URL for reliable image display
+ * Supports both OpenAI-compatible API and Nano Banana (Gemini) API
  */
 export function createImageGenerationTool(config: ImageGenerationConfig) {
   const { apiKey, baseURL, model = "gpt-image-1.5", userId } = config
@@ -77,12 +167,17 @@ export function createImageGenerationTool(config: ImageGenerationConfig) {
     )
 
     try {
+      // Use Nano Banana API for nano-banana-pro model
+      if (model === "nano-banana-pro") {
+        const imageUrl = await generateImageNanoBanana(apiKey, prompt, userId)
+        return `![Generated Image](${imageUrl})\n\n**Prompt:** ${prompt}\n**Model:** Nano Banana Pro`
+      }
+
+      // Use OpenAI-compatible API for other models
       const apiUrl = baseURL
         ? `${baseURL}/images/generations`
         : "https://api.openai.com/v1/images/generations"
 
-      // Note: Comet API doesn't support response_format parameter
-      // We'll get URL and convert to base64 for reliable display
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {

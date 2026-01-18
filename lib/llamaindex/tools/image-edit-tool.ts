@@ -23,6 +23,21 @@ interface ImageEditResponse {
   }>
 }
 
+// Nano Banana (Gemini) API response types
+interface NanoBananaResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text?: string
+        inlineData?: {
+          mimeType: string
+          data: string
+        }
+      }>
+    }
+  }>
+}
+
 const imageEditSchema = {
   type: "object" as const,
   properties: {
@@ -73,8 +88,105 @@ export function getUserImages(): string[] {
 }
 
 /**
+ * Edit image using Nano Banana (Gemini) API
+ */
+async function editImageNanoBanana(
+  apiKey: string,
+  prompt: string,
+  imageToEdit: string,
+  userId?: string
+): Promise<string> {
+  const apiUrl =
+    "https://api.cometapi.com/v1beta/models/gemini-3-pro-image:generateContent"
+
+  // Convert image to base64 if it's a URL
+  let base64Data: string
+  if (imageToEdit.startsWith("data:image")) {
+    // Extract base64 from data URL
+    base64Data = imageToEdit.split(",")[1]
+  } else {
+    // Fetch URL and convert to base64
+    const imageResponse = await fetch(imageToEdit)
+    const imageBlob = await imageResponse.blob()
+    const arrayBuffer = await imageBlob.arrayBuffer()
+    const bytes = new Uint8Array(arrayBuffer)
+    base64Data = btoa(String.fromCharCode(...bytes))
+  }
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: apiKey
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt
+            },
+            {
+              inlineData: {
+                mimeType: "image/png",
+                data: base64Data
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseModalities: ["IMAGE"]
+      }
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: { message: response.statusText } }))
+    throw new Error(
+      `Nano Banana image editing failed: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  const data: NanoBananaResponse = await response.json()
+  const imagePart = data.candidates?.[0]?.content?.parts?.find(
+    part => part.inlineData
+  )
+
+  if (!imagePart?.inlineData?.data) {
+    throw new Error("No image data returned from Nano Banana API")
+  }
+
+  const resultBase64Data = imagePart.inlineData.data
+  const imageSource = `data:image/png;base64,${resultBase64Data}`
+
+  console.log(
+    `[ImageEditTool] Nano Banana image edited successfully (${Math.round(resultBase64Data.length / 1024)}KB)`
+  )
+
+  // Upload to Supabase Storage
+  if (userId) {
+    try {
+      const finalImageUrl = await uploadGeneratedImage(
+        imageSource,
+        userId,
+        "edit_image_nanobanana"
+      )
+      return finalImageUrl
+    } catch (uploadError) {
+      console.error(`[ImageEditTool] Upload failed:`, uploadError)
+      return imageSource // Fallback to base64
+    }
+  }
+
+  return imageSource
+}
+
+/**
  * Creates an image editing tool for LlamaIndex agent
- * Uses OpenAI-compatible API (works with Comet API)
+ * Supports both OpenAI-compatible API and Nano Banana (Gemini) API
  * Edits user-uploaded images based on text prompts
  */
 export function createImageEditTool(config: ImageEditConfig) {
@@ -100,6 +212,18 @@ export function createImageEditTool(config: ImageEditConfig) {
     console.log(`[ImageEditTool] Parameters: model=${model}, size=${size}`)
 
     try {
+      // Use Nano Banana API for nano-banana-pro model
+      if (model === "nano-banana-pro") {
+        const imageUrl = await editImageNanoBanana(
+          apiKey,
+          prompt,
+          imageToEdit,
+          userId
+        )
+        return `![Edited Image](${imageUrl})\n\n**Edit prompt:** ${prompt}\n**Model:** Nano Banana Pro`
+      }
+
+      // Use OpenAI-compatible API for other models
       const apiUrl = baseURL
         ? `${baseURL}/images/edits`
         : "https://api.openai.com/v1/images/edits"
