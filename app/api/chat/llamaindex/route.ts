@@ -80,27 +80,37 @@ export async function POST(request: Request) {
       )
     }
 
-    // Extract last user message and images
+    // Extract last user message query
     const lastMessage = messages[messages.length - 1]
     let userQuery = ""
-    let userImages: string[] = []
 
     if (typeof lastMessage.content === "string") {
       userQuery = lastMessage.content
     } else if (Array.isArray(lastMessage.content)) {
-      // Extract text and images from multimodal content
+      // Extract text from multimodal content
       for (const part of lastMessage.content) {
         if (part.type === "text" && part.text) {
           userQuery += part.text
-        } else if (part.type === "image_url" && part.image_url?.url) {
-          userImages.push(part.image_url.url)
+        }
+      }
+    }
+
+    // Extract images from ALL user messages in conversation history
+    // This allows the model to access images from previous messages
+    let userImages: string[] = []
+    for (const msg of messages) {
+      if (msg.role === "user" && Array.isArray(msg.content)) {
+        for (const part of msg.content) {
+          if (part.type === "image_url" && part.image_url?.url) {
+            userImages.push(part.image_url.url)
+          }
         }
       }
     }
 
     if (userImages.length > 0) {
       console.log(
-        `[LlamaIndex] Found ${userImages.length} images in user message`
+        `[LlamaIndex] Found ${userImages.length} images in conversation history`
       )
     }
 

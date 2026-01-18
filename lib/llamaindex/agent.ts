@@ -204,9 +204,15 @@ export async function* runAgentStream(
 
       // Add SHORT context to the query so the agent knows images are available
       // Don't include the actual image data!
-      finalQuery =
-        query +
-        " [IMAGE_ATTACHED: User uploaded an image. Use edit_image tool to modify it.]"
+      if (images.length === 1) {
+        finalQuery =
+          query +
+          " [IMAGE_ATTACHED: User uploaded 1 image. Use edit_image tool to modify it.]"
+      } else {
+        finalQuery =
+          query +
+          ` [IMAGES_ATTACHED: User uploaded ${images.length} images (numbered 0-${images.length - 1}). Use edit_image tool with image_index parameter to modify a specific image. If user doesn't specify which image, ask them or default to image 0.]`
+      }
     } else {
       // Clear any previously set images
       clearUserImages()

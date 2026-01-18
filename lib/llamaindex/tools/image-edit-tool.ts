@@ -3,6 +3,7 @@ import { uploadGeneratedImage } from "@/db/storage/generated-images"
 
 interface ImageEditInput {
   prompt: string
+  image_index?: number // Which image to edit (0-based index), default is 0
   size?: "1024x1024" | "1792x1024" | "1024x1792"
 }
 
@@ -29,6 +30,11 @@ const imageEditSchema = {
       type: "string" as const,
       description:
         "A detailed description of the edits to make to the uploaded image. Describe what changes you want: add elements, remove objects, change colors, apply effects, etc."
+    },
+    image_index: {
+      type: "number" as const,
+      description:
+        "Which uploaded image to edit (0 for first image, 1 for second, etc.). Default is 0 (first image). Use this when user uploads multiple images and specifies which one to edit."
     },
     size: {
       type: "string" as const,
@@ -75,16 +81,21 @@ export function createImageEditTool(config: ImageEditConfig) {
   const { apiKey, baseURL, model = "gpt-image-1.5", userId } = config
 
   async function editImage(input: ImageEditInput): Promise<string> {
-    const { prompt, size = "1024x1024" } = input
+    const { prompt, image_index = 0, size = "1024x1024" } = input
 
-    // Check if we have an image to edit
+    // Check if we have images to edit
     if (pendingUserImages.length === 0) {
       return "Error: No image uploaded for editing. Please ask the user to upload an image first."
     }
 
-    const imageToEdit = pendingUserImages[0] // Use first image
+    // Validate image index
+    if (image_index < 0 || image_index >= pendingUserImages.length) {
+      return `Error: Invalid image index ${image_index}. User uploaded ${pendingUserImages.length} image(s). Valid indices: 0-${pendingUserImages.length - 1}.`
+    }
+
+    const imageToEdit = pendingUserImages[image_index]
     console.log(
-      `[ImageEditTool] Editing image with prompt: "${prompt.substring(0, 100)}..."`
+      `[ImageEditTool] Editing image #${image_index + 1}/${pendingUserImages.length} with prompt: "${prompt.substring(0, 100)}..."`
     )
     console.log(`[ImageEditTool] Parameters: model=${model}, size=${size}`)
 
@@ -163,8 +174,8 @@ export function createImageEditTool(config: ImageEditConfig) {
         throw new Error("No image URL or base64 data returned from API")
       }
 
-      // Clear pending images after successful edit
-      clearUserImages()
+      // Note: Don't clear images here - user might want to edit multiple images
+      // Images will be cleared at the start of next message in agent.ts
 
       // Upload image to Supabase Storage to get public URL
       // CRITICAL: Don't return base64 in tool result - it will exceed context limits!
@@ -205,7 +216,7 @@ export function createImageEditTool(config: ImageEditConfig) {
     {
       name: "edit_image",
       description:
-        "Edit or modify an image that the user has uploaded. Use this tool when the user uploads an image and asks to modify, edit, change, transform, or process it. You can add elements, remove objects, change colors, apply effects, or make any visual modifications based on the text description.",
+        "Edit or modify an image that the user has uploaded. Use this tool when the user uploads an image and asks to modify, edit, change, transform, or process it. You can add elements, remove objects, change colors, apply effects, or make any visual modifications based on the text description. If multiple images are uploaded, use the image_index parameter to specify which one to edit (0 for first image, 1 for second, etc.).",
       parameters: imageEditSchema
     }
   )
