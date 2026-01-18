@@ -9,6 +9,8 @@
     "prepare": "husky install",
     "clean": "npm run format:write",
     "dev": "next dev",
+    "dev:debug": "cross-env NODE_OPTIONS='--inspect' next dev",
+    "dev:verbose": "cross-env DEBUG=* next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

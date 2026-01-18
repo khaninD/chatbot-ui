@@ -1,5 +1,6 @@
 import { FunctionTool } from "@llamaindex/core/tools"
 import { uploadGeneratedImage } from "@/db/storage/generated-images"
+import { uint8ArrayToBase64 } from "./utils/image-utils"
 
 interface ImageEditInput {
   prompt: string
@@ -36,6 +37,22 @@ interface NanoBananaResponse {
       }>
     }
   }>
+}
+
+// Flux API response types
+interface FluxTaskResponse {
+  id: string
+  polling_url: string
+  cost?: number
+}
+
+interface FluxStatusResponse {
+  status: "Pending" | "Processing" | "Ready" | "Error" | "Failed"
+  output?: {
+    url?: string
+    images?: string[]
+  }
+  error?: string
 }
 
 const imageEditSchema = {
@@ -88,6 +105,131 @@ export function getUserImages(): string[] {
 }
 
 /**
+ * Edit image using Flux API (async with polling)
+ */
+async function editImageFlux(
+  apiKey: string,
+  prompt: string,
+  imageToEdit: string,
+  model: string,
+  size: string,
+  userId?: string
+): Promise<string> {
+  // Parse size
+  const [width, height] = size.split("x").map(Number)
+
+  // Convert image to base64 if it's a URL
+  let base64Data: string
+  if (imageToEdit.startsWith("data:image")) {
+    base64Data = imageToEdit.split(",")[1]
+  } else {
+    const imageResponse = await fetch(imageToEdit)
+    const imageBlob = await imageResponse.blob()
+    const arrayBuffer = await imageBlob.arrayBuffer()
+    const bytes = new Uint8Array(arrayBuffer)
+    base64Data = uint8ArrayToBase64(bytes)
+  }
+
+  // Submit edit task
+  const apiUrl = `https://api.cometapi.com/flux/v1/${model}`
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-key": apiKey
+    },
+    body: JSON.stringify({
+      prompt,
+      image_prompt: base64Data, // Reference image
+      width: width || 1024,
+      height: height || 1024
+    })
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    let errorMessage = response.statusText
+
+    try {
+      const errorJson = JSON.parse(errorText)
+      errorMessage =
+        errorJson.error?.message ||
+        errorJson.message ||
+        errorJson.error ||
+        errorText
+    } catch {
+      errorMessage = errorText || response.statusText
+    }
+
+    console.error(`[ImageEditTool] Flux API error:`, errorMessage)
+    throw new Error(`Flux image editing failed: ${errorMessage}`)
+  }
+
+  const taskData: FluxTaskResponse = await response.json()
+  console.log(`[ImageEditTool] Flux task created: ${taskData.id}, polling...`)
+
+  // Poll for completion
+  const maxAttempts = 60
+  let attempts = 0
+
+  while (attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    attempts++
+
+    const statusResponse = await fetch(taskData.polling_url, {
+      headers: { "x-key": apiKey }
+    })
+
+    if (!statusResponse.ok) {
+      throw new Error(`Failed to poll status: ${statusResponse.statusText}`)
+    }
+
+    const status: FluxStatusResponse = await statusResponse.json()
+    console.log(`[ImageEditTool] Flux status: ${status.status}`)
+
+    if (status.status === "Ready") {
+      const imageUrl = status.output?.url || status.output?.images?.[0] || null
+
+      if (!imageUrl) {
+        throw new Error("No image URL in Flux response")
+      }
+
+      console.log(
+        `[ImageEditTool] Flux image ready: ${imageUrl.substring(0, 80)}...`
+      )
+
+      // Download and upload to Supabase Storage
+      if (userId) {
+        try {
+          const imageResponse = await fetch(imageUrl)
+          const imageBlob = await imageResponse.blob()
+          const arrayBuffer = await imageBlob.arrayBuffer()
+          const bytes = new Uint8Array(arrayBuffer)
+          const base64 = uint8ArrayToBase64(bytes)
+          const imageSource = `data:image/png;base64,${base64}`
+
+          const finalImageUrl = await uploadGeneratedImage(
+            imageSource,
+            userId,
+            `edit_image_${model}`
+          )
+          return finalImageUrl
+        } catch (uploadError) {
+          console.error(`[ImageEditTool] Upload failed:`, uploadError)
+          return imageUrl
+        }
+      }
+
+      return imageUrl
+    } else if (status.status === "Error" || status.status === "Failed") {
+      throw new Error(`Flux editing failed: ${status.error || status.status}`)
+    }
+  }
+
+  throw new Error("Flux editing timeout after 60 seconds")
+}
+
+/**
  * Edit image using Nano Banana (Gemini) API
  */
 async function editImageNanoBanana(
@@ -110,7 +252,7 @@ async function editImageNanoBanana(
     const imageBlob = await imageResponse.blob()
     const arrayBuffer = await imageBlob.arrayBuffer()
     const bytes = new Uint8Array(arrayBuffer)
-    base64Data = btoa(String.fromCharCode(...bytes))
+    base64Data = uint8ArrayToBase64(bytes)
   }
 
   const response = await fetch(apiUrl, {
@@ -186,7 +328,10 @@ async function editImageNanoBanana(
 
 /**
  * Creates an image editing tool for LlamaIndex agent
- * Supports both OpenAI-compatible API and Nano Banana (Gemini) API
+ * Supports multiple APIs:
+ * - OpenAI-compatible API (gpt-image-1.5, etc.)
+ * - Nano Banana (Gemini) API (nano-banana-pro)
+ * - Flux API with polling (flex-2-pro, flux-*)
  * Edits user-uploaded images based on text prompts
  */
 export function createImageEditTool(config: ImageEditConfig) {
@@ -223,7 +368,20 @@ export function createImageEditTool(config: ImageEditConfig) {
         return `![Edited Image](${imageUrl})\n\n**Edit prompt:** ${prompt}\n**Model:** Nano Banana Pro`
       }
 
-      // Use OpenAI-compatible API for other models
+      // Use Flux API for flux models (flex-2-pro, etc.)
+      if (model === "flex-2-pro" || model.startsWith("flux-")) {
+        const imageUrl = await editImageFlux(
+          apiKey,
+          prompt,
+          imageToEdit,
+          model,
+          size,
+          userId
+        )
+        return `![Edited Image](${imageUrl})\n\n**Edit prompt:** ${prompt}\n**Model:** ${model}`
+      }
+
+      // Use OpenAI-compatible API for other models (gpt-image-1.5, etc.)
       const apiUrl = baseURL
         ? `${baseURL}/images/edits`
         : "https://api.openai.com/v1/images/edits"

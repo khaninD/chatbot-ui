@@ -402,6 +402,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
 
               <SelectContent>
                 <SelectItem value="gpt-image-1.5">GPT Image 1.5</SelectItem>
+                <SelectItem value="midjourney">Midjourney v6.1</SelectItem>
                 <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
                 <SelectItem value="flex-2-pro">Flex 2 Pro</SelectItem>
                 <SelectItem value="kling-image">Kling Image</SelectItem>

@@ -6,6 +6,11 @@ export const IMAGE_MODELS = [
     provider: "Comet API"
   },
   {
+    id: "midjourney",
+    name: "Midjourney v6.1",
+    provider: "Comet API"
+  },
+  {
     id: "nano-banana-pro",
     name: "Nano Banana Pro",
     provider: "Comet API"
