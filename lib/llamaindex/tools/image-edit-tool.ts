@@ -55,6 +55,35 @@ interface FluxStatusResponse {
   error?: string
 }
 
+// Midjourney Blend API response types
+interface MidjourneyBlendSubmitResponse {
+  code: number
+  description: string
+  result: string // task ID
+}
+
+interface MidjourneyBlendTaskResponse {
+  id: string
+  action: string
+  status:
+    | "NOT_START"
+    | "IN_QUEUE"
+    | "SUBMITTED"
+    | "IN_PROGRESS"
+    | "SUCCESS"
+    | "FAILURE"
+    | "MODAL"
+  prompt?: string
+  promptEn?: string
+  description?: string
+  submitTime?: number
+  startTime?: number
+  finishTime?: number
+  progress?: string
+  imageUrl?: string
+  failReason?: string
+}
+
 const imageEditSchema = {
   type: "object" as const,
   properties: {
@@ -327,9 +356,140 @@ async function editImageNanoBanana(
 }
 
 /**
+ * Edit image using Midjourney Blend API (async with polling)
+ * Note: Midjourney doesn't have a traditional "edit" API, so we use Blend
+ * which requires 2-5 images to blend together
+ */
+async function editImageMidjourney(
+  apiKey: string,
+  prompt: string,
+  imagesToEdit: string[],
+  userId?: string
+): Promise<string> {
+  const baseUrl = "https://api.cometapi.com"
+
+  // Convert all images to base64 data URLs
+  const imageDataUrls: string[] = []
+
+  for (const imageUrl of imagesToEdit) {
+    let imageDataUrl: string
+    if (imageUrl.startsWith("data:image")) {
+      imageDataUrl = imageUrl
+    } else {
+      const imageResponse = await fetch(imageUrl)
+      const imageBlob = await imageResponse.blob()
+      const arrayBuffer = await imageBlob.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      const base64Data = uint8ArrayToBase64(bytes)
+      imageDataUrl = `data:image/png;base64,${base64Data}`
+    }
+    imageDataUrls.push(imageDataUrl)
+  }
+
+  // Submit blend task with all images (2-5 required)
+  const submitResponse = await fetch(`${baseUrl}/mj/submit/blend`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      base64Array: imageDataUrls,
+      dimensions: "SQUARE",
+      botType: "MID_JOURNEY"
+    })
+  })
+
+  if (!submitResponse.ok) {
+    const errorText = await submitResponse.text()
+    throw new Error(`Midjourney blend submit failed: ${errorText}`)
+  }
+
+  const submitData: MidjourneyBlendSubmitResponse = await submitResponse.json()
+
+  if (submitData.code !== 1) {
+    throw new Error(`Midjourney blend submit failed: ${submitData.description}`)
+  }
+
+  const taskId = submitData.result
+  console.log(
+    `[ImageEditTool] Midjourney blend task created: ${taskId}, polling...`
+  )
+
+  // Poll for completion (max 180 seconds, check every 3 seconds)
+  const maxAttempts = 60
+  let attempts = 0
+
+  while (attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    attempts++
+
+    const statusResponse = await fetch(`${baseUrl}/mj/task/${taskId}/fetch`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`
+      }
+    })
+
+    if (!statusResponse.ok) {
+      throw new Error(
+        `Failed to poll Midjourney blend status: ${statusResponse.statusText}`
+      )
+    }
+
+    const task: MidjourneyBlendTaskResponse = await statusResponse.json()
+    console.log(
+      `[ImageEditTool] Midjourney blend status: ${task.status} ${task.progress || ""}`
+    )
+
+    if (task.status === "SUCCESS") {
+      if (!task.imageUrl) {
+        throw new Error("No image URL in Midjourney blend response")
+      }
+
+      console.log(
+        `[ImageEditTool] Midjourney blend image ready: ${task.imageUrl.substring(0, 80)}...`
+      )
+
+      // Download and upload to Supabase Storage
+      if (userId) {
+        try {
+          const imageResponse = await fetch(task.imageUrl)
+          const imageBlob = await imageResponse.blob()
+          const arrayBuffer = await imageBlob.arrayBuffer()
+          const bytes = new Uint8Array(arrayBuffer)
+          const base64Data = uint8ArrayToBase64(bytes)
+          const imageSource = `data:image/png;base64,${base64Data}`
+
+          const finalImageUrl = await uploadGeneratedImage(
+            imageSource,
+            userId,
+            "edit_image_midjourney"
+          )
+          return finalImageUrl
+        } catch (uploadError) {
+          console.error(`[ImageEditTool] Upload failed:`, uploadError)
+          return task.imageUrl
+        }
+      }
+
+      return task.imageUrl
+    } else if (task.status === "FAILURE") {
+      throw new Error(
+        `Midjourney blend failed: ${task.failReason || task.description}`
+      )
+    }
+
+    // Continue polling for other statuses
+  }
+
+  throw new Error("Midjourney blend timeout after 180 seconds")
+}
+
+/**
  * Creates an image editing tool for LlamaIndex agent
  * Supports multiple APIs:
  * - OpenAI-compatible API (gpt-image-1.5, etc.)
+ * - Midjourney Blend API (midjourney) - combines original image with AI-generated concepts
  * - Nano Banana (Gemini) API (nano-banana-pro)
  * - Flux API with polling (flex-2-pro, flux-*)
  * Edits user-uploaded images based on text prompts
@@ -357,6 +517,26 @@ export function createImageEditTool(config: ImageEditConfig) {
     console.log(`[ImageEditTool] Parameters: model=${model}, size=${size}`)
 
     try {
+      // Use Midjourney Blend API for midjourney model
+      if (model === "midjourney") {
+        // Midjourney Blend requires 2-5 images
+        if (pendingUserImages.length < 2) {
+          return `Error: Midjourney Blend API requires 2-5 images to blend together, but only ${pendingUserImages.length} image was uploaded. Please upload at least 2 images to use Midjourney Blend, or use a different model (gpt-image-1.5, nano-banana-pro, or flex-2-pro) for single image editing.`
+        }
+        if (pendingUserImages.length > 5) {
+          return `Error: Midjourney Blend API requires 2-5 images, but ${pendingUserImages.length} images were uploaded. Please upload between 2-5 images to use Midjourney Blend.`
+        }
+
+        // Use all uploaded images for blending
+        const imageUrl = await editImageMidjourney(
+          apiKey,
+          prompt,
+          pendingUserImages,
+          userId
+        )
+        return `![Edited Image](${imageUrl})\n\n**Edit prompt:** ${prompt}\n**Model:** Midjourney v6.1 (Blend)\n**Images blended:** ${pendingUserImages.length}`
+      }
+
       // Use Nano Banana API for nano-banana-pro model
       if (model === "nano-banana-pro") {
         const imageUrl = await editImageNanoBanana(
