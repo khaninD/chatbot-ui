@@ -13,6 +13,7 @@ import {
   setUserImages,
   clearUserImages
 } from "./tools/image-edit-tool"
+import { createMultiAgentCoordinator } from "./agents/multi-agent-coordinator"
 
 /**
  * Create a LlamaIndex agent with MCP tools
@@ -140,13 +141,18 @@ export async function createAgent(
     // For Comet API (OpenAI-compatible), always use OpenAI provider
     const llm = useAnthropicProvider ? anthropic(llmConfig) : openai(llmConfig)
 
-    // Create agent
-    const sqlAgent = agent({
-      name: "SQL Assistant",
-      systemPrompt: finalSystemPrompt,
-      tools: allTools as Parameters<typeof agent>[0]["tools"],
+    // Create multi-agent coordinator by default
+    console.log(`[LlamaIndex Agent] Creating multi-agent coordinator`)
+    const sqlAgent = createMultiAgentCoordinator({
       llm,
-      verbose: process.env.NODE_ENV === "development"
+      tools: allTools as any,
+      verbose: process.env.NODE_ENV === "development",
+      enabledAgents: {
+        researcher: true,
+        coder: true,
+        dataAnalyst: true,
+        imageSpecialist: enableImageGeneration || false
+      }
     })
 
     // Return cleanup functions for all MCP servers

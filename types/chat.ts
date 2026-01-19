@@ -15,6 +15,7 @@ export interface ChatSettings {
   useReranking?: boolean
   enableImageGeneration?: boolean
   imageModel?: string
+  useMultiAgent?: boolean
 }
 
 export interface ChatPayload {
