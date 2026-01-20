@@ -151,7 +151,8 @@ export async function createAgent(
         researcher: true,
         coder: true,
         dataAnalyst: true,
-        imageSpecialist: enableImageGeneration || false
+        imageSpecialist: true, // Always enable - edit_image works even if generation disabled
+        customTools: true
       }
     })
 
@@ -220,11 +221,22 @@ export async function* runAgentStream(
   )
 
   try {
-    // Convert chat history to ChatMessage format if provided
-    const formattedHistory = chatHistory?.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }))
+    // Convert chat history to ChatMessage format and filter out tool calls
+    // Tool calls (handoffs) should not be in history to avoid re-delegation loops
+    const formattedHistory = chatHistory
+      ?.filter(msg => {
+        // Keep only text messages, skip tool calls/results
+        // Tool calls typically contain handoff instructions that cause loops
+        const isToolCall =
+          msg.content.includes("handoff") ||
+          msg.content.includes("toAgent") ||
+          msg.content.includes("is now handling the request")
+        return !isToolCall
+      })
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
 
     // Set user images for the edit tool if available
     const finalQuery = query

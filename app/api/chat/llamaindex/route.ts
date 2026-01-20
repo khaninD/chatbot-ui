@@ -252,7 +252,7 @@ export async function POST(request: Request) {
           )
           console.log(`[LlamaIndex] Using Comet API: ${!!cometApiKey}`)
           console.log(
-            `[LlamaIndex] Image generation: ${chatSettings.enableImageGeneration ? "enabled" : "disabled"}`
+            `[LlamaIndex] Image model: ${chatSettings.imageModel || "gpt-image-1.5"}`
           )
 
           // Run the agent and stream events
@@ -265,7 +265,7 @@ export async function POST(request: Request) {
             temperature,
             conversationMessages,
             !!cometApiKey,
-            chatSettings.enableImageGeneration,
+            true, // Image generation always enabled
             userImages,
             profile.user_id, // Pass userId for image storage
             chatSettings.imageModel // Pass selected image model

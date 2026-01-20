@@ -353,63 +353,52 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
       </div>
 
       <div className="mt-4 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            checked={chatSettings.enableImageGeneration || false}
-            onCheckedChange={(value: boolean) =>
-              onChangeChatSettings({
-                ...chatSettings,
-                enableImageGeneration: value
-              })
-            }
-          />
-
-          <Label>Image Generation</Label>
-
-          {showTooltip && (
-            <WithTooltip
-              delayDuration={0}
-              display={
-                <div className="w-[400px] p-3">
-                  Enables the agent to generate and edit images using Comet API
-                  models. When enabled, you can ask the agent to create, draw,
-                  or generate images based on text descriptions.
-                </div>
-              }
-              trigger={
-                <IconInfoCircle className="cursor-hover:opacity-50" size={16} />
-              }
-            />
-          )}
-        </div>
-
-        {chatSettings.enableImageGeneration && (
-          <div className="space-y-1">
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
             <Label>Image Model</Label>
 
-            <Select
-              value={chatSettings.imageModel || "gpt-image-1.5"}
-              onValueChange={(value: string) =>
-                onChangeChatSettings({
-                  ...chatSettings,
-                  imageModel: value
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select image model" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="gpt-image-1.5">GPT Image 1.5</SelectItem>
-                <SelectItem value="midjourney">Midjourney v6.1</SelectItem>
-                <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
-                <SelectItem value="flex-2-pro">Flex 2 Pro</SelectItem>
-                <SelectItem value="kling-image">Kling Image</SelectItem>
-              </SelectContent>
-            </Select>
+            {showTooltip && (
+              <WithTooltip
+                delayDuration={0}
+                display={
+                  <div className="w-[400px] p-3">
+                    Select the image model for generating and editing images
+                    using Comet API. The agent can create, draw, or generate
+                    images based on text descriptions, and edit existing images.
+                  </div>
+                }
+                trigger={
+                  <IconInfoCircle
+                    className="cursor-hover:opacity-50"
+                    size={16}
+                  />
+                }
+              />
+            )}
           </div>
-        )}
+
+          <Select
+            value={chatSettings.imageModel || "gpt-image-1.5"}
+            onValueChange={(value: string) =>
+              onChangeChatSettings({
+                ...chatSettings,
+                imageModel: value
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select image model" />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="gpt-image-1.5">GPT Image 1.5</SelectItem>
+              <SelectItem value="midjourney">Midjourney v6.1</SelectItem>
+              <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
+              <SelectItem value="flex-2-pro">Flex 2 Pro</SelectItem>
+              <SelectItem value="kling-image">Kling Image</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   )

@@ -21,6 +21,7 @@ export interface MultiAgentConfig {
     coder?: boolean
     dataAnalyst?: boolean
     imageSpecialist?: boolean
+    customTools?: boolean
   }
 }
 

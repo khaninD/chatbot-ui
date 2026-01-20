@@ -448,8 +448,8 @@ export const handleCreateChat = async (
     agent_model: chatSettings.agentModel || null,
     use_advanced_rag: chatSettings.useAdvancedRAG || false,
     use_reranking: chatSettings.useReranking || false,
-    enable_image_generation: chatSettings.enableImageGeneration || false,
-    image_model: chatSettings.imageModel || null
+    enable_image_generation: true, // Always enabled
+    image_model: chatSettings.imageModel || "gpt-image-1.5"
   })
 
   setSelectedChat(createdChat)
