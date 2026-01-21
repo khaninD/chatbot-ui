@@ -102,12 +102,25 @@ export type CometLLMID =
   | "gemini-2.5-pro"
   | "gemini-2.5-flash"
   | "gemini-2.5-flash-lite"
+  | "gemini-3-pro-preview"
   // DeepSeek models via Comet
   | "deepseek-v3"
   | "deepseek-v3.1"
   | "deepseek-v3.2"
+  | "deepseek-chat-v3.1"
   | "deepseek-reasoner"
   | "deepseek-r1t2-chimera"
+  // xAI Grok models
+  | "grok-4"
+  // Anthropic simplified IDs (for Router AI compatibility)
+  | "claude-sonnet-4.5"
+  // Router AI specific model IDs (with routerai- prefix to avoid conflicts)
+  | "routerai-deepseek-v3.2"
+  | "routerai-deepseek-chat-v3.1"
+  | "routerai-gpt-5.2"
+  | "routerai-gemini-3-pro-preview"
+  | "routerai-claude-sonnet-4.5"
+  | "routerai-grok-4"
 
 export interface LLM {
   modelId: LLMID

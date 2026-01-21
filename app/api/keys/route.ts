@@ -14,6 +14,7 @@ export async function GET() {
     perplexity: VALID_ENV_KEYS.PERPLEXITY_API_KEY,
     openrouter: VALID_ENV_KEYS.OPENROUTER_API_KEY,
     comet: VALID_ENV_KEYS.COMET_API_KEY,
+    routerai: VALID_ENV_KEYS.ROUTER_AI_API_KEY,
     llamaindex: VALID_ENV_KEYS.OPENAI_API_KEY,
 
     openai_organization_id: VALID_ENV_KEYS.OPENAI_ORGANIZATION_ID,

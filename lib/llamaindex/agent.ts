@@ -24,11 +24,12 @@ export async function createAgent(
   model?: string,
   toolUrls?: string[],
   temperature?: number,
-  useCometAPI?: boolean,
+  useCustomAPI?: boolean,
   enableImageGeneration?: boolean,
   userId?: string,
   enableImageEditTool?: boolean,
-  imageModel?: string
+  imageModel?: string,
+  customAPIBaseURL?: string
 ): Promise<{
   agent: ReturnType<typeof agent>
   servers: Array<{ cleanup: () => Promise<void> }>
@@ -61,7 +62,7 @@ export async function createAgent(
     if (enableImageGeneration && apiKey) {
       const imageGenTool = createImageGenerationTool({
         apiKey,
-        baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
+        baseURL: customAPIBaseURL,
         model: imageModel || "gpt-image-1.5",
         userId
       })
@@ -75,7 +76,7 @@ export async function createAgent(
     if (enableImageEditTool && apiKey) {
       const imageEditTool = createImageEditTool({
         apiKey,
-        baseURL: useCometAPI ? "https://api.cometapi.com/v1" : undefined,
+        baseURL: customAPIBaseURL,
         model: imageModel || "gpt-image-1.5",
         userId
       })
@@ -105,14 +106,14 @@ export async function createAgent(
     }
 
     // Determine which provider to use
-    // IMPORTANT: Comet API is OpenAI-compatible, so always use OpenAI provider with Comet
+    // IMPORTANT: Custom APIs (Comet, Router AI) are OpenAI-compatible
     let useAnthropicProvider = false
 
-    if (useCometAPI) {
-      // Comet API - always use OpenAI provider (OpenAI-compatible)
-      llmConfig.baseURL = "https://api.cometapi.com/v1"
+    if (useCustomAPI && customAPIBaseURL) {
+      // Custom API (Comet or Router AI) - always use OpenAI provider (OpenAI-compatible)
+      llmConfig.baseURL = customAPIBaseURL
       console.log(
-        `[LlamaIndex Agent] Using Comet API (OpenAI-compatible) with model: ${llmConfig.model}`
+        `[LlamaIndex Agent] Using custom API (OpenAI-compatible) with baseURL: ${customAPIBaseURL}`
       )
     } else {
       // Direct API access - use native provider
@@ -134,11 +135,11 @@ export async function createAgent(
       temperature: llmConfig.temperature,
       baseURL: llmConfig.baseURL || "default",
       apiKeyLength: llmConfig.apiKey.length,
-      usingCometAPI: useCometAPI
+      usingCustomAPI: useCustomAPI
     })
 
     // Use Anthropic provider only for direct Anthropic API access
-    // For Comet API (OpenAI-compatible), always use OpenAI provider
+    // For custom APIs (Comet, Router AI - OpenAI-compatible), always use OpenAI provider
     const llm = useAnthropicProvider ? anthropic(llmConfig) : openai(llmConfig)
 
     // Create multi-agent coordinator by default
@@ -183,11 +184,12 @@ export async function* runAgentStream(
   toolUrls?: string[],
   temperature?: number,
   chatHistory?: Array<{ role: "user" | "assistant"; content: string }>,
-  useCometAPI?: boolean,
+  useCustomAPI?: boolean,
   enableImageGeneration?: boolean,
   images?: string[],
   userId?: string,
-  imageModel?: string
+  imageModel?: string,
+  customAPIBaseURL?: string
 ) {
   // Determine if we have images from conversation history
   const hasImages = images && images.length > 0
@@ -213,11 +215,12 @@ export async function* runAgentStream(
     model,
     toolUrls,
     temperature,
-    useCometAPI,
+    useCustomAPI,
     enableImageGeneration,
     userId,
     hasImages, // Enable image edit tool if images are in conversation
-    imageModel
+    imageModel,
+    customAPIBaseURL
   )
 
   try {

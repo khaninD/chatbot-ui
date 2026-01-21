@@ -66,12 +66,19 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
-    // Determine which API key to use - prefer Comet if available, fallback to OpenAI
+    // Determine which API key to use - priority: Router AI > Comet > OpenAI
+    const routerAiApiKey =
+      profile.routerai_api_key || process.env.ROUTER_AI_API_KEY
     const cometApiKey = profile.comet_api_key || process.env.COMET_API_KEY
     const apiKeyToUse =
-      cometApiKey || profile.openai_api_key || process.env.OPENAI_API_KEY
+      routerAiApiKey ||
+      cometApiKey ||
+      profile.openai_api_key ||
+      process.env.OPENAI_API_KEY
 
-    if (cometApiKey) {
+    if (routerAiApiKey) {
+      checkApiKey(routerAiApiKey, "Router AI")
+    } else if (cometApiKey) {
       checkApiKey(cometApiKey, "Comet")
     } else {
       checkApiKey(
@@ -250,10 +257,20 @@ export async function POST(request: Request) {
           console.log(
             `[LlamaIndex] Creating agent stream with model: ${chatSettings.agentModel || "gpt-4o"}`
           )
-          console.log(`[LlamaIndex] Using Comet API: ${!!cometApiKey}`)
+          console.log(
+            `[LlamaIndex] Using API: ${routerAiApiKey ? "Router AI" : cometApiKey ? "Comet" : "OpenAI"}`
+          )
           console.log(
             `[LlamaIndex] Image model: ${chatSettings.imageModel || "gpt-image-1.5"}`
           )
+
+          // Determine which custom API to use (Comet or Router AI)
+          const useCustomAPI = !!routerAiApiKey || !!cometApiKey
+          const customAPIBaseURL = routerAiApiKey
+            ? "https://routerai.ru/api/v1"
+            : cometApiKey
+              ? "https://api.cometapi.com/v1"
+              : undefined
 
           // Run the agent and stream events
           const events = runAgentStream(
@@ -264,11 +281,12 @@ export async function POST(request: Request) {
             mcpUrls,
             temperature,
             conversationMessages,
-            !!cometApiKey,
+            useCustomAPI,
             true, // Image generation always enabled
             userImages,
             profile.user_id, // Pass userId for image storage
-            chatSettings.imageModel // Pass selected image model
+            chatSettings.imageModel, // Pass selected image model
+            customAPIBaseURL
           )
 
           for await (const event of events) {

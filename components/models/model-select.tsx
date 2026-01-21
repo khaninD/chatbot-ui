@@ -122,6 +122,11 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                         Comet
                       </span>
                     )}
+                    {selectedModel?.provider === "routerai" && (
+                      <span className="ml-2 rounded bg-purple-500/20 px-1.5 py-0.5 text-xs text-purple-500">
+                        Router AI
+                      </span>
+                    )}
                   </div>
                 </>
               ) : (

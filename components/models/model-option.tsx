@@ -46,6 +46,11 @@ export const ModelOption: FC<ModelOptionProps> = ({ model, onSelect }) => {
                 Comet
               </span>
             )}
+            {model.provider === "routerai" && (
+              <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-xs text-purple-500">
+                Router AI
+              </span>
+            )}
           </div>
         </div>
       }
