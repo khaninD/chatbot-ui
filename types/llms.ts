@@ -9,6 +9,7 @@ export type LLMID =
   | PerplexityLLMID
   | CometLLMID
   | LlamaIndexLLMID
+  | DeepSeekLLMID
 
 // OpenAI Models (UPDATED 12/30/24)
 export type OpenAILLMID =
@@ -67,6 +68,11 @@ export type PerplexityLLMID =
 
 // LlamaIndex Models
 export type LlamaIndexLLMID = "llamaindex-sql-agent" // LlamaIndex SQL Agent with MCP
+
+// DeepSeek Models (direct API)
+export type DeepSeekLLMID =
+  | "deepseek-chat" // DeepSeek-V3.2 (Non-thinking Mode)
+  | "deepseek-reasoner" // DeepSeek-V3.2 (Thinking Mode)
 
 // Comet API Models - aggregator for multiple providers (январь 2026)
 export type CometLLMID =

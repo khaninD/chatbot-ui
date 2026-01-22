@@ -7,6 +7,7 @@ import { OPENAI_LLM_LIST } from "./openai-llm-list"
 import { PERPLEXITY_LLM_LIST } from "./perplexity-llm-list"
 import { COMET_LLM_LIST } from "./comet-llm-list"
 import { ROUTER_AI_LLM_LIST } from "./router-ai-llm-list"
+import { DEEPSEEK_LLM_LIST } from "./deepseek-llm-list"
 
 export const LLM_LIST: LLM[] = [
   ...OPENAI_LLM_LIST,
@@ -16,7 +17,8 @@ export const LLM_LIST: LLM[] = [
   ...PERPLEXITY_LLM_LIST,
   ...ANTHROPIC_LLM_LIST,
   ...COMET_LLM_LIST,
-  ...ROUTER_AI_LLM_LIST
+  ...ROUTER_AI_LLM_LIST,
+  ...DEEPSEEK_LLM_LIST
 ]
 
 export const LLM_LIST_MAP: Record<string, LLM[]> = {
@@ -28,5 +30,6 @@ export const LLM_LIST_MAP: Record<string, LLM[]> = {
   perplexity: PERPLEXITY_LLM_LIST,
   anthropic: ANTHROPIC_LLM_LIST,
   comet: COMET_LLM_LIST,
-  routerai: ROUTER_AI_LLM_LIST
+  routerai: ROUTER_AI_LLM_LIST,
+  deepseek: DEEPSEEK_LLM_LIST
 }

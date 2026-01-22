@@ -7,6 +7,7 @@ export type ModelProvider =
   | "perplexity"
   | "comet"
   | "routerai"
+  | "deepseek"
   | "ollama"
   | "openrouter"
   | "llamaindex"

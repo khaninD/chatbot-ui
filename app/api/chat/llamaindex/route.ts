@@ -1,12 +1,13 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
 import { buildRetrievalText } from "@/lib/build-prompt"
 import { Database, Tables } from "@/supabase/types"
-import { ChatSettings } from "@/types"
+import { ChatSettings, ModelProvider } from "@/types"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { ServerRuntime } from "next"
 import { runAgentStream } from "@/lib/llamaindex/agent"
 import { createRAGQueryEngine, queryRAG } from "@/lib/llamaindex/rag"
+import { LLM_LIST } from "@/lib/models/llm/llm-list"
 
 export const runtime: ServerRuntime = "nodejs" // Changed from "edge" to support LlamaIndex
 
@@ -66,25 +67,54 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
-    // Determine which API key to use - priority: Router AI > Comet > OpenAI
+    // Get the selected model and find its provider from LLM_LIST
+    const selectedModelId = chatSettings.agentModel || "gpt-4o"
+    const selectedModel = LLM_LIST.find(
+      model => model.modelId === selectedModelId
+    )
+    const modelProvider: ModelProvider = selectedModel?.provider || "openai"
+
+    // Get API keys from profile or environment
+    const deepseekApiKey =
+      profile.deepseek_api_key || process.env.DEEPSEEK_API_KEY
     const routerAiApiKey =
       profile.routerai_api_key || process.env.ROUTER_AI_API_KEY
     const cometApiKey = profile.comet_api_key || process.env.COMET_API_KEY
-    const apiKeyToUse =
-      routerAiApiKey ||
-      cometApiKey ||
-      profile.openai_api_key ||
-      process.env.OPENAI_API_KEY
+    const openaiApiKey = profile.openai_api_key || process.env.OPENAI_API_KEY
+    const anthropicApiKey =
+      profile.anthropic_api_key || process.env.ANTHROPIC_API_KEY
 
-    if (routerAiApiKey) {
-      checkApiKey(routerAiApiKey, "Router AI")
-    } else if (cometApiKey) {
-      checkApiKey(cometApiKey, "Comet")
-    } else {
-      checkApiKey(
-        profile.openai_api_key || process.env.OPENAI_API_KEY || null,
-        "OpenAI"
-      )
+    // Determine which API key to use based on the model's provider
+    let apiKeyToUse: string | null | undefined
+    let activeProvider: string
+
+    switch (modelProvider) {
+      case "deepseek":
+        apiKeyToUse = deepseekApiKey
+        activeProvider = "DeepSeek"
+        checkApiKey(deepseekApiKey || null, "DeepSeek")
+        break
+      case "routerai":
+        apiKeyToUse = routerAiApiKey
+        activeProvider = "Router AI"
+        checkApiKey(routerAiApiKey || null, "Router AI")
+        break
+      case "comet":
+        apiKeyToUse = cometApiKey
+        activeProvider = "Comet"
+        checkApiKey(cometApiKey || null, "Comet")
+        break
+      case "anthropic":
+        apiKeyToUse = anthropicApiKey
+        activeProvider = "Anthropic"
+        checkApiKey(anthropicApiKey || null, "Anthropic")
+        break
+      case "openai":
+      default:
+        apiKeyToUse = openaiApiKey
+        activeProvider = "OpenAI"
+        checkApiKey(openaiApiKey || null, "OpenAI")
+        break
     }
 
     // Extract last user message query
@@ -257,20 +287,32 @@ export async function POST(request: Request) {
           console.log(
             `[LlamaIndex] Creating agent stream with model: ${chatSettings.agentModel || "gpt-4o"}`
           )
-          console.log(
-            `[LlamaIndex] Using API: ${routerAiApiKey ? "Router AI" : cometApiKey ? "Comet" : "OpenAI"}`
-          )
+          console.log(`[LlamaIndex] Using API: ${activeProvider}`)
           console.log(
             `[LlamaIndex] Image model: ${chatSettings.imageModel || "gpt-image-1.5"}`
           )
 
-          // Determine which custom API to use (Comet or Router AI)
-          const useCustomAPI = !!routerAiApiKey || !!cometApiKey
-          const customAPIBaseURL = routerAiApiKey
-            ? "https://routerai.ru/api/v1"
-            : cometApiKey
-              ? "https://api.cometapi.com/v1"
-              : undefined
+          // Determine custom API base URL based on model provider
+          let useCustomAPI = false
+          let customAPIBaseURL: string | undefined
+
+          switch (modelProvider) {
+            case "deepseek":
+              useCustomAPI = true
+              customAPIBaseURL = "https://api.deepseek.com"
+              break
+            case "routerai":
+              useCustomAPI = true
+              customAPIBaseURL = "https://routerai.ru/api/v1"
+              break
+            case "comet":
+              useCustomAPI = true
+              customAPIBaseURL = "https://api.cometapi.com/v1"
+              break
+            default:
+              useCustomAPI = false
+              customAPIBaseURL = undefined
+          }
 
           // Run the agent and stream events
           const events = runAgentStream(

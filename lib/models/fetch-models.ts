@@ -12,7 +12,8 @@ export const fetchHostedModels = async (profile: Tables<"profiles">) => {
       "groq",
       "perplexity",
       "comet",
-      "routerai"
+      "routerai",
+      "deepseek"
     ]
 
     if (profile.use_azure_openai) {

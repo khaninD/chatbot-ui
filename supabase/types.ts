@@ -991,6 +991,7 @@ export type Database = {
           bio: string
           comet_api_key: string | null
           created_at: string
+          deepseek_api_key: string | null
           display_name: string
           google_gemini_api_key: string | null
           groq_api_key: string | null
@@ -1022,6 +1023,7 @@ export type Database = {
           bio: string
           comet_api_key?: string | null
           created_at?: string
+          deepseek_api_key?: string | null
           display_name: string
           google_gemini_api_key?: string | null
           groq_api_key?: string | null
@@ -1053,6 +1055,7 @@ export type Database = {
           bio?: string
           comet_api_key?: string | null
           created_at?: string
+          deepseek_api_key?: string | null
           display_name?: string
           google_gemini_api_key?: string | null
           groq_api_key?: string | null

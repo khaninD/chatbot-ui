@@ -470,5 +470,14 @@ export const CHAT_SETTING_LIMITS: Record<LLMID, ChatSettingLimits> = {
     MAX_TEMPERATURE: 2.0,
     MAX_TOKEN_OUTPUT_LENGTH: 16384,
     MAX_CONTEXT_LENGTH: 131072
+  },
+
+  // DEEPSEEK DIRECT API MODELS (direct DeepSeek API)
+  "deepseek-chat": {
+    MIN_TEMPERATURE: 0.0,
+    MAX_TEMPERATURE: 2.0,
+    MAX_TOKEN_OUTPUT_LENGTH: 8192,
+    MAX_CONTEXT_LENGTH: 128000
   }
+  // Note: "deepseek-reasoner" is already defined in Comet models above
 }

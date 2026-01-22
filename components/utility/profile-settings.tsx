@@ -129,6 +129,10 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
   const [cometAPIKey, setCometAPIKey] = useState(profile?.comet_api_key || "")
 
+  const [deepseekAPIKey, setDeepseekAPIKey] = useState(
+    profile?.deepseek_api_key || ""
+  )
+
   const [openaiEmbeddingModel, setOpenaiEmbeddingModel] = useState(
     profile?.openai_embedding_model || "text-embedding-3-small"
   )
@@ -174,7 +178,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       azure_openai_45_vision_id: azureOpenai45VisionID,
       azure_openai_embeddings_id: azureEmbeddingsID,
       openrouter_api_key: openrouterAPIKey,
-      comet_api_key: cometAPIKey
+      comet_api_key: cometAPIKey,
+      deepseek_api_key: deepseekAPIKey
     })
 
     setProfile(updatedProfile)
@@ -189,7 +194,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       "mistral",
       "groq",
       "perplexity",
-      "openrouter"
+      "openrouter",
+      "deepseek"
     ]
 
     providers.forEach(async provider => {
@@ -776,6 +782,22 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                       type="password"
                       value={cometAPIKey}
                       onChange={e => setCometAPIKey(e.target.value)}
+                    />
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                {envKeyMap["deepseek"] ? (
+                  <Label>DeepSeek API key set by admin.</Label>
+                ) : (
+                  <>
+                    <Label>DeepSeek API Key</Label>
+                    <Input
+                      placeholder="DeepSeek API Key"
+                      type="password"
+                      value={deepseekAPIKey}
+                      onChange={e => setDeepseekAPIKey(e.target.value)}
                     />
                   </>
                 )}
