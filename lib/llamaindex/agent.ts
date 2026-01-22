@@ -142,20 +142,50 @@ export async function createAgent(
     // For custom APIs (Comet, Router AI - OpenAI-compatible), always use OpenAI provider
     const llm = useAnthropicProvider ? anthropic(llmConfig) : openai(llmConfig)
 
-    // Create multi-agent coordinator by default
-    console.log(`[LlamaIndex Agent] Creating multi-agent coordinator`)
-    const sqlAgent = createMultiAgentCoordinator({
-      llm,
-      tools: allTools as any,
-      verbose: process.env.NODE_ENV === "development",
-      enabledAgents: {
-        researcher: true,
-        coder: true,
-        dataAnalyst: true,
-        imageSpecialist: true, // Always enable - edit_image works even if generation disabled
-        customTools: true
-      }
-    })
+    // Check if model supports tool_choice parameter for multi-agent handoff
+    // Models that DON'T support tool_choice (use single-agent mode):
+    const unsupportedMultiAgentModels = [
+      "deepseek" // DeepSeek V3, V3.2, Chat V3.1
+      // Add other models here if needed
+    ]
+
+    const supportsMultiAgent = !unsupportedMultiAgentModels.some(pattern =>
+      modelId.toLowerCase().includes(pattern)
+    )
+
+    let sqlAgent
+
+    if (!supportsMultiAgent) {
+      // Model doesn't support tool_choice parameter needed for multi-agent handoff
+      // Use single-agent mode instead
+      console.log(
+        `[LlamaIndex Agent] Creating single agent for model (no tool_choice support): ${modelId}`
+      )
+      sqlAgent = agent({
+        name: "SQL Assistant",
+        systemPrompt: finalSystemPrompt,
+        tools: allTools as Parameters<typeof agent>[0]["tools"],
+        llm,
+        verbose: process.env.NODE_ENV === "development"
+      })
+    } else {
+      // Create multi-agent coordinator for models that support tool_choice
+      console.log(
+        `[LlamaIndex Agent] Creating multi-agent coordinator for model: ${modelId}`
+      )
+      sqlAgent = createMultiAgentCoordinator({
+        llm,
+        tools: allTools as any,
+        verbose: process.env.NODE_ENV === "development",
+        enabledAgents: {
+          researcher: true,
+          coder: true,
+          dataAnalyst: true,
+          imageSpecialist: true, // Always enable - edit_image works even if generation disabled
+          customTools: true
+        }
+      })
+    }
 
     // Return cleanup functions for all MCP servers
     const cleanupFunctions = mcpServers.map(server => ({

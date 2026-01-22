@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Local Development
 ```bash
-# Start local development with Supabase and Next.js dev server
-npm run chat
+# # Start local development with Supabase and Next.js dev server
+# npm run chat
 
-# Restart Supabase and dev server (stops Supabase first)
-npm run restart
+# # Restart Supabase and dev server (stops Supabase first)
+# npm run restart
 
 # Regular Next.js dev server only (no Supabase start)
 npm run dev
@@ -23,22 +23,9 @@ npm run start
 ```
 
 ### Database Management
-```bash
-# Reset local database and regenerate types
-npm run db-reset
-
-# Apply migrations and regenerate types
-npm run db-migrate
-
-# Generate TypeScript types from Supabase schema
-npm run db-types
-
-# Pull remote database changes
-npm run db-pull
-
-# Push local migrations to remote database
-npm run db-push
-```
+- Создавать миграции только здесь:D:\apps\agent-client\supabase-docker\migrations
+- После создания миграции, можно применить ее (cd "D:\apps\agent-client\supabase-docker" && docker exec -i supabase-db psql -U postgres -d postgres < migrations/[name_migration].sql)
+- После успешного применения миграции необходимо написать новые типы в D:\apps\agent-client\chatbot-ui\supabase\types.ts
 
 ### Code Quality
 ```bash
@@ -64,7 +51,7 @@ npm run test
 npm run analyze
 ```
 
-### Supabase (must have Docker running)
+<!-- ### Supabase (must have Docker running)
 ```bash
 # Start Supabase locally
 supabase start
@@ -77,13 +64,13 @@ supabase status
 
 # Link to remote Supabase project
 supabase link --project-ref <project-id>
-```
+``` -->
 
-### Update Process
+<!-- ### Update Process
 ```bash
 # Pull latest changes and update database
 npm run update
-```
+``` -->
 
 ## Architecture Overview
 
@@ -336,7 +323,7 @@ The LlamaIndex agent loads tools from all configured MCP servers when a chat use
 - Ensure LlamaIndex packages are in `serverExternalPackages` in `next.config.js`
 - Verify `runtime = "nodejs"` in LlamaIndex route
 
-### Database type errors
+<!-- ### Database type errors
 ```bash
 npm run db-types
 ```
@@ -345,7 +332,7 @@ npm run db-types
 ```bash
 supabase status  # Check if running
 supabase start   # Start if stopped
-```
+``` -->
 
 ### Build errors with native modules
 Check `next.config.js` webpack configuration - native modules (sharp, pdf-parse, canvas) must be externalized.
