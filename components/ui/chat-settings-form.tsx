@@ -20,6 +20,8 @@ import {
 import { Slider } from "./slider"
 import { TextareaAutosize } from "./textarea-autosize"
 import { WithTooltip } from "./with-tooltip"
+import { LLM_LIST } from "@/lib/models/llm/llm-list"
+import { IMAGE_MODELS, DEFAULT_IMAGE_MODEL } from "@/lib/models/image-models"
 
 interface ChatSettingsFormProps {
   chatSettings: ChatSettings
@@ -46,8 +48,13 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
 
         <ModelSelect
           selectedModelId={chatSettings.model}
-          onSelectModel={model => {
-            onChangeChatSettings({ ...chatSettings, model })
+          selectedModelProvider={chatSettings.modelProvider}
+          onSelectModel={(model, provider) => {
+            onChangeChatSettings({
+              ...chatSettings,
+              model,
+              modelProvider: provider
+            })
           }}
         />
       </div>
@@ -116,7 +123,20 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
   function findOpenRouterModel(modelId: string) {
     return availableOpenRouterModels.find(model => model.modelId === modelId)
   }
-
+  // Find selected model from LLM_LIST to get provider
+  // Use both modelId and modelProvider for unique identification
+  const selectedModel = LLM_LIST.find(model => {
+    if (chatSettings.modelProvider) {
+      // If provider is specified, match both provider and modelId
+      return (
+        model.modelId === chatSettings.model &&
+        model.provider === chatSettings.modelProvider
+      )
+    }
+    // Fallback: match by modelId only (for backward compatibility)
+    return model.modelId === chatSettings.model
+  })
+  const isCometProvider = selectedModel?.provider === "comet"
   const MODEL_LIMITS = CHAT_SETTING_LIMITS[chatSettings.model] || {
     MIN_TEMPERATURE: 0,
     MAX_TEMPERATURE: 1,
@@ -352,54 +372,65 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
         )}
       </div>
 
-      <div className="mt-4 space-y-3">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            <Label>Image Model</Label>
+      {isCometProvider && (
+        <div className="mt-4 space-y-3">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <Label>Image Model</Label>
+              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-500">
+                Comet
+              </span>
 
-            {showTooltip && (
-              <WithTooltip
-                delayDuration={0}
-                display={
-                  <div className="w-[400px] p-3">
-                    Select the image model for generating and editing images
-                    using Comet API. The agent can create, draw, or generate
-                    images based on text descriptions, and edit existing images.
-                  </div>
-                }
-                trigger={
-                  <IconInfoCircle
-                    className="cursor-hover:opacity-50"
-                    size={16}
-                  />
-                }
-              />
-            )}
+              {showTooltip && (
+                <WithTooltip
+                  delayDuration={0}
+                  display={
+                    <div className="w-[400px] p-3">
+                      Select the image model for generating and editing images
+                      using Comet API. The agent can create, draw, or generate
+                      images based on text descriptions, and edit existing
+                      images.
+                    </div>
+                  }
+                  trigger={
+                    <IconInfoCircle
+                      className="cursor-hover:opacity-50"
+                      size={16}
+                    />
+                  }
+                />
+              )}
+            </div>
+
+            <Select
+              value={chatSettings.imageModel || DEFAULT_IMAGE_MODEL}
+              onValueChange={(value: string) =>
+                onChangeChatSettings({
+                  ...chatSettings,
+                  imageModel: value
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select image model" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {IMAGE_MODELS.map(model => (
+                  <SelectItem key={model.id} value={model.id}>
+                    <div className="flex w-full items-center justify-between">
+                      <span>{model.name}</span>
+                      <span className="ml-2 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-500">
+                        {model.provider}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          <Select
-            value={chatSettings.imageModel || "gpt-image-1.5"}
-            onValueChange={(value: string) =>
-              onChangeChatSettings({
-                ...chatSettings,
-                imageModel: value
-              })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select image model" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="gpt-image-1.5">GPT Image 1.5</SelectItem>
-              <SelectItem value="midjourney">Midjourney v6.1</SelectItem>
-              <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
-              <SelectItem value="flex-2-pro">Flex 2 Pro</SelectItem>
-              <SelectItem value="kling-image">Kling Image</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
-      </div>
+      )}
     </div>
   )
 }

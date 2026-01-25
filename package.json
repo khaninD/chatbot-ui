@@ -113,6 +113,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.11",
+    "@types/testing-library__react": "^10.0.1",
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",

@@ -16,11 +16,13 @@ import { ModelOption } from "./model-option"
 
 interface ModelSelectProps {
   selectedModelId: string
-  onSelectModel: (modelId: LLMID) => void
+  selectedModelProvider?: string
+  onSelectModel: (modelId: LLMID, provider: string) => void
 }
 
 export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
+  selectedModelProvider,
   onSelectModel
 }) => {
   const { t } = useTranslation()
@@ -47,8 +49,8 @@ export const ModelSelect: FC<ModelSelectProps> = ({
     }
   }, [isOpen])
 
-  const handleSelectModel = (modelId: LLMID) => {
-    onSelectModel(modelId)
+  const handleSelectModel = (modelId: LLMID, provider: string) => {
+    onSelectModel(modelId, provider)
     setIsOpen(false)
   }
 
@@ -78,9 +80,17 @@ export const ModelSelect: FC<ModelSelectProps> = ({
     {}
   )
 
-  const selectedModel = allModels.find(
-    model => model.modelId === selectedModelId
-  )
+  const selectedModel = allModels.find(model => {
+    if (selectedModelProvider) {
+      // Match both modelId and provider for unique identification
+      return (
+        model.modelId === selectedModelId &&
+        model.provider === selectedModelProvider
+      )
+    }
+    // Fallback: match by modelId only (for backward compatibility)
+    return model.modelId === selectedModelId
+  })
 
   if (!profile) return null
 
@@ -199,9 +209,11 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                         )}
 
                         <ModelOption
-                          key={model.modelId}
+                          key={`${model.provider}-${model.modelId}`}
                           model={model}
-                          onSelect={() => handleSelectModel(model.modelId)}
+                          onSelect={() =>
+                            handleSelectModel(model.modelId, model.provider)
+                          }
                         />
                       </div>
                     )

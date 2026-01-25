@@ -144,8 +144,8 @@ export async function createAgent(
 
     // Check if model supports tool_choice parameter for multi-agent handoff
     // Models that DON'T support tool_choice (use single-agent mode):
-    const unsupportedMultiAgentModels = [
-      "deepseek" // DeepSeek V3, V3.2, Chat V3.1
+    const unsupportedMultiAgentModels: string[] = [
+      //"deepseek" // DeepSeek V3, V3.2, Chat V3.1
       // Add other models here if needed
     ]
 
@@ -290,52 +290,77 @@ export async function* runAgentStream(
       chatHistory: formattedHistory
     })
 
-    // Stream events to the caller
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for await (const event of events as any) {
-      try {
-        if (agentToolCallEvent.include(event)) {
-          // Yield tool call information
-          yield {
-            type: "tool_call",
-            data: {
-              toolName: event.data.toolName,
-              toolInput: event.data.toolKwargs
-            }
-          }
-        }
+    // Stream events to the caller with error handling
 
-        if (agentToolCallResultEvent.include(event)) {
-          // Yield tool call result
-          yield {
-            type: "tool_result",
-            data: {
-              toolName: event.data.toolName,
-              toolOutput: event.data.toolOutput
+    try {
+      for await (const event of events as any) {
+        try {
+          if (agentToolCallEvent.include(event)) {
+            // Yield tool call information
+            yield {
+              type: "tool_call",
+              data: {
+                toolName: event.data.toolName,
+                toolInput: event.data.toolKwargs
+              }
             }
           }
-        }
 
-        if (agentStreamEvent.include(event)) {
-          // Yield text delta
-          yield {
-            type: "text_delta",
-            data: {
-              delta: event.data.delta
+          if (agentToolCallResultEvent.include(event)) {
+            // Yield tool call result
+            yield {
+              type: "tool_result",
+              data: {
+                toolName: event.data.toolName,
+                toolOutput: event.data.toolOutput
+              }
             }
           }
+
+          if (agentStreamEvent.include(event)) {
+            // Yield text delta
+            yield {
+              type: "text_delta",
+              data: {
+                delta: event.data.delta
+              }
+            }
+          }
+        } catch (eventError) {
+          console.error(
+            `[LlamaIndex Agent] Error processing event:`,
+            eventError
+          )
+          console.error(`[LlamaIndex Agent] Event data:`, event)
+          // Continue processing other events
         }
-      } catch (eventError) {
-        console.error(`[LlamaIndex Agent] Error processing event:`, eventError)
-        console.error(`[LlamaIndex Agent] Event data:`, event)
-        // Continue processing other events
       }
-    }
 
-    // Signal completion
-    yield {
-      type: "done",
-      data: {}
+      // Signal completion
+      yield {
+        type: "done",
+        data: {}
+      }
+    } catch (streamError) {
+      // Handle stream-level errors (e.g., "Tools not found")
+      console.error(`[LlamaIndex Agent] Stream error:`, streamError)
+
+      // Yield error event to client
+      yield {
+        type: "error",
+        data: {
+          error:
+            streamError instanceof Error
+              ? streamError.message
+              : "Unknown stream error"
+        }
+      }
+
+      // Still signal completion to close the stream gracefully
+      yield {
+        type: "done",
+        data: {}
+      }
     }
 
     // Cleanup all servers

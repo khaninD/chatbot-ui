@@ -498,7 +498,7 @@ export function createImageEditTool(config: ImageEditConfig) {
   const { apiKey, baseURL, model = "gpt-image-1.5", userId } = config
 
   async function editImage(input: ImageEditInput): Promise<string> {
-    const { prompt, image_index = 0, size = "1024x1024" } = input
+    const { prompt, image_index = 0, size = "1024x768" } = input
 
     // Check if we have images to edit
     if (pendingUserImages.length === 0) {

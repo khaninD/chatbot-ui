@@ -3,6 +3,7 @@ import { ChatMessage, LLMID } from "."
 
 export interface ChatSettings {
   model: LLMID
+  modelProvider?: string // Provider of the selected model (e.g., "openai", "comet", "anthropic")
   prompt: string
   temperature: number
   contextLength: number

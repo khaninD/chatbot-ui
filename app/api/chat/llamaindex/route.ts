@@ -45,9 +45,11 @@ interface ToolResultEvent {
   }
 }
 
-interface DoneEvent {
-  type: "done"
-  data: Record<string, never>
+interface ErrorEvent {
+  type: "error"
+  data: {
+    error: string
+  }
 }
 
 export async function POST(request: Request) {
@@ -69,11 +71,18 @@ export async function POST(request: Request) {
 
     // Get the selected model and find its provider from LLM_LIST
     const selectedModelId = chatSettings.agentModel || "gpt-4o"
-    const selectedModel = LLM_LIST.find(
-      model => model.modelId === selectedModelId
-    )
+    const selectedModel = LLM_LIST.find(model => {
+      if (chatSettings.modelProvider) {
+        // Match both modelId and provider for unique identification
+        return (
+          model.modelId === selectedModelId &&
+          model.provider === chatSettings.modelProvider
+        )
+      }
+      // Fallback: match by modelId only (for backward compatibility)
+      return model.modelId === selectedModelId
+    })
     const modelProvider: ModelProvider = selectedModel?.provider || "openai"
-
     // Get API keys from profile or environment
     const deepseekApiKey =
       profile.deepseek_api_key || process.env.DEEPSEEK_API_KEY
@@ -277,13 +286,34 @@ export async function POST(request: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        try {
-          // Helper to send SSE event
-          const sendSSE = (event: Record<string, unknown>) => {
+        // Track if stream has been closed
+        let streamClosed = false
+
+        const safeClose = () => {
+          if (!streamClosed) {
+            streamClosed = true
+            controller.close()
+          }
+        }
+
+        // Helper to send SSE event (declared before try block for use in catch)
+        const sendSSE = (event: Record<string, unknown>) => {
+          if (streamClosed) {
+            console.warn(
+              "[LlamaIndex] Attempted to send SSE after stream closed"
+            )
+            return
+          }
+          try {
             const sseData = `data: ${JSON.stringify(event)}\n\n`
             controller.enqueue(encoder.encode(sseData))
+          } catch (enqueueError) {
+            console.error("[LlamaIndex] Error enqueueing SSE:", enqueueError)
+            streamClosed = true
           }
+        }
 
+        try {
           console.log(
             `[LlamaIndex] Creating agent stream with model: ${chatSettings.agentModel || "gpt-4o"}`
           )
@@ -331,155 +361,254 @@ export async function POST(request: Request) {
             customAPIBaseURL
           )
 
-          for await (const event of events) {
-            switch (event.type) {
-              case "text_delta": {
-                const textEvent = event as TextDeltaEvent
-                // Send text delta event (Anthropic-style)
+          // Add timeout protection (5 minutes max)
+          const timeout = setTimeout(
+            () => {
+              if (!streamClosed) {
+                console.error(
+                  "[LlamaIndex] Agent timeout after 5 minutes - forcing close"
+                )
                 sendSSE({
                   type: "content_block_delta",
                   index: contentBlockIndex,
                   delta: {
                     type: "text_delta",
-                    text: textEvent.data.delta
+                    text: "\n\n⏱️ Request timeout: The agent took too long to respond. Please try again with a simpler request."
                   }
                 })
-                break
-              }
-
-              case "tool_call": {
-                const toolCallEvent = event as ToolCallEvent
-                // Log tool call with request details (like Claude Code)
-                console.log(`\n[LlamaIndex] 🔧 ${toolCallEvent.data.toolName}`)
-                if (toolCallEvent.data.toolInput) {
-                  console.log("Request:")
-                  console.log(
-                    JSON.stringify(toolCallEvent.data.toolInput, null, 2)
-                  )
-                }
-
-                // Generate unique tool_use ID and store it
-                const toolUseId = `tool_${Date.now()}_${contentBlockIndex}`
-                toolUseIdMap.set(toolCallEvent.data.toolName, toolUseId)
-
-                // Send tool_use content block start (Anthropic-style)
-                sendSSE({
-                  type: "content_block_start",
-                  index: contentBlockIndex++,
-                  content_block: {
-                    type: "tool_use",
-                    id: toolUseId,
-                    name: toolCallEvent.data.toolName,
-                    input: toolCallEvent.data.toolInput
-                  }
-                })
-
-                // Send content block stop
-                sendSSE({
-                  type: "content_block_stop",
-                  index: contentBlockIndex - 1
-                })
-                break
-              }
-
-              case "tool_result": {
-                const toolResultEvent = event as ToolResultEvent
-                // Log tool result with response details (like Claude Code)
-                console.log("Response:")
-                if (typeof toolResultEvent.data.toolOutput === "string") {
-                  try {
-                    // Check if string is empty or whitespace only
-                    if (!toolResultEvent.data.toolOutput.trim()) {
-                      console.log("[LlamaIndex] Empty tool output")
-                    } else {
-                      const parsed = JSON.parse(toolResultEvent.data.toolOutput)
-                      console.log(JSON.stringify(parsed, null, 2))
-                    }
-                  } catch (error) {
-                    console.log(
-                      `[LlamaIndex] Tool output (non-JSON): ${toolResultEvent.data.toolOutput}`
-                    )
-                    console.log(
-                      `[LlamaIndex] Parse error: ${error instanceof Error ? error.message : "Unknown error"}`
-                    )
-                  }
-                } else {
-                  console.log(
-                    JSON.stringify(toolResultEvent.data.toolOutput, null, 2)
-                  )
-                }
-                console.log(
-                  `[LlamaIndex] ✓ Tool completed: ${toolResultEvent.data.toolName}\n`
-                )
-
-                // Get the matching tool_use_id from the map
-                const toolUseId = toolUseIdMap.get(
-                  toolResultEvent.data.toolName
-                )
-
-                // Send tool_result content block to frontend
-                sendSSE({
-                  type: "content_block_start",
-                  index: contentBlockIndex++,
-                  content_block: {
-                    type: "tool_result",
-                    tool_use_id:
-                      toolUseId || `tool_unknown_${contentBlockIndex}`,
-                    tool_name: toolResultEvent.data.toolName,
-                    content: toolResultEvent.data.toolOutput
-                  }
-                })
-
-                // Send content block stop
-                sendSSE({
-                  type: "content_block_stop",
-                  index: contentBlockIndex - 1
-                })
-
-                // Also send a message delta to indicate tool use completion
                 sendSSE({
                   type: "message_delta",
                   delta: {
-                    stop_reason: "tool_use"
+                    stop_reason: "timeout"
                   }
                 })
-
-                // Clean up the map entry after use
-                toolUseIdMap.delete(toolResultEvent.data.toolName)
-                break
-              }
-
-              case "done":
-                // Agent finished - send final events
-                console.log("[LlamaIndex] Agent completed")
-
-                // Send message_delta with stop_reason
-                sendSSE({
-                  type: "message_delta",
-                  delta: {
-                    stop_reason: "end_turn"
-                  }
-                })
-
-                // Send message_stop event (Anthropic-style completion)
                 sendSSE({
                   type: "message_stop"
                 })
-                break
+                safeClose()
+              }
+            },
+            2 * 60 * 1000
+          ) // 2 minutes
+
+          try {
+            for await (const event of events) {
+              switch (event.type) {
+                case "text_delta": {
+                  const textEvent = event as TextDeltaEvent
+                  // Send text delta event (Anthropic-style)
+                  sendSSE({
+                    type: "content_block_delta",
+                    index: contentBlockIndex,
+                    delta: {
+                      type: "text_delta",
+                      text: textEvent.data.delta
+                    }
+                  })
+                  break
+                }
+
+                case "tool_call": {
+                  const toolCallEvent = event as ToolCallEvent
+                  // Log tool call with request details (like Claude Code)
+                  console.log(
+                    `\n[LlamaIndex] 🔧 ${toolCallEvent.data.toolName}`
+                  )
+                  if (toolCallEvent.data.toolInput) {
+                    console.log("Request:")
+                    console.log(
+                      JSON.stringify(toolCallEvent.data.toolInput, null, 2)
+                    )
+                  }
+
+                  // Generate unique tool_use ID and store it
+                  const toolUseId = `tool_${Date.now()}_${contentBlockIndex}`
+                  toolUseIdMap.set(toolCallEvent.data.toolName, toolUseId)
+
+                  // Send tool_use content block start (Anthropic-style)
+                  sendSSE({
+                    type: "content_block_start",
+                    index: contentBlockIndex++,
+                    content_block: {
+                      type: "tool_use",
+                      id: toolUseId,
+                      name: toolCallEvent.data.toolName,
+                      input: toolCallEvent.data.toolInput
+                    }
+                  })
+
+                  // Send content block stop
+                  sendSSE({
+                    type: "content_block_stop",
+                    index: contentBlockIndex - 1
+                  })
+                  break
+                }
+
+                case "tool_result": {
+                  const toolResultEvent = event as ToolResultEvent
+                  // Log tool result with response details (like Claude Code)
+                  console.log("Response:")
+                  if (typeof toolResultEvent.data.toolOutput === "string") {
+                    try {
+                      // Check if string is empty or whitespace only
+                      if (!toolResultEvent.data.toolOutput.trim()) {
+                        console.log("[LlamaIndex] Empty tool output")
+                      } else {
+                        const parsed = JSON.parse(
+                          toolResultEvent.data.toolOutput
+                        )
+                        console.log(JSON.stringify(parsed, null, 2))
+                      }
+                    } catch (error) {
+                      console.log(
+                        `[LlamaIndex] Tool output (non-JSON): ${toolResultEvent.data.toolOutput}`
+                      )
+                      console.log(
+                        `[LlamaIndex] Parse error: ${error instanceof Error ? error.message : "Unknown error"}`
+                      )
+                    }
+                  } else {
+                    console.log(
+                      JSON.stringify(toolResultEvent.data.toolOutput, null, 2)
+                    )
+                  }
+                  console.log(
+                    `[LlamaIndex] ✓ Tool completed: ${toolResultEvent.data.toolName}\n`
+                  )
+
+                  // Get the matching tool_use_id from the map
+                  const toolUseId = toolUseIdMap.get(
+                    toolResultEvent.data.toolName
+                  )
+
+                  // Send tool_result content block to frontend
+                  sendSSE({
+                    type: "content_block_start",
+                    index: contentBlockIndex++,
+                    content_block: {
+                      type: "tool_result",
+                      tool_use_id:
+                        toolUseId || `tool_unknown_${contentBlockIndex}`,
+                      tool_name: toolResultEvent.data.toolName,
+                      content: toolResultEvent.data.toolOutput
+                    }
+                  })
+
+                  // Send content block stop
+                  sendSSE({
+                    type: "content_block_stop",
+                    index: contentBlockIndex - 1
+                  })
+
+                  // Also send a message delta to indicate tool use completion
+                  sendSSE({
+                    type: "message_delta",
+                    delta: {
+                      stop_reason: "tool_use"
+                    }
+                  })
+
+                  // Clean up the map entry after use
+                  toolUseIdMap.delete(toolResultEvent.data.toolName)
+                  break
+                }
+
+                case "error": {
+                  const errorEvent = event as ErrorEvent
+                  // Agent encountered an error during streaming
+                  console.error(
+                    "[LlamaIndex] Agent stream error:",
+                    errorEvent.data.error
+                  )
+
+                  // Send error message as text delta to show user what went wrong
+                  sendSSE({
+                    type: "content_block_delta",
+                    index: contentBlockIndex,
+                    delta: {
+                      type: "text_delta",
+                      text: `\n\n❌ Error: ${errorEvent.data.error}\n\nThe agent encountered an error and will stop processing. Please try again or rephrase your request.`
+                    }
+                  })
+
+                  // Send stop reason
+                  sendSSE({
+                    type: "message_delta",
+                    delta: {
+                      stop_reason: "error"
+                    }
+                  })
+
+                  // Send message_stop event
+                  sendSSE({
+                    type: "message_stop"
+                  })
+                  break
+                }
+
+                case "done":
+                  // Agent finished - send final events
+                  console.log("[LlamaIndex] Agent completed")
+
+                  // Send message_delta with stop_reason
+                  sendSSE({
+                    type: "message_delta",
+                    delta: {
+                      stop_reason: "end_turn"
+                    }
+                  })
+
+                  // Send message_stop event (Anthropic-style completion)
+                  sendSSE({
+                    type: "message_stop"
+                  })
+                  break
+              }
             }
+          } finally {
+            // Clear timeout when agent finishes
+            clearTimeout(timeout)
           }
 
-          controller.close()
+          safeClose()
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Agent error"
           console.error("[LlamaIndex] Agent error:", error)
-          const sseData = `data: ${JSON.stringify({
-            type: "error",
-            error: errorMessage
-          })}\n\n`
-          controller.enqueue(encoder.encode(sseData))
-          controller.close()
+
+          if (!streamClosed) {
+            try {
+              // Send error message to client
+              sendSSE({
+                type: "content_block_delta",
+                index: contentBlockIndex,
+                delta: {
+                  type: "text_delta",
+                  text: `\n\n❌ Unexpected error: ${errorMessage}\n\nThe agent has stopped. Please try again.`
+                }
+              })
+
+              // Send stop events
+              sendSSE({
+                type: "message_delta",
+                delta: {
+                  stop_reason: "error"
+                }
+              })
+
+              sendSSE({
+                type: "message_stop"
+              })
+            } catch (sendError) {
+              console.error(
+                "[LlamaIndex] Error sending error message:",
+                sendError
+              )
+            }
+          }
+
+          safeClose()
         }
       }
     })

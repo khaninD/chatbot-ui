@@ -4,7 +4,7 @@ import { uint8ArrayToBase64 } from "./utils/image-utils"
 
 interface ImageGenerationInput {
   prompt: string
-  size?: "1024x1024" | "1792x1024" | "1024x1792"
+  size?: "1024x768" | "1792x1024" | "1024x1792"
   quality?: "standard" | "hd"
   style?: "vivid" | "natural"
 }
