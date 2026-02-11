@@ -2,14 +2,14 @@ import { SidebarCreateItem } from "@/components/sidebar/items/all/sidebar-create
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TextareaAutosize } from "@/components/ui/textarea-autosize"
-import { ChatbotUIContext } from "@/context/context"
+import { useProfileStore, useWorkspaceStore } from "@/stores"
 import {
   MCP_SERVER_DESCRIPTION_MAX,
   MCP_SERVER_NAME_MAX,
   MCP_SERVER_URL_MAX
 } from "@/db/limits"
 import { TablesInsert } from "@/supabase/types"
-import { FC, useContext, useState } from "react"
+import { FC, useState } from "react"
 
 interface CreateMcpServerProps {
   isOpen: boolean
@@ -20,7 +20,8 @@ export const CreateMcpServer: FC<CreateMcpServerProps> = ({
   isOpen,
   onOpenChange
 }) => {
-  const { profile, selectedWorkspace } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const [isTyping, setIsTyping] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")

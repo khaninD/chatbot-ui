@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore } from "@/stores"
 import { deleteAssistant } from "@/db/assistants"
 import { deleteChat } from "@/db/chats"
 import { deleteCollection } from "@/db/collections"
@@ -21,7 +21,7 @@ import { deleteFileFromStorage } from "@/db/storage/files"
 import { deleteTool } from "@/db/tools"
 import { Tables } from "@/supabase/types"
 import { ContentType, DataItemType } from "@/types"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 interface SidebarDeleteItemProps {
@@ -34,17 +34,16 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   contentType
 }) => {
   const { t } = useTranslation()
-  const {
-    setChats,
-    setPresets,
-    setPrompts,
-    setFiles,
-    setCollections,
-    setAssistants,
-    setTools,
-    setModels,
-    setMcpServers
-  } = useContext(ChatbotUIContext)
+  const chats = useItemsStore(state => state.chats)
+  const setChats = useItemsStore(state => state.setChats)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const setTools = useItemsStore(state => state.setTools)
+  const setModels = useItemsStore(state => state.setModels)
+  const setMcpServers = useItemsStore(state => state.setMcpServers)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -69,9 +68,7 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     },
     assistants: async (assistant: Tables<"assistants">) => {
       await deleteAssistant(assistant.id)
-      setChats(prevState =>
-        prevState.filter(chat => chat.assistant_id !== assistant.id)
-      )
+      setChats(chats.filter(chat => chat.assistant_id !== assistant.id))
     },
     tools: async (tool: Tables<"tools">) => {
       await deleteTool(tool.id)
@@ -84,28 +81,61 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     }
   }
 
-  const stateUpdateFunctions = {
-    chats: setChats,
-    presets: setPresets,
-    prompts: setPrompts,
-    files: setFiles,
-    collections: setCollections,
-    assistants: setAssistants,
-    tools: setTools,
-    models: setModels,
-    mcp_servers: setMcpServers
+  const updateStateList = (
+    updater: (items: DataItemType[]) => DataItemType[]
+  ) => {
+    switch (contentType) {
+      case "chats":
+        setChats(prev => updater(prev as DataItemType[]) as Tables<"chats">[])
+        break
+      case "presets":
+        setPresets(
+          prev => updater(prev as DataItemType[]) as Tables<"presets">[]
+        )
+        break
+      case "prompts":
+        setPrompts(
+          prev => updater(prev as DataItemType[]) as Tables<"prompts">[]
+        )
+        break
+      case "files":
+        setFiles(prev => updater(prev as DataItemType[]) as Tables<"files">[])
+        break
+      case "collections":
+        setCollections(
+          prev => updater(prev as DataItemType[]) as Tables<"collections">[]
+        )
+        break
+      case "assistants":
+        setAssistants(
+          prev => updater(prev as DataItemType[]) as Tables<"assistants">[]
+        )
+        break
+      case "tools":
+        setTools(prev => updater(prev as DataItemType[]) as Tables<"tools">[])
+        break
+      case "models":
+        setModels(prev => updater(prev as DataItemType[]) as Tables<"models">[])
+        break
+      case "mcp_servers":
+        setMcpServers(
+          prev => updater(prev as DataItemType[]) as Tables<"mcp_servers">[]
+        )
+        break
+      default:
+        break
+    }
   }
 
   const handleDelete = async () => {
     const deleteFunction = deleteFunctions[contentType]
-    const setStateFunction = stateUpdateFunctions[contentType]
 
-    if (!deleteFunction || !setStateFunction) return
+    if (!deleteFunction) return
 
-    await deleteFunction(item as any)
+    await deleteFunction(item as DataItemType)
 
-    setStateFunction((prevItems: any) =>
-      prevItems.filter((prevItem: any) => prevItem.id !== item.id)
+    updateStateList(prevItems =>
+      prevItems.filter(prevItem => prevItem.id !== item.id)
     )
 
     setShowDialog(false)

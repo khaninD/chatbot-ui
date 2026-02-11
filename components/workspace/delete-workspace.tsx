@@ -9,10 +9,10 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore, useWorkspaceStore } from "@/stores"
 import { deleteWorkspace } from "@/db/workspaces"
 import { Tables } from "@/supabase/types"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { Input } from "../ui/input"
 import { useRouter } from "next/navigation"
 
@@ -25,7 +25,11 @@ export const DeleteWorkspace: FC<DeleteWorkspaceProps> = ({
   workspace,
   onDelete
 }) => {
-  const { setWorkspaces, setSelectedWorkspace } = useContext(ChatbotUIContext)
+  const workspaces = useItemsStore(state => state.workspaces)
+  const setWorkspaces = useItemsStore(state => state.setWorkspaces)
+  const setSelectedWorkspace = useWorkspaceStore(
+    state => state.setSelectedWorkspace
+  )
   const { handleNewChat } = useChatHandler()
   const router = useRouter()
 
@@ -38,18 +42,14 @@ export const DeleteWorkspace: FC<DeleteWorkspaceProps> = ({
   const handleDeleteWorkspace = async () => {
     await deleteWorkspace(workspace.id)
 
-    setWorkspaces(prevWorkspaces => {
-      const filteredWorkspaces = prevWorkspaces.filter(
-        w => w.id !== workspace.id
-      )
+    const filteredWorkspaces = workspaces.filter(w => w.id !== workspace.id)
+    setWorkspaces(filteredWorkspaces)
 
-      const defaultWorkspace = filteredWorkspaces[0]
-
+    const defaultWorkspace = filteredWorkspaces[0]
+    if (defaultWorkspace) {
       setSelectedWorkspace(defaultWorkspace)
       router.push(`/${defaultWorkspace.id}/chat`)
-
-      return filteredWorkspaces
-    })
+    }
 
     setShowWorkspaceDialog(false)
     onDelete()

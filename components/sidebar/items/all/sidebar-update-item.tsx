@@ -9,7 +9,12 @@ import {
   SheetTrigger
 } from "@/components/ui/sheet"
 import { AssignWorkspaces } from "@/components/workspace/assign-workspaces"
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useItemsStore,
+  useProfileStore,
+  useWorkspaceStore
+} from "@/stores"
 import {
   createAssistantCollection,
   deleteAssistantCollection,
@@ -86,8 +91,7 @@ import {
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { Tables, TablesUpdate } from "@/supabase/types"
 import { CollectionFile, ContentType, DataItemType } from "@/types"
-import { FC, useContext, useEffect, useRef, useState } from "react"
-import profile from "react-syntax-highlighter/dist/esm/languages/hljs/profile"
+import { FC, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { SidebarDeleteItem } from "./sidebar-delete-item"
 
@@ -96,8 +100,8 @@ interface SidebarUpdateItemProps {
   item: DataItemType
   contentType: ContentType
   children: React.ReactNode
-  renderInputs: (renderState: any) => React.JSX.Element
-  updateState: any
+  renderInputs: (renderState: unknown) => React.JSX.Element
+  updateState: unknown
 }
 
 export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
@@ -108,20 +112,21 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
   updateState,
   isTyping
 }) => {
-  const {
-    workspaces,
-    selectedWorkspace,
-    setChats,
-    setPresets,
-    setPrompts,
-    setFiles,
-    setCollections,
-    setAssistants,
-    setTools,
-    setModels,
-    setMcpServers,
-    setAssistantImages
-  } = useContext(ChatbotUIContext)
+  const workspaces = useItemsStore(state => state.workspaces)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const setChats = useItemsStore(state => state.setChats)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const setTools = useItemsStore(state => state.setTools)
+  const setModels = useItemsStore(state => state.setModels)
+  const setMcpServers = useItemsStore(state => state.setMcpServers)
+  const setAssistantImages = useAssistantStore(
+    state => state.setAssistantImages
+  )
+  const profile = useProfileStore(state => state.profile)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -311,13 +316,9 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     }
 
     if (deleteList.map(w => w.id).includes(selectedWorkspace.id)) {
-      const setStateFunction = stateUpdateFunctions[contentType]
-
-      if (setStateFunction) {
-        setStateFunction((prevItems: any) =>
-          prevItems.filter((prevItem: any) => prevItem.id !== item.id)
-        )
-      }
+      updateStateList(prevItems =>
+        prevItems.filter(prevItem => prevItem.id !== item.id)
+      )
     }
 
     const createList = selectedWorkspaces.filter(
@@ -333,7 +334,7 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
           user_id: workspace.user_id,
           [itemIdKey]: itemId,
           workspace_id: workspace.id
-        } as any
+        } as { user_id: string; workspace_id: string } & Record<string, string>
       })
     )
   }
@@ -348,7 +349,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         presetId,
         deletePresetWorkspace,
-        createPresetWorkspaces as any,
+        createPresetWorkspaces as (
+          workspaces: {
+            user_id: string
+            preset_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "preset_id"
       )
 
@@ -362,7 +369,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         promptId,
         deletePromptWorkspace,
-        createPromptWorkspaces as any,
+        createPromptWorkspaces as (
+          workspaces: {
+            user_id: string
+            prompt_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "prompt_id"
       )
 
@@ -376,7 +389,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         fileId,
         deleteFileWorkspace,
-        createFileWorkspaces as any,
+        createFileWorkspaces as (
+          workspaces: {
+            user_id: string
+            file_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "file_id"
       )
 
@@ -422,7 +441,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         collectionId,
         deleteCollectionWorkspace,
-        createCollectionWorkspaces as any,
+        createCollectionWorkspaces as (
+          workspaces: {
+            user_id: string
+            collection_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "collection_id"
       )
 
@@ -548,7 +573,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         assistantId,
         deleteAssistantWorkspace,
-        createAssistantWorkspaces as any,
+        createAssistantWorkspaces as (
+          workspaces: {
+            user_id: string
+            assistant_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "assistant_id"
       )
 
@@ -562,7 +593,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         toolId,
         deleteToolWorkspace,
-        createToolWorkspaces as any,
+        createToolWorkspaces as (
+          workspaces: {
+            user_id: string
+            tool_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "tool_id"
       )
 
@@ -576,7 +613,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         modelId,
         deleteModelWorkspace,
-        createModelWorkspaces as any,
+        createModelWorkspaces as (
+          workspaces: {
+            user_id: string
+            model_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "model_id"
       )
 
@@ -593,7 +636,13 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         mcpServerId,
         deleteMcpServerWorkspace,
-        createMcpServerWorkspaces as any,
+        createMcpServerWorkspaces as (
+          workspaces: {
+            user_id: string
+            mcp_server_id: string
+            workspace_id: string
+          }[]
+        ) => Promise<void>,
         "mcp_server_id"
       )
 
@@ -601,30 +650,62 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     }
   }
 
-  const stateUpdateFunctions = {
-    chats: setChats,
-    presets: setPresets,
-    prompts: setPrompts,
-    files: setFiles,
-    collections: setCollections,
-    assistants: setAssistants,
-    tools: setTools,
-    models: setModels,
-    mcp_servers: setMcpServers
+  const updateStateList = (
+    updater: (items: DataItemType[]) => DataItemType[]
+  ) => {
+    switch (contentType) {
+      case "chats":
+        setChats(prev => updater(prev as DataItemType[]) as Tables<"chats">[])
+        break
+      case "presets":
+        setPresets(
+          prev => updater(prev as DataItemType[]) as Tables<"presets">[]
+        )
+        break
+      case "prompts":
+        setPrompts(
+          prev => updater(prev as DataItemType[]) as Tables<"prompts">[]
+        )
+        break
+      case "files":
+        setFiles(prev => updater(prev as DataItemType[]) as Tables<"files">[])
+        break
+      case "collections":
+        setCollections(
+          prev => updater(prev as DataItemType[]) as Tables<"collections">[]
+        )
+        break
+      case "assistants":
+        setAssistants(
+          prev => updater(prev as DataItemType[]) as Tables<"assistants">[]
+        )
+        break
+      case "tools":
+        setTools(prev => updater(prev as DataItemType[]) as Tables<"tools">[])
+        break
+      case "models":
+        setModels(prev => updater(prev as DataItemType[]) as Tables<"models">[])
+        break
+      case "mcp_servers":
+        setMcpServers(
+          prev => updater(prev as DataItemType[]) as Tables<"mcp_servers">[]
+        )
+        break
+      default:
+        break
+    }
   }
 
   const handleUpdate = async () => {
     try {
       const updateFunction = updateFunctions[contentType]
-      const setStateFunction = stateUpdateFunctions[contentType]
-
-      if (!updateFunction || !setStateFunction) return
+      if (!updateFunction) return
       if (isTyping) return // Prevent update while typing
 
       const updatedItem = await updateFunction(item.id, updateState)
 
-      setStateFunction((prevItems: any) =>
-        prevItems.map((prevItem: any) =>
+      updateStateList(prevItems =>
+        prevItems.map(prevItem =>
           prevItem.id === item.id ? updatedItem : prevItem
         )
       )

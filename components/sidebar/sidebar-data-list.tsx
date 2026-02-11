@@ -1,4 +1,4 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore } from "@/stores"
 import { updateAssistant } from "@/db/assistants"
 import { updateChat } from "@/db/chats"
 import { updateCollection } from "@/db/collections"
@@ -11,7 +11,7 @@ import { updateTool } from "@/db/tools"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
 import { ContentType, DataItemType, DataListType } from "@/types"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Separator } from "../ui/separator"
 import { AssistantItem } from "./items/assistants/assistant-item"
@@ -37,17 +37,15 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   folders
 }) => {
   const { t } = useTranslation()
-  const {
-    setChats,
-    setPresets,
-    setPrompts,
-    setFiles,
-    setCollections,
-    setAssistants,
-    setTools,
-    setModels,
-    setMcpServers
-  } = useContext(ChatbotUIContext)
+  const setChats = useItemsStore(state => state.setChats)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const setTools = useItemsStore(state => state.setTools)
+  const setModels = useItemsStore(state => state.setModels)
+  const setMcpServers = useItemsStore(state => state.setMcpServers)
 
   const divRef = useRef<HTMLDivElement>(null)
 
@@ -107,9 +105,10 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   }
 
   const getSortedData = (
-    data: any,
+    data: DataListType,
     dateCategory: "Today" | "Yesterday" | "Previous Week" | "Older"
   ) => {
+    const typedData = data as DataItemType[]
     const now = new Date()
     const todayStart = new Date(now.setHours(0, 0, 0, 0))
     const yesterdayStart = new Date(
@@ -119,8 +118,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
       new Date().setDate(todayStart.getDate() - 7)
     )
 
-    return data
-      .filter((item: any) => {
+    return typedData
+      .filter(item => {
         const itemDate = new Date(item.updated_at || item.created_at)
         switch (dateCategory) {
           case "Today":
@@ -157,37 +156,53 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     mcp_servers: updateMcpServer
   }
 
-  const stateUpdateFunctions = {
-    chats: setChats,
-    presets: setPresets,
-    prompts: setPrompts,
-    files: setFiles,
-    collections: setCollections,
-    assistants: setAssistants,
-    tools: setTools,
-    models: setModels,
-    mcp_servers: setMcpServers
-  }
-
   const updateFolder = async (itemId: string, folderId: string | null) => {
-    const item: any = data.find(item => item.id === itemId)
+    const item = (data as DataItemType[]).find(item => item.id === itemId)
 
     if (!item) return null
 
     const updateFunction = updateFunctions[contentType]
-    const setStateFunction = stateUpdateFunctions[contentType]
-
-    if (!updateFunction || !setStateFunction) return
+    if (!updateFunction) return
 
     const updatedItem = await updateFunction(item.id, {
       folder_id: folderId
     })
 
-    setStateFunction((items: any) =>
-      items.map((item: any) =>
-        item.id === updatedItem.id ? updatedItem : item
-      )
+    const updatedItems = (data as DataItemType[]).map(item =>
+      item.id === updatedItem.id ? updatedItem : item
     )
+
+    switch (contentType) {
+      case "chats":
+        setChats(updatedItems as Tables<"chats">[])
+        break
+      case "presets":
+        setPresets(updatedItems as Tables<"presets">[])
+        break
+      case "prompts":
+        setPrompts(updatedItems as Tables<"prompts">[])
+        break
+      case "files":
+        setFiles(updatedItems as Tables<"files">[])
+        break
+      case "collections":
+        setCollections(updatedItems as Tables<"collections">[])
+        break
+      case "assistants":
+        setAssistants(updatedItems as Tables<"assistants">[])
+        break
+      case "tools":
+        setTools(updatedItems as Tables<"tools">[])
+        break
+      case "models":
+        setModels(updatedItems as Tables<"models">[])
+        break
+      case "mcp_servers":
+        setMcpServers(updatedItems as Tables<"mcp_servers">[])
+        break
+      default:
+        break
+    }
   }
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
@@ -310,7 +325,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                           onDragLeave={handleDragLeave}
                           onDragOver={handleDragOver}
                         >
-                          {sortedData.map((item: any) => (
+                          {sortedData.map(item => (
                             <div
                               key={item.id}
                               draggable

@@ -1,6 +1,11 @@
 "use client"
 
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useItemsStore,
+  useModelsStore,
+  useProfileStore,
+  useWorkspaceStore
+} from "@/stores"
 import { getProfileByUserId, updateProfile } from "@/db/profile"
 import {
   getHomeWorkspaceByUserId,
@@ -13,7 +18,7 @@ import {
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesUpdate } from "@/supabase/types"
 import { useRouter } from "next/navigation"
-import { useContext, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { APIStep } from "../../../components/setup/api-step"
 import { FinishStep } from "../../../components/setup/finish-step"
 import { ProfileStep } from "../../../components/setup/profile-step"
@@ -23,15 +28,19 @@ import {
 } from "../../../components/setup/step-container"
 
 export default function SetupPage() {
-  const {
-    profile,
-    setProfile,
-    setWorkspaces,
-    setSelectedWorkspace,
-    setEnvKeyMap,
-    setAvailableHostedModels,
-    setAvailableOpenRouterModels
-  } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const setProfile = useProfileStore(state => state.setProfile)
+  const setWorkspaces = useItemsStore(state => state.setWorkspaces)
+  const setSelectedWorkspace = useWorkspaceStore(
+    state => state.setSelectedWorkspace
+  )
+  const setEnvKeyMap = useModelsStore(state => state.setEnvKeyMap)
+  const setAvailableHostedModels = useModelsStore(
+    state => state.setAvailableHostedModels
+  )
+  const setAvailableOpenRouterModels = useModelsStore(
+    state => state.setAvailableOpenRouterModels
+  )
 
   const router = useRouter()
 

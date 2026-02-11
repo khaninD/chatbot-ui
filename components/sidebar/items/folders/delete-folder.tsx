@@ -8,13 +8,13 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore } from "@/stores"
 import { deleteFolder } from "@/db/folders"
 import { supabase } from "@/lib/supabase/browser-client"
 import { Tables } from "@/supabase/types"
 import { ContentType } from "@/types"
 import { IconTrash } from "@tabler/icons-react"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface DeleteFolderProps {
@@ -26,33 +26,57 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
   folder,
   contentType
 }) => {
-  const {
-    setChats,
-    setFolders,
-    setPresets,
-    setPrompts,
-    setFiles,
-    setCollections,
-    setAssistants,
-    setTools,
-    setModels,
-    setMcpServers
-  } = useContext(ChatbotUIContext)
+  const setChats = useItemsStore(state => state.setChats)
+  const setFolders = useItemsStore(state => state.setFolders)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const setTools = useItemsStore(state => state.setTools)
+  const setModels = useItemsStore(state => state.setModels)
+  const setMcpServers = useItemsStore(state => state.setMcpServers)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const [showFolderDialog, setShowFolderDialog] = useState(false)
 
-  const stateUpdateFunctions = {
-    chats: setChats,
-    presets: setPresets,
-    prompts: setPrompts,
-    files: setFiles,
-    collections: setCollections,
-    assistants: setAssistants,
-    tools: setTools,
-    models: setModels,
-    mcp_servers: setMcpServers
+  const updateStateList = (
+    updater: (
+      items: Array<{ id: string; folder_id?: string | null }>
+    ) => Array<{ id: string; folder_id?: string | null }>
+  ) => {
+    switch (contentType) {
+      case "chats":
+        setChats(prev => updater(prev) as Tables<"chats">[])
+        break
+      case "presets":
+        setPresets(prev => updater(prev) as Tables<"presets">[])
+        break
+      case "prompts":
+        setPrompts(prev => updater(prev) as Tables<"prompts">[])
+        break
+      case "files":
+        setFiles(prev => updater(prev) as Tables<"files">[])
+        break
+      case "collections":
+        setCollections(prev => updater(prev) as Tables<"collections">[])
+        break
+      case "assistants":
+        setAssistants(prev => updater(prev) as Tables<"assistants">[])
+        break
+      case "tools":
+        setTools(prev => updater(prev) as Tables<"tools">[])
+        break
+      case "models":
+        setModels(prev => updater(prev) as Tables<"models">[])
+        break
+      case "mcp_servers":
+        setMcpServers(prev => updater(prev) as Tables<"mcp_servers">[])
+        break
+      default:
+        break
+    }
   }
 
   const handleDeleteFolderOnly = async () => {
@@ -62,12 +86,8 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
 
     setShowFolderDialog(false)
 
-    const setStateFunction = stateUpdateFunctions[contentType]
-
-    if (!setStateFunction) return
-
-    setStateFunction((prevItems: any) =>
-      prevItems.map((item: any) => {
+    updateStateList(prevItems =>
+      prevItems.map(item => {
         if (item.folder_id === folder.id) {
           return {
             ...item,
@@ -81,10 +101,6 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
   }
 
   const handleDeleteFolderAndItems = async () => {
-    const setStateFunction = stateUpdateFunctions[contentType]
-
-    if (!setStateFunction) return
-
     const { error } = await supabase
       .from(contentType)
       .delete()
@@ -94,8 +110,8 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
       toast.error(error.message)
     }
 
-    setStateFunction((prevItems: any) =>
-      prevItems.filter((item: any) => item.folder_id !== folder.id)
+    updateStateList(prevItems =>
+      prevItems.filter(item => item.folder_id !== folder.id)
     )
 
     handleDeleteFolderOnly()

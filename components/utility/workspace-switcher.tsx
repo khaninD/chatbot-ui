@@ -6,14 +6,14 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore, useWorkspaceStore } from "@/stores"
 import { createWorkspace } from "@/db/workspaces"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { IconBuilding, IconHome, IconPlus } from "@tabler/icons-react"
 import { ChevronsUpDown } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { FC, useContext, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 
@@ -22,13 +22,13 @@ interface WorkspaceSwitcherProps {}
 export const WorkspaceSwitcher: FC<WorkspaceSwitcherProps> = ({}) => {
   useHotkey(";", () => setOpen(prevState => !prevState))
 
-  const {
-    workspaces,
-    workspaceImages,
-    selectedWorkspace,
-    setSelectedWorkspace,
-    setWorkspaces
-  } = useContext(ChatbotUIContext)
+  const workspaces = useItemsStore(state => state.workspaces)
+  const setWorkspaces = useItemsStore(state => state.setWorkspaces)
+  const workspaceImages = useWorkspaceStore(state => state.workspaceImages)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const setSelectedWorkspace = useWorkspaceStore(
+    state => state.setSelectedWorkspace
+  )
 
   const { handleNewChat } = useChatHandler()
 

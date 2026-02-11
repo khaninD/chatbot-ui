@@ -6,10 +6,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { FileIcon } from "@/components/ui/file-icon"
 import { Input } from "@/components/ui/input"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore } from "@/stores"
 import { CollectionFile } from "@/types"
 import { IconChevronDown, IconCircleCheckFilled } from "@tabler/icons-react"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 
 interface CollectionFileSelectProps {
   selectedCollectionFiles: CollectionFile[]
@@ -20,7 +20,7 @@ export const CollectionFileSelect: FC<CollectionFileSelectProps> = ({
   selectedCollectionFiles,
   onCollectionFileSelect
 }) => {
-  const { files } = useContext(ChatbotUIContext)
+  const files = useItemsStore(state => state.files)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)

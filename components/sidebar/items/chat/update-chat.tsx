@@ -9,18 +9,19 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore } from "@/stores"
 import { updateChat } from "@/db/chats"
 import { Tables } from "@/supabase/types"
 import { IconEdit } from "@tabler/icons-react"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 
 interface UpdateChatProps {
   chat: Tables<"chats">
 }
 
 export const UpdateChat: FC<UpdateChatProps> = ({ chat }) => {
-  const { setChats } = useContext(ChatbotUIContext)
+  const chats = useItemsStore(state => state.chats)
+  const setChats = useItemsStore(state => state.setChats)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -31,9 +32,7 @@ export const UpdateChat: FC<UpdateChatProps> = ({ chat }) => {
     const updatedChat = await updateChat(chat.id, {
       name
     })
-    setChats(prevState =>
-      prevState.map(c => (c.id === chat.id ? updatedChat : c))
-    )
+    setChats(chats.map(c => (c.id === chat.id ? updatedChat : c)))
 
     setShowChatDialog(false)
   }

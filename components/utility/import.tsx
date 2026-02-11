@@ -1,4 +1,4 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore, useProfileStore, useWorkspaceStore } from "@/stores"
 import { createAssistants } from "@/db/assistants"
 import { createChats } from "@/db/chats"
 import { createCollections } from "@/db/collections"
@@ -7,7 +7,7 @@ import { createPresets } from "@/db/presets"
 import { createPrompts } from "@/db/prompts"
 import { createTools } from "@/db/tools"
 import { IconUpload, IconX } from "@tabler/icons-react"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { toast } from "sonner"
 import { SIDEBAR_ICON_SIZE } from "../sidebar/sidebar-switcher"
 import { Badge } from "../ui/badge"
@@ -24,32 +24,42 @@ import { Input } from "../ui/input"
 interface ImportProps {}
 
 export const Import: FC<ImportProps> = ({}) => {
-  const {
-    profile,
-    selectedWorkspace,
-    setChats,
-    setPresets,
-    setPrompts,
-    setFiles,
-    setCollections,
-    setAssistants,
-    setTools
-  } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const chats = useItemsStore(state => state.chats)
+  const presets = useItemsStore(state => state.presets)
+  const prompts = useItemsStore(state => state.prompts)
+  const files = useItemsStore(state => state.files)
+  const collections = useItemsStore(state => state.collections)
+  const assistants = useItemsStore(state => state.assistants)
+  const tools = useItemsStore(state => state.tools)
+  const setChats = useItemsStore(state => state.setChats)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const setTools = useItemsStore(state => state.setTools)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
+  type ImportContentType =
+    | "chats"
+    | "presets"
+    | "prompts"
+    | "files"
+    | "collections"
+    | "assistants"
+    | "tools"
+  type ImportItem = Record<string, unknown> & {
+    contentType?: ImportContentType
+  }
+  type ImportCounts = Record<ImportContentType, number>
+
   const [isOpen, setIsOpen] = useState(false)
-  const [importList, setImportList] = useState<Array<Record<string, any>>>([])
-  const [importCounts, setImportCounts] = useState<{
-    chats: number
-    presets: number
-    prompts: number
-    files: number
-    collections: number
-    assistants: number
-    tools: number
-  }>({
+  const [importList, setImportList] = useState<ImportItem[]>([])
+  const [importCounts, setImportCounts] = useState<ImportCounts>({
     chats: 0,
     presets: 0,
     prompts: 0,
@@ -59,17 +69,8 @@ export const Import: FC<ImportProps> = ({}) => {
     tools: 0
   })
 
-  const stateUpdateFunctions = {
-    chats: setChats,
-    presets: setPresets,
-    prompts: setPrompts,
-    files: setFiles,
-    collections: setCollections,
-    assistants: setAssistants,
-    tools: setTools
-  }
-
-  const handleSelectFiles = async (e: any) => {
+  const handleSelectFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
     const filePromises = Array.from(e.target.files).map(file => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
@@ -88,7 +89,7 @@ export const Import: FC<ImportProps> = ({}) => {
     try {
       const results = await Promise.all(filePromises)
       const flatResults = results.flat()
-      let uniqueResults: Array<Record<string, any>> = []
+      let uniqueResults: ImportItem[] = []
       setImportList(prevState => {
         const newState = [...prevState, ...flatResults]
         uniqueResults = Array.from(
@@ -98,15 +99,16 @@ export const Import: FC<ImportProps> = ({}) => {
       })
 
       setImportCounts(prevCounts => {
-        const countTypes = [
+        const countTypes: ImportContentType[] = [
           "chats",
           "presets",
           "prompts",
           "files",
           "collections",
-          "assistants"
+          "assistants",
+          "tools"
         ]
-        const newCounts: any = { ...prevCounts }
+        const newCounts: ImportCounts = { ...prevCounts }
         countTypes.forEach(type => {
           newCounts[type] = uniqueResults.filter(
             item => item.contentType === type
@@ -119,12 +121,17 @@ export const Import: FC<ImportProps> = ({}) => {
     }
   }
 
-  const handleRemoveItem = (item: any) => {
+  const handleRemoveItem = (item: ImportItem) => {
     setImportList(prev => prev.filter(prevItem => prevItem !== item))
 
     setImportCounts(prev => {
-      const newCounts: any = { ...prev }
-      newCounts[item.contentType] -= 1
+      const newCounts: ImportCounts = { ...prev }
+      if (item.contentType) {
+        newCounts[item.contentType] = Math.max(
+          (newCounts[item.contentType] || 0) - 1,
+          0
+        )
+      }
       return newCounts
     })
   }
@@ -147,7 +154,10 @@ export const Import: FC<ImportProps> = ({}) => {
     if (!profile) return
     if (!selectedWorkspace) return
 
-    const saveData: any = {
+    const saveData: Record<
+      ImportContentType,
+      Array<Record<string, unknown>>
+    > = {
       chats: [],
       presets: [],
       prompts: [],
@@ -159,6 +169,7 @@ export const Import: FC<ImportProps> = ({}) => {
 
     importList.forEach(item => {
       const { contentType, ...itemWithoutContentType } = item
+      if (!contentType) return
       itemWithoutContentType.user_id = profile.user_id
       itemWithoutContentType.workspace_id = selectedWorkspace.id
       saveData[contentType].push(itemWithoutContentType)
@@ -180,13 +191,13 @@ export const Import: FC<ImportProps> = ({}) => {
       tools: await createTools(saveData.tools, selectedWorkspace.id)
     }
 
-    Object.keys(createdItems).forEach(key => {
-      const typedKey = key as keyof typeof stateUpdateFunctions
-      stateUpdateFunctions[typedKey]((prevItems: any) => [
-        ...prevItems,
-        ...createdItems[typedKey]
-      ])
-    })
+    setChats([...chats, ...createdItems.chats])
+    setPresets([...presets, ...createdItems.presets])
+    setPrompts([...prompts, ...createdItems.prompts])
+    setFiles([...files, ...createdItems.files])
+    setCollections([...collections, ...createdItems.collections])
+    setAssistants([...assistants, ...createdItems.assistants])
+    setTools([...tools, ...createdItems.tools])
 
     toast.success("Data imported successfully!")
 

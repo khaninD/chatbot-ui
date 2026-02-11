@@ -5,14 +5,14 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore } from "@/stores"
 import { Tables } from "@/supabase/types"
 import {
   IconBolt,
   IconChevronDown,
   IconCircleCheckFilled
 } from "@tabler/icons-react"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 
 interface AssistantToolSelectProps {
   selectedAssistantTools: Tables<"tools">[]
@@ -23,7 +23,7 @@ export const AssistantToolSelect: FC<AssistantToolSelectProps> = ({
   selectedAssistantTools,
   onAssistantToolsSelect
 }) => {
-  const { tools } = useContext(ChatbotUIContext)
+  const tools = useItemsStore(state => state.tools)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)

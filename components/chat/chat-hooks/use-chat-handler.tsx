@@ -1,4 +1,17 @@
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useAttachmentsStore,
+  useChatInputStore,
+  useChatRuntimeStore,
+  useChatStore,
+  useItemsStore,
+  useModelsStore,
+  usePresetStore,
+  useProfileStore,
+  useRetrievalStore,
+  useToolStore,
+  useWorkspaceStore
+} from "@/stores"
 import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
 import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
@@ -9,7 +22,7 @@ import { buildFinalMessages } from "@/lib/build-prompt"
 import { Tables } from "@/supabase/types"
 import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
 import { useRouter } from "next/navigation"
-import { useContext, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
 import {
   createTempMessages,
@@ -25,49 +38,74 @@ import {
 export const useChatHandler = () => {
   const router = useRouter()
 
-  const {
-    userInput,
-    chatFiles,
-    setUserInput,
-    setNewMessageImages,
-    profile,
-    setIsGenerating,
-    setChatMessages,
-    setFirstTokenReceived,
-    selectedChat,
-    selectedWorkspace,
-    setSelectedChat,
-    setChats,
-    setSelectedTools,
-    availableLocalModels,
-    availableOpenRouterModels,
-    abortController,
-    setAbortController,
-    chatSettings,
-    newMessageImages,
-    selectedAssistant,
-    chatMessages,
-    chatImages,
-    setChatImages,
-    setChatFiles,
-    setNewMessageFiles,
-    setShowFilesDisplay,
-    newMessageFiles,
-    chatFileItems,
-    setChatFileItems,
-    setToolInUse,
-    useRetrieval,
-    sourceCount,
-    setIsPromptPickerOpen,
-    setIsFilePickerOpen,
-    selectedTools,
-    selectedPreset,
-    setChatSettings,
-    models,
-    isPromptPickerOpen,
-    isFilePickerOpen,
-    isToolPickerOpen
-  } = useContext(ChatbotUIContext)
+  const userInput = useChatStore(state => state.userInput)
+  const setUserInput = useChatStore(state => state.setUserInput)
+  const setChatMessages = useChatStore(state => state.setChatMessages)
+  const selectedChat = useChatStore(state => state.selectedChat)
+  const setSelectedChat = useChatStore(state => state.setSelectedChat)
+  const chatSettings = useChatStore(state => state.chatSettings)
+  const setChatSettings = useChatStore(state => state.setChatSettings)
+  const chatMessages = useChatStore(state => state.chatMessages)
+  const chatFileItems = useChatStore(state => state.chatFileItems)
+  const setChatFileItems = useChatStore(state => state.setChatFileItems)
+
+  const chatFiles = useAttachmentsStore(state => state.chatFiles)
+  const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
+  const chatImages = useAttachmentsStore(state => state.chatImages)
+  const setChatImages = useAttachmentsStore(state => state.setChatImages)
+  const newMessageImages = useAttachmentsStore(state => state.newMessageImages)
+  const setNewMessageImages = useAttachmentsStore(
+    state => state.setNewMessageImages
+  )
+  const newMessageFiles = useAttachmentsStore(state => state.newMessageFiles)
+  const setNewMessageFiles = useAttachmentsStore(
+    state => state.setNewMessageFiles
+  )
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
+
+  const profile = useProfileStore(state => state.profile)
+  const setIsGenerating = useChatRuntimeStore(state => state.setIsGenerating)
+  const setFirstTokenReceived = useChatRuntimeStore(
+    state => state.setFirstTokenReceived
+  )
+  const abortController = useChatRuntimeStore(state => state.abortController)
+  const setAbortController = useChatRuntimeStore(
+    state => state.setAbortController
+  )
+
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const setChats = useItemsStore(state => state.setChats)
+  const setSelectedTools = useToolStore(state => state.setSelectedTools)
+  const setToolInUse = useToolStore(state => state.setToolInUse)
+  const selectedTools = useToolStore(state => state.selectedTools)
+
+  const availableLocalModels = useModelsStore(
+    state => state.availableLocalModels
+  )
+  const availableOpenRouterModels = useModelsStore(
+    state => state.availableOpenRouterModels
+  )
+
+  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
+  const selectedPreset = usePresetStore(state => state.selectedPreset)
+  const models = useItemsStore(state => state.models)
+
+  const useRetrieval = useRetrievalStore(state => state.useRetrieval)
+  const sourceCount = useRetrievalStore(state => state.sourceCount)
+
+  const setIsPromptPickerOpen = useChatInputStore(
+    state => state.setIsPromptPickerOpen
+  )
+  const setIsFilePickerOpen = useChatInputStore(
+    state => state.setIsFilePickerOpen
+  )
+  const isPromptPickerOpen = useChatInputStore(
+    state => state.isPromptPickerOpen
+  )
+  const isFilePickerOpen = useChatInputStore(state => state.isFilePickerOpen)
+  const isToolPickerOpen = useChatInputStore(state => state.isToolPickerOpen)
 
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
 

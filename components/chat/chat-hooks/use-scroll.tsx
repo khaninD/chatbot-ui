@@ -1,15 +1,15 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatRuntimeStore, useChatStore } from "@/stores"
 import {
   type UIEventHandler,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState
 } from "react"
 
 export const useScroll = () => {
-  const { isGenerating, chatMessages } = useContext(ChatbotUIContext)
+  const isGenerating = useChatRuntimeStore(state => state.isGenerating)
+  const chatMessages = useChatStore(state => state.chatMessages)
 
   const messagesStartRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)

@@ -1,4 +1,12 @@
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useAttachmentsStore,
+  useChatStore,
+  useItemsStore,
+  usePresetStore,
+  useToolStore,
+  useWorkspaceStore
+} from "@/stores"
 import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
 import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
@@ -9,7 +17,7 @@ import { Tables } from "@/supabase/types"
 import { LLMID } from "@/types"
 import { IconChevronDown, IconRobotFace } from "@tabler/icons-react"
 import Image from "next/image"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ModelIcon } from "../models/model-icon"
 import { Button } from "../ui/button"
@@ -29,21 +37,23 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
 
   useHotkey("p", () => setIsOpen(prevState => !prevState))
 
-  const {
-    presets,
-    assistants,
-    selectedAssistant,
-    selectedPreset,
-    chatSettings,
-    setSelectedPreset,
-    setSelectedAssistant,
-    setChatSettings,
-    assistantImages,
-    setChatFiles,
-    setSelectedTools,
-    setShowFilesDisplay,
-    selectedWorkspace
-  } = useContext(ChatbotUIContext)
+  const presets = useItemsStore(state => state.presets)
+  const assistants = useItemsStore(state => state.assistants)
+  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
+  const selectedPreset = usePresetStore(state => state.selectedPreset)
+  const chatSettings = useChatStore(state => state.chatSettings)
+  const setSelectedPreset = usePresetStore(state => state.setSelectedPreset)
+  const setSelectedAssistant = useAssistantStore(
+    state => state.setSelectedAssistant
+  )
+  const setChatSettings = useChatStore(state => state.setChatSettings)
+  const assistantImages = useAssistantStore(state => state.assistantImages)
+  const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
+  const setSelectedTools = useToolStore(state => state.setSelectedTools)
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
 
   const inputRef = useRef<HTMLInputElement>(null)
 

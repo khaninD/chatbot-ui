@@ -1,6 +1,6 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatInputStore, useItemsStore } from "@/stores"
 import { Tables } from "@/supabase/types"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
 import { Label } from "../ui/label"
@@ -10,13 +10,15 @@ import { usePromptAndCommand } from "./chat-hooks/use-prompt-and-command"
 interface PromptPickerProps {}
 
 export const PromptPicker: FC<PromptPickerProps> = ({}) => {
-  const {
-    prompts,
-    isPromptPickerOpen,
-    setIsPromptPickerOpen,
-    focusPrompt,
-    slashCommand
-  } = useContext(ChatbotUIContext)
+  const prompts = useItemsStore(state => state.prompts)
+  const isPromptPickerOpen = useChatInputStore(
+    state => state.isPromptPickerOpen
+  )
+  const setIsPromptPickerOpen = useChatInputStore(
+    state => state.setIsPromptPickerOpen
+  )
+  const focusPrompt = useChatInputStore(state => state.focusPrompt)
+  const slashCommand = useChatInputStore(state => state.slashCommand)
 
   const { handleSelectPrompt } = usePromptAndCommand()
 
@@ -108,8 +110,13 @@ export const PromptPicker: FC<PromptPickerProps> = ({}) => {
         ?.content || ""
     )
 
-    const newPrompt: any = {
-      ...prompts.find(prompt => prompt.id === promptVariables[0].promptId),
+    const promptTemplate = prompts.find(
+      prompt => prompt.id === promptVariables[0].promptId
+    )
+    if (!promptTemplate) return
+
+    const newPrompt: Tables<"prompts"> = {
+      ...promptTemplate,
       content: newPromptContent
     }
 

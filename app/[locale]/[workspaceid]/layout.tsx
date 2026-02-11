@@ -1,7 +1,14 @@
 "use client"
 
 import { Dashboard } from "@/components/ui/dashboard"
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useAttachmentsStore,
+  useChatRuntimeStore,
+  useChatStore,
+  useItemsStore,
+  useWorkspaceStore
+} from "@/stores"
 import { getAssistantWorkspacesByWorkspaceId } from "@/db/assistants"
 import { getChatsByWorkspaceId } from "@/db/chats"
 import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
@@ -18,7 +25,7 @@ import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
 import { LLMID } from "@/types"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ReactNode, useContext, useEffect, useState } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import Loading from "../loading"
 
 interface WorkspaceLayoutProps {
@@ -32,32 +39,42 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const searchParams = useSearchParams()
   const workspaceId = params.workspaceid as string
 
-  const {
-    setChatSettings,
-    setAssistants,
-    setAssistantImages,
-    setChats,
-    setCollections,
-    setFolders,
-    setFiles,
-    setPresets,
-    setPrompts,
-    setMcpServers,
-    setTools,
-    setModels,
-    selectedWorkspace: _selectedWorkspace,
-    setSelectedWorkspace,
-    setSelectedChat,
-    setChatMessages,
-    setUserInput,
-    setIsGenerating,
-    setFirstTokenReceived,
-    setChatFiles,
-    setChatImages,
-    setNewMessageFiles,
-    setNewMessageImages,
-    setShowFilesDisplay
-  } = useContext(ChatbotUIContext)
+  const setChatSettings = useChatStore(state => state.setChatSettings)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const setAssistantImages = useAssistantStore(
+    state => state.setAssistantImages
+  )
+  const setChats = useItemsStore(state => state.setChats)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setFolders = useItemsStore(state => state.setFolders)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setMcpServers = useItemsStore(state => state.setMcpServers)
+  const setTools = useItemsStore(state => state.setTools)
+  const setModels = useItemsStore(state => state.setModels)
+  const _selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const setSelectedWorkspace = useWorkspaceStore(
+    state => state.setSelectedWorkspace
+  )
+  const setSelectedChat = useChatStore(state => state.setSelectedChat)
+  const setChatMessages = useChatStore(state => state.setChatMessages)
+  const setUserInput = useChatStore(state => state.setUserInput)
+  const setIsGenerating = useChatRuntimeStore(state => state.setIsGenerating)
+  const setFirstTokenReceived = useChatRuntimeStore(
+    state => state.setFirstTokenReceived
+  )
+  const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
+  const setChatImages = useAttachmentsStore(state => state.setChatImages)
+  const setNewMessageFiles = useAttachmentsStore(
+    state => state.setNewMessageFiles
+  )
+  const setNewMessageImages = useAttachmentsStore(
+    state => state.setNewMessageImages
+  )
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
 
   const [loading, setLoading] = useState(true)
 

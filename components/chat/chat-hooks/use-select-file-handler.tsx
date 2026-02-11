@@ -1,8 +1,15 @@
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAttachmentsStore,
+  useChatStore,
+  useItemsStore,
+  useProfileStore,
+  useRetrievalStore,
+  useWorkspaceStore
+} from "@/stores"
 import { createDocXFile, createFile } from "@/db/files"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import mammoth from "mammoth"
-import { useContext, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 export const ACCEPTED_FILE_TYPES = [
@@ -15,16 +22,23 @@ export const ACCEPTED_FILE_TYPES = [
 ].join(",")
 
 export const useSelectFileHandler = () => {
-  const {
-    selectedWorkspace,
-    profile,
-    chatSettings,
-    setNewMessageImages,
-    setNewMessageFiles,
-    setShowFilesDisplay,
-    setFiles,
-    setUseRetrieval
-  } = useContext(ChatbotUIContext)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const profile = useProfileStore(state => state.profile)
+  const chatSettings = useChatStore(state => state.chatSettings)
+  const newMessageImages = useAttachmentsStore(state => state.newMessageImages)
+  const setNewMessageImages = useAttachmentsStore(
+    state => state.setNewMessageImages
+  )
+  const newMessageFiles = useAttachmentsStore(state => state.newMessageFiles)
+  const setNewMessageFiles = useAttachmentsStore(
+    state => state.setNewMessageFiles
+  )
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
+  const files = useItemsStore(state => state.files)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setUseRetrieval = useRetrievalStore(state => state.setUseRetrieval)
 
   const [filesToAccept, setFilesToAccept] = useState(ACCEPTED_FILE_TYPES)
 
@@ -70,8 +84,8 @@ export const useSelectFileHandler = () => {
           simplifiedFileType = "docx"
         }
 
-        setNewMessageFiles(prev => [
-          ...prev,
+        setNewMessageFiles([
+          ...newMessageFiles,
           {
             id: "loading",
             name: file.name,
@@ -108,10 +122,10 @@ export const useSelectFileHandler = () => {
             chatSettings.embeddingsProvider
           )
 
-          setFiles(prev => [...prev, createdFile])
+          setFiles([...files, createdFile])
 
-          setNewMessageFiles(prev =>
-            prev.map(item =>
+          setNewMessageFiles(
+            newMessageFiles.map(item =>
               item.id === "loading"
                 ? {
                     id: createdFile.id,
@@ -143,8 +157,8 @@ export const useSelectFileHandler = () => {
             const imageUrl = URL.createObjectURL(file)
 
             // This is a temporary image for display purposes in the chat input
-            setNewMessageImages(prev => [
-              ...prev,
+            setNewMessageImages([
+              ...newMessageImages,
               {
                 messageId: "temp",
                 path: "",
@@ -169,10 +183,10 @@ export const useSelectFileHandler = () => {
               chatSettings.embeddingsProvider
             )
 
-            setFiles(prev => [...prev, createdFile])
+            setFiles([...files, createdFile])
 
-            setNewMessageFiles(prev =>
-              prev.map(item =>
+            setNewMessageFiles(
+              newMessageFiles.map(item =>
                 item.id === "loading"
                   ? {
                       id: createdFile.id,

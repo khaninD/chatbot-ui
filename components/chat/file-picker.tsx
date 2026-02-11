@@ -1,7 +1,7 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatInputStore, useItemsStore } from "@/stores"
 import { Tables } from "@/supabase/types"
 import { IconBooks } from "@tabler/icons-react"
-import { FC, useContext, useEffect, useRef } from "react"
+import { FC, useEffect, useRef } from "react"
 import { FileIcon } from "../ui/file-icon"
 
 interface FilePickerProps {
@@ -25,8 +25,11 @@ export const FilePicker: FC<FilePickerProps> = ({
   onSelectCollection,
   isFocused
 }) => {
-  const { files, collections, setIsFilePickerOpen } =
-    useContext(ChatbotUIContext)
+  const files = useItemsStore(state => state.files)
+  const collections = useItemsStore(state => state.collections)
+  const setIsFilePickerOpen = useChatInputStore(
+    state => state.setIsFilePickerOpen
+  )
 
   const itemsRef = useRef<(HTMLDivElement | null)[]>([])
 
@@ -63,7 +66,11 @@ export const FilePicker: FC<FilePickerProps> = ({
   }
 
   const getKeyDownHandler =
-    (index: number, type: "file" | "collection", item: any) =>
+    (
+      index: number,
+      type: "file" | "collection",
+      item: Tables<"files"> | Tables<"collections">
+    ) =>
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (e.key === "Escape") {
         e.preventDefault()

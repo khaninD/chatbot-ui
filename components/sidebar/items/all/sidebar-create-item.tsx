@@ -6,7 +6,7 @@ import {
   SheetHeader,
   SheetTitle
 } from "@/components/ui/sheet"
-import { ChatbotUIContext } from "@/context/context"
+import { useAssistantStore, useItemsStore, useWorkspaceStore } from "@/stores"
 import { createAssistantCollections } from "@/db/assistant-collections"
 import { createAssistantFiles } from "@/db/assistant-files"
 import { createAssistantTools } from "@/db/assistant-tools"
@@ -27,7 +27,7 @@ import { createTool } from "@/db/tools"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { Tables, TablesInsert } from "@/supabase/types"
 import { ContentType } from "@/types"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface SidebarCreateItemProps {
@@ -36,7 +36,7 @@ interface SidebarCreateItemProps {
   onOpenChange: (isOpen: boolean) => void
   contentType: ContentType
   renderInputs: () => React.JSX.Element
-  createState: any
+  createState: unknown
 }
 
 export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
@@ -47,33 +47,45 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   createState,
   isTyping
 }) => {
-  const {
-    selectedWorkspace,
-    setChats,
-    setPresets,
-    setPrompts,
-    setMcpServers,
-    setFiles,
-    setCollections,
-    setAssistants,
-    setAssistantImages,
-    setTools,
-    setModels
-  } = useContext(ChatbotUIContext)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const chats = useItemsStore(state => state.chats)
+  const presets = useItemsStore(state => state.presets)
+  const prompts = useItemsStore(state => state.prompts)
+  const mcpServers = useItemsStore(state => state.mcpServers)
+  const files = useItemsStore(state => state.files)
+  const collections = useItemsStore(state => state.collections)
+  const assistants = useItemsStore(state => state.assistants)
+  const tools = useItemsStore(state => state.tools)
+  const models = useItemsStore(state => state.models)
+  const setChats = useItemsStore(state => state.setChats)
+  const setPresets = useItemsStore(state => state.setPresets)
+  const setPrompts = useItemsStore(state => state.setPrompts)
+  const setMcpServers = useItemsStore(state => state.setMcpServers)
+  const setFiles = useItemsStore(state => state.setFiles)
+  const setCollections = useItemsStore(state => state.setCollections)
+  const setAssistants = useItemsStore(state => state.setAssistants)
+  const addAssistantImage = useAssistantStore(state => state.addAssistantImage)
+  const setTools = useItemsStore(state => state.setTools)
+  const setModels = useItemsStore(state => state.setModels)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const [creating, setCreating] = useState(false)
 
-  const createFunctions = {
-    chats: createChat,
-    presets: createPreset,
-    prompts: createPrompt,
-    mcp_servers: createMcpServer,
-    files: async (
-      createState: { file: File } & TablesInsert<"files">,
-      workspaceId: string
-    ) => {
+  const createFunctions: Record<
+    ContentType,
+    (state: unknown, workspaceId: string) => Promise<unknown>
+  > = {
+    chats: (state, workspaceId) =>
+      createChat(state as TablesInsert<"chats">, workspaceId),
+    presets: (state, workspaceId) =>
+      createPreset(state as TablesInsert<"presets">, workspaceId),
+    prompts: (state, workspaceId) =>
+      createPrompt(state as TablesInsert<"prompts">, workspaceId),
+    mcp_servers: (state, workspaceId) =>
+      createMcpServer(state as TablesInsert<"mcp_servers">, workspaceId),
+    files: async (state, workspaceId) => {
+      const createState = state as { file: File } & TablesInsert<"files">
       if (!selectedWorkspace) return
 
       const { file, ...rest } = createState
@@ -87,13 +99,11 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
       return createdFile
     },
-    collections: async (
-      createState: {
+    collections: async (state, workspaceId) => {
+      const createState = state as {
         image: File
         collectionFiles: TablesInsert<"collection_files">[]
-      } & Tables<"collections">,
-      workspaceId: string
-    ) => {
+      } & Tables<"collections">
       const { collectionFiles, ...rest } = createState
 
       const createdCollection = await createCollection(rest, workspaceId)
@@ -107,15 +117,13 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
       return createdCollection
     },
-    assistants: async (
-      createState: {
+    assistants: async (state, workspaceId) => {
+      const createState = state as {
         image: File
         files: Tables<"files">[]
         collections: Tables<"collections">[]
         tools: Tables<"tools">[]
-      } & Tables<"assistants">,
-      workspaceId: string
-    ) => {
+      } & Tables<"assistants">
       const { image, files, collections, tools, ...rest } = createState
 
       const createdAssistant = await createAssistant(rest, workspaceId)
@@ -136,15 +144,12 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
           const blob = await response.blob()
           const base64 = await convertBlobToBase64(blob)
 
-          setAssistantImages(prev => [
-            ...prev,
-            {
-              assistantId: updatedAssistant.id,
-              path: filePath,
-              base64,
-              url
-            }
-          ])
+          addAssistantImage({
+            assistantId: updatedAssistant.id,
+            path: filePath,
+            base64,
+            url
+          })
         }
       }
 
@@ -172,20 +177,10 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
       return updatedAssistant
     },
-    tools: createTool,
-    models: createModel
-  }
-
-  const stateUpdateFunctions = {
-    chats: setChats,
-    presets: setPresets,
-    prompts: setPrompts,
-    mcp_servers: setMcpServers,
-    files: setFiles,
-    collections: setCollections,
-    assistants: setAssistants,
-    tools: setTools,
-    models: setModels
+    tools: (state, workspaceId) =>
+      createTool(state as TablesInsert<"tools">, workspaceId),
+    models: (state, workspaceId) =>
+      createModel(state as TablesInsert<"models">, workspaceId)
   }
 
   const handleCreate = async () => {
@@ -194,15 +189,44 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
       if (isTyping) return // Prevent creation while typing
 
       const createFunction = createFunctions[contentType]
-      const setStateFunction = stateUpdateFunctions[contentType]
 
-      if (!createFunction || !setStateFunction) return
+      if (!createFunction) return
 
       setCreating(true)
 
       const newItem = await createFunction(createState, selectedWorkspace.id)
 
-      setStateFunction((prevItems: any) => [...prevItems, newItem])
+      switch (contentType) {
+        case "chats":
+          setChats([...chats, newItem as Tables<"chats">])
+          break
+        case "presets":
+          setPresets([...presets, newItem as Tables<"presets">])
+          break
+        case "prompts":
+          setPrompts([...prompts, newItem as Tables<"prompts">])
+          break
+        case "mcp_servers":
+          setMcpServers([...mcpServers, newItem as Tables<"mcp_servers">])
+          break
+        case "files":
+          setFiles([...files, newItem as Tables<"files">])
+          break
+        case "collections":
+          setCollections([...collections, newItem as Tables<"collections">])
+          break
+        case "assistants":
+          setAssistants([...assistants, newItem as Tables<"assistants">])
+          break
+        case "tools":
+          setTools([...tools, newItem as Tables<"tools">])
+          break
+        case "models":
+          setModels([...models, newItem as Tables<"models">])
+          break
+        default:
+          break
+      }
 
       onOpenChange(false)
       setCreating(false)

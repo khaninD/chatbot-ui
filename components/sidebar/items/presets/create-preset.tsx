@@ -2,10 +2,11 @@ import { SidebarCreateItem } from "@/components/sidebar/items/all/sidebar-create
 import { ChatSettingsForm } from "@/components/ui/chat-settings-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChatbotUIContext } from "@/context/context"
+import { useProfileStore, useWorkspaceStore } from "@/stores"
 import { PRESET_NAME_MAX } from "@/db/limits"
 import { TablesInsert } from "@/supabase/types"
-import { FC, useContext, useState } from "react"
+import { ChatSettings } from "@/types"
+import { FC, useState } from "react"
 
 interface CreatePresetProps {
   isOpen: boolean
@@ -16,12 +17,13 @@ export const CreatePreset: FC<CreatePresetProps> = ({
   isOpen,
   onOpenChange
 }) => {
-  const { profile, selectedWorkspace } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
 
   const [name, setName] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [description, setDescription] = useState("")
-  const [presetChatSettings, setPresetChatSettings] = useState({
+  const [presetChatSettings, setPresetChatSettings] = useState<ChatSettings>({
     model: selectedWorkspace?.default_model,
     prompt: selectedWorkspace?.default_prompt,
     temperature: selectedWorkspace?.default_temperature,
@@ -70,7 +72,7 @@ export const CreatePreset: FC<CreatePresetProps> = ({
           </div>
 
           <ChatSettingsForm
-            chatSettings={presetChatSettings as any}
+            chatSettings={presetChatSettings}
             onChangeChatSettings={setPresetChatSettings}
             useAdvancedDropdown={true}
           />

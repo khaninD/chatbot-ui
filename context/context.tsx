@@ -66,8 +66,8 @@ interface ChatbotUIContext {
   setSelectedAssistant: Dispatch<SetStateAction<Tables<"assistants"> | null>>
   assistantImages: AssistantImage[]
   setAssistantImages: Dispatch<SetStateAction<AssistantImage[]>>
-  openaiAssistants: any[]
-  setOpenaiAssistants: Dispatch<SetStateAction<any[]>>
+  openaiAssistants: unknown[]
+  setOpenaiAssistants: Dispatch<SetStateAction<unknown[]>>
 
   // PASSIVE CHAT STORE
   userInput: string

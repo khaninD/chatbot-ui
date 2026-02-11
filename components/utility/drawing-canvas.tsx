@@ -1,13 +1,16 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useAttachmentsStore } from "@/stores"
 import { MessageImage } from "@/types"
-import { FC, MouseEvent, useContext, useEffect, useRef, useState } from "react"
+import { FC, MouseEvent, useEffect, useRef, useState } from "react"
 
 interface DrawingCanvasProps {
   imageItem: MessageImage
 }
 
 export const DrawingCanvas: FC<DrawingCanvasProps> = ({ imageItem }) => {
-  const { setNewMessageImages } = useContext(ChatbotUIContext)
+  const newMessageImages = useAttachmentsStore(state => state.newMessageImages)
+  const setNewMessageImages = useAttachmentsStore(
+    state => state.setNewMessageImages
+  )
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -77,14 +80,14 @@ export const DrawingCanvas: FC<DrawingCanvasProps> = ({ imageItem }) => {
             type: "image/png"
           })
 
-          setNewMessageImages(prevImages => {
-            return prevImages.map(img => {
+          setNewMessageImages(
+            newMessageImages.map(img => {
               if (img.url === imageItem.url) {
                 return { ...img, base64: dataURL, file: newImageFile }
               }
               return img
             })
-          })
+          )
         })
     }
   }

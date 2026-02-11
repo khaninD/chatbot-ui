@@ -2,8 +2,14 @@ import React from "react"
 import { render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom"
 import { ChatSettingsForm } from "@/components/ui/chat-settings-form"
-import { ChatSettings } from "@/types"
-import { ChatbotUIContext } from "@/context/context"
+import { ChatSettings, LLM, OpenRouterLLM } from "@/types"
+import { Tables } from "@/supabase/types"
+import {
+  useItemsStore,
+  useModelsStore,
+  useProfileStore,
+  useWorkspaceStore
+} from "@/stores"
 import { IMAGE_MODELS } from "@/lib/models/image-models"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 
@@ -56,14 +62,14 @@ const mockProfile = {
   openai_embedding_model: "text-embedding-3-small"
 }
 
-const mockContextValue = {
-  profile: mockProfile,
-  models: [],
-  selectedWorkspace: null,
-  availableOpenRouterModels: [],
-  mcpServers: [],
-  availableHostedModels: []
-}
+type ContextOverrides = Partial<{
+  profile: typeof mockProfile | null
+  models: Tables<"models">[]
+  mcpServers: Tables<"mcp_servers">[]
+  selectedWorkspace: Tables<"workspaces"> | null
+  availableOpenRouterModels: OpenRouterLLM[]
+  availableHostedModels: LLM[]
+}>
 
 const defaultChatSettings: ChatSettings = {
   model: "gpt-4o",
@@ -80,19 +86,52 @@ const defaultChatSettings: ChatSettings = {
 describe("ChatSettingsForm - Image Model Selection", () => {
   const renderWithContext = (
     chatSettings: ChatSettings,
-    contextOverrides = {}
+    contextOverrides: ContextOverrides = {},
+    onChangeChatSettings: (value: ChatSettings) => void = jest.fn()
   ) => {
+    useProfileStore.setState({ profile: mockProfile })
+    useItemsStore.setState({
+      models: [],
+      mcpServers: []
+    })
+    useWorkspaceStore.setState({ selectedWorkspace: null })
+    useModelsStore.setState({
+      availableOpenRouterModels: [],
+      availableHostedModels: []
+    })
+
+    if (contextOverrides.profile) {
+      useProfileStore.setState({ profile: contextOverrides.profile })
+    }
+    if (contextOverrides.models) {
+      useItemsStore.setState({ models: contextOverrides.models })
+    }
+    if (contextOverrides.mcpServers) {
+      useItemsStore.setState({ mcpServers: contextOverrides.mcpServers })
+    }
+    if (contextOverrides.selectedWorkspace !== undefined) {
+      useWorkspaceStore.setState({
+        selectedWorkspace: contextOverrides.selectedWorkspace
+      })
+    }
+    if (contextOverrides.availableOpenRouterModels) {
+      useModelsStore.setState({
+        availableOpenRouterModels: contextOverrides.availableOpenRouterModels
+      })
+    }
+    if (contextOverrides.availableHostedModels) {
+      useModelsStore.setState({
+        availableHostedModels: contextOverrides.availableHostedModels
+      })
+    }
+
     return render(
-      <ChatbotUIContext.Provider
-        value={{ ...mockContextValue, ...contextOverrides } as any}
-      >
-        <ChatSettingsForm
-          chatSettings={chatSettings}
-          onChangeChatSettings={jest.fn()}
-          useAdvancedDropdown={false}
-          showTooltip={false}
-        />
-      </ChatbotUIContext.Provider>
+      <ChatSettingsForm
+        chatSettings={chatSettings}
+        onChangeChatSettings={onChangeChatSettings}
+        useAdvancedDropdown={false}
+        showTooltip={false}
+      />
     )
   }
 
@@ -208,16 +247,7 @@ describe("ChatSettingsForm - Image Model Selection", () => {
       model: cometModel.modelId
     }
 
-    render(
-      <ChatbotUIContext.Provider value={mockContextValue as any}>
-        <ChatSettingsForm
-          chatSettings={settings}
-          onChangeChatSettings={mockOnChange}
-          useAdvancedDropdown={false}
-          showTooltip={false}
-        />
-      </ChatbotUIContext.Provider>
-    )
+    renderWithContext(settings, {}, mockOnChange)
 
     // The onChange handler should be defined
     expect(mockOnChange).toBeDefined()

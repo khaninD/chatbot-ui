@@ -1,6 +1,11 @@
 import { ModelIcon } from "@/components/models/model-icon"
 import { WithTooltip } from "@/components/ui/with-tooltip"
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useChatStore,
+  useModelsStore,
+  useWorkspaceStore
+} from "@/stores"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
@@ -8,7 +13,7 @@ import { LLM } from "@/types"
 import { IconRobotFace } from "@tabler/icons-react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
-import { FC, useContext, useRef } from "react"
+import { FC, useRef } from "react"
 import { DeleteChat } from "./delete-chat"
 import { UpdateChat } from "./update-chat"
 
@@ -17,13 +22,15 @@ interface ChatItemProps {
 }
 
 export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
-  const {
-    selectedWorkspace,
-    selectedChat,
-    availableLocalModels,
-    assistantImages,
-    availableOpenRouterModels
-  } = useContext(ChatbotUIContext)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const selectedChat = useChatStore(state => state.selectedChat)
+  const availableLocalModels = useModelsStore(
+    state => state.availableLocalModels
+  )
+  const assistantImages = useAssistantStore(state => state.assistantImages)
+  const availableOpenRouterModels = useModelsStore(
+    state => state.availableOpenRouterModels
+  )
 
   const router = useRouter()
   const params = useParams()

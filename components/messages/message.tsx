@@ -1,9 +1,19 @@
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { ChatbotUIContext } from "@/context/context"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
+import {
+  useAssistantStore,
+  useAttachmentsStore,
+  useChatRuntimeStore,
+  useChatStore,
+  useItemsStore,
+  useModelsStore,
+  useProfileStore,
+  useToolStore
+} from "@/stores"
 import { Tables } from "@/supabase/types"
 import { LLM, LLMID, MessageImage, ModelProvider } from "@/types"
+import { ContentBlock } from "@/types/content-blocks"
 import {
   IconBolt,
   IconCaretDownFilled,
@@ -14,7 +24,7 @@ import {
   IconPencil
 } from "@tabler/icons-react"
 import Image from "next/image"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { ModelIcon } from "../models/model-icon"
 import { Button } from "../ui/button"
 import { FileIcon } from "../ui/file-icon"
@@ -36,7 +46,7 @@ interface MessageProps {
   onStartEdit: (message: Tables<"messages">) => void
   onCancelEdit: () => void
   onSubmitEdit: (value: string, sequenceNumber: number) => void
-  contentBlocks?: any[] // Anthropic-style content blocks
+  contentBlocks?: ContentBlock[] // Anthropic-style content blocks
 }
 
 export const Message: FC<MessageProps> = ({
@@ -49,22 +59,26 @@ export const Message: FC<MessageProps> = ({
   onSubmitEdit,
   contentBlocks
 }) => {
-  const {
-    assistants,
-    profile,
-    isGenerating,
-    setIsGenerating,
-    firstTokenReceived,
-    availableLocalModels,
-    availableOpenRouterModels,
-    chatMessages,
-    selectedAssistant,
-    chatImages,
-    assistantImages,
-    toolInUse,
-    files,
-    models
-  } = useContext(ChatbotUIContext)
+  const assistants = useItemsStore(state => state.assistants)
+  const files = useItemsStore(state => state.files)
+  const models = useItemsStore(state => state.models)
+  const profile = useProfileStore(state => state.profile)
+  const isGenerating = useChatRuntimeStore(state => state.isGenerating)
+  const setIsGenerating = useChatRuntimeStore(state => state.setIsGenerating)
+  const firstTokenReceived = useChatRuntimeStore(
+    state => state.firstTokenReceived
+  )
+  const availableLocalModels = useModelsStore(
+    state => state.availableLocalModels
+  )
+  const availableOpenRouterModels = useModelsStore(
+    state => state.availableOpenRouterModels
+  )
+  const chatMessages = useChatStore(state => state.chatMessages)
+  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
+  const chatImages = useAttachmentsStore(state => state.chatImages)
+  const assistantImages = useAssistantStore(state => state.assistantImages)
+  const toolInUse = useToolStore(state => state.toolInUse)
 
   const { handleSendMessage } = useChatHandler()
 

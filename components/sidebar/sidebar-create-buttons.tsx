@@ -1,9 +1,9 @@
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { ChatbotUIContext } from "@/context/context"
+import { useItemsStore, useProfileStore, useWorkspaceStore } from "@/stores"
 import { createFolder } from "@/db/folders"
 import { ContentType } from "@/types"
 import { IconFolderPlus, IconPlus } from "@tabler/icons-react"
-import { FC, useContext, useState } from "react"
+import { FC, useState } from "react"
 import { Button } from "../ui/button"
 import { CreateAssistant } from "./items/assistants/create-assistant"
 import { CreateCollection } from "./items/collections/create-collection"
@@ -23,8 +23,10 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
   contentType,
   hasData
 }) => {
-  const { profile, selectedWorkspace, folders, setFolders } =
-    useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const folders = useItemsStore(state => state.folders)
+  const setFolders = useItemsStore(state => state.setFolders)
   const { handleNewChat } = useChatHandler()
 
   const [isCreatingPrompt, setIsCreatingPrompt] = useState(false)

@@ -1,10 +1,10 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useAssistantStore, useItemsStore, useWorkspaceStore } from "@/stores"
 import { createChat } from "@/db/chats"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
 import { ContentType, DataItemType } from "@/types"
 import { useRouter } from "next/navigation"
-import { FC, useContext, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { SidebarUpdateItem } from "./sidebar-update-item"
 
 interface SidebarItemProps {
@@ -12,8 +12,8 @@ interface SidebarItemProps {
   isTyping: boolean
   contentType: ContentType
   icon: React.ReactNode
-  updateState: any
-  renderInputs: (renderState: any) => React.JSX.Element
+  updateState: unknown
+  renderInputs: (renderState: unknown) => React.JSX.Element
 }
 
 export const SidebarItem: FC<SidebarItemProps> = ({
@@ -24,8 +24,12 @@ export const SidebarItem: FC<SidebarItemProps> = ({
   icon,
   isTyping
 }) => {
-  const { selectedWorkspace, setChats, setSelectedAssistant } =
-    useContext(ChatbotUIContext)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const chats = useItemsStore(state => state.chats)
+  const setChats = useItemsStore(state => state.setChats)
+  const setSelectedAssistant = useAssistantStore(
+    state => state.setSelectedAssistant
+  )
 
   const router = useRouter()
 
@@ -33,39 +37,40 @@ export const SidebarItem: FC<SidebarItemProps> = ({
 
   const [isHovering, setIsHovering] = useState(false)
 
-  const actionMap = {
-    chats: async (item: any) => {},
-    presets: async (item: any) => {},
-    prompts: async (item: any) => {},
-    files: async (item: any) => {},
-    collections: async (item: any) => {},
-    assistants: async (assistant: Tables<"assistants">) => {
-      if (!selectedWorkspace) return
+  const actionMap: Record<ContentType, (item: DataItemType) => Promise<void>> =
+    {
+      chats: async () => {},
+      presets: async () => {},
+      prompts: async () => {},
+      files: async () => {},
+      collections: async () => {},
+      assistants: async (assistant: Tables<"assistants">) => {
+        if (!selectedWorkspace) return
 
-      const createdChat = await createChat({
-        user_id: assistant.user_id,
-        workspace_id: selectedWorkspace.id,
-        assistant_id: assistant.id,
-        context_length: assistant.context_length,
-        include_profile_context: assistant.include_profile_context,
-        include_workspace_instructions:
-          assistant.include_workspace_instructions,
-        model: assistant.model,
-        name: `Chat with ${assistant.name}`,
-        prompt: assistant.prompt,
-        temperature: assistant.temperature,
-        embeddings_provider: assistant.embeddings_provider
-      })
+        const createdChat = await createChat({
+          user_id: assistant.user_id,
+          workspace_id: selectedWorkspace.id,
+          assistant_id: assistant.id,
+          context_length: assistant.context_length,
+          include_profile_context: assistant.include_profile_context,
+          include_workspace_instructions:
+            assistant.include_workspace_instructions,
+          model: assistant.model,
+          name: `Chat with ${assistant.name}`,
+          prompt: assistant.prompt,
+          temperature: assistant.temperature,
+          embeddings_provider: assistant.embeddings_provider
+        })
 
-      setChats(prevState => [createdChat, ...prevState])
-      setSelectedAssistant(assistant)
+        setChats([createdChat, ...chats])
+        setSelectedAssistant(assistant)
 
-      return router.push(`/${selectedWorkspace.id}/chat/${createdChat.id}`)
-    },
-    tools: async (item: any) => {},
-    models: async (item: any) => {},
-    mcp_servers: async (item: any) => {}
-  }
+        return router.push(`/${selectedWorkspace.id}/chat/${createdChat.id}`)
+      },
+      tools: async () => {},
+      models: async () => {},
+      mcp_servers: async () => {}
+    }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {

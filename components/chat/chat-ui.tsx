@@ -1,6 +1,13 @@
 import Loading from "@/app/[locale]/loading"
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useAttachmentsStore,
+  useChatStore,
+  useItemsStore,
+  useRetrievalStore,
+  useToolStore
+} from "@/stores"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
 import { getChatFilesByChatId } from "@/db/chat-files"
 import { getChatById } from "@/db/chats"
@@ -12,7 +19,7 @@ import useHotkey from "@/lib/hooks/use-hotkey"
 import { ContentBlock } from "@/types/content-blocks"
 import { LLMID, MessageImage } from "@/types"
 import { useParams } from "next/navigation"
-import { FC, useContext, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import { ChatHelp } from "./chat-help"
 import { useScroll } from "./chat-hooks/use-scroll"
 import { ChatInput } from "./chat-input"
@@ -27,20 +34,24 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
 
   const params = useParams()
 
-  const {
-    setChatMessages,
-    selectedChat,
-    setSelectedChat,
-    setChatSettings,
-    setChatImages,
-    assistants,
-    setSelectedAssistant,
-    setChatFileItems,
-    setChatFiles,
-    setShowFilesDisplay,
-    setUseRetrieval,
-    setSelectedTools
-  } = useContext(ChatbotUIContext)
+  const setChatMessages = useChatStore(state => state.setChatMessages)
+  const selectedChat = useChatStore(state => state.selectedChat)
+  const setSelectedChat = useChatStore(state => state.setSelectedChat)
+  const setChatSettings = useChatStore(state => state.setChatSettings)
+  const setChatFileItems = useChatStore(state => state.setChatFileItems)
+
+  const setChatImages = useAttachmentsStore(state => state.setChatImages)
+  const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
+
+  const assistants = useItemsStore(state => state.assistants)
+  const setSelectedAssistant = useAssistantStore(
+    state => state.setSelectedAssistant
+  )
+  const setUseRetrieval = useRetrievalStore(state => state.setUseRetrieval)
+  const setSelectedTools = useToolStore(state => state.setSelectedTools)
 
   const { handleNewChat, handleFocusChatInput } = useChatHandler()
 

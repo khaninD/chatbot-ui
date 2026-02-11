@@ -1,33 +1,53 @@
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useAttachmentsStore,
+  useChatInputStore,
+  useChatStore,
+  useRetrievalStore,
+  useToolStore
+} from "@/stores"
 import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
 import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
 import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import { Tables } from "@/supabase/types"
 import { LLMID } from "@/types"
-import { useContext } from "react"
 
 export const usePromptAndCommand = () => {
-  const {
-    chatFiles,
-    setNewMessageFiles,
-    userInput,
-    setUserInput,
-    setShowFilesDisplay,
-    setIsPromptPickerOpen,
-    setIsFilePickerOpen,
-    setSlashCommand,
-    setHashtagCommand,
-    setUseRetrieval,
-    setToolCommand,
-    setIsToolPickerOpen,
-    setSelectedTools,
-    setAtCommand,
-    setIsAssistantPickerOpen,
-    setSelectedAssistant,
-    setChatSettings,
-    setChatFiles
-  } = useContext(ChatbotUIContext)
+  const chatFiles = useAttachmentsStore(state => state.chatFiles)
+  const newMessageFiles = useAttachmentsStore(state => state.newMessageFiles)
+  const setNewMessageFiles = useAttachmentsStore(
+    state => state.setNewMessageFiles
+  )
+  const userInput = useChatStore(state => state.userInput)
+  const setUserInput = useChatStore(state => state.setUserInput)
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
+  const setIsPromptPickerOpen = useChatInputStore(
+    state => state.setIsPromptPickerOpen
+  )
+  const setIsFilePickerOpen = useChatInputStore(
+    state => state.setIsFilePickerOpen
+  )
+  const setSlashCommand = useChatInputStore(state => state.setSlashCommand)
+  const setHashtagCommand = useChatInputStore(state => state.setHashtagCommand)
+  const setUseRetrieval = useRetrievalStore(state => state.setUseRetrieval)
+  const setToolCommand = useChatInputStore(state => state.setToolCommand)
+  const setIsToolPickerOpen = useChatInputStore(
+    state => state.setIsToolPickerOpen
+  )
+  const selectedTools = useToolStore(state => state.selectedTools)
+  const setSelectedTools = useToolStore(state => state.setSelectedTools)
+  const setAtCommand = useChatInputStore(state => state.setAtCommand)
+  const setIsAssistantPickerOpen = useChatInputStore(
+    state => state.setIsAssistantPickerOpen
+  )
+  const setSelectedAssistant = useAssistantStore(
+    state => state.setSelectedAssistant
+  )
+  const setChatSettings = useChatStore(state => state.setChatSettings)
+  const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
 
   const handleInputChange = (value: string) => {
     const atTextRegex = /@([^ ]*)$/
@@ -75,24 +95,21 @@ export const usePromptAndCommand = () => {
     setIsFilePickerOpen(false)
     setUseRetrieval(true)
 
-    setNewMessageFiles(prev => {
-      const fileAlreadySelected =
-        prev.some(prevFile => prevFile.id === file.id) ||
-        chatFiles.some(chatFile => chatFile.id === file.id)
+    const fileAlreadySelected =
+      newMessageFiles.some(prevFile => prevFile.id === file.id) ||
+      chatFiles.some(chatFile => chatFile.id === file.id)
 
-      if (!fileAlreadySelected) {
-        return [
-          ...prev,
-          {
-            id: file.id,
-            name: file.name,
-            type: file.type,
-            file: null
-          }
-        ]
-      }
-      return prev
-    })
+    if (!fileAlreadySelected) {
+      setNewMessageFiles([
+        ...newMessageFiles,
+        {
+          id: file.id,
+          name: file.name,
+          type: file.type,
+          file: null
+        }
+      ])
+    }
 
     setUserInput(userInput.replace(/#[^ ]*$/, ""))
   }
@@ -108,22 +125,22 @@ export const usePromptAndCommand = () => {
       collection.id
     )
 
-    setNewMessageFiles(prev => {
-      const newFiles = collectionFiles.files
-        .filter(
-          file =>
-            !prev.some(prevFile => prevFile.id === file.id) &&
-            !chatFiles.some(chatFile => chatFile.id === file.id)
-        )
-        .map(file => ({
-          id: file.id,
-          name: file.name,
-          type: file.type,
-          file: null
-        }))
+    const newFiles = collectionFiles.files
+      .filter(
+        file =>
+          !newMessageFiles.some(prevFile => prevFile.id === file.id) &&
+          !chatFiles.some(chatFile => chatFile.id === file.id)
+      )
+      .map(file => ({
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        file: null
+      }))
 
-      return [...prev, ...newFiles]
-    })
+    if (newFiles.length > 0) {
+      setNewMessageFiles([...newMessageFiles, ...newFiles])
+    }
 
     setUserInput(userInput.replace(/#[^ ]*$/, ""))
   }
@@ -131,7 +148,7 @@ export const usePromptAndCommand = () => {
   const handleSelectTool = (tool: Tables<"tools">) => {
     setIsToolPickerOpen(false)
     setUserInput(userInput.replace(/![^ ]*$/, ""))
-    setSelectedTools(prev => [...prev, tool])
+    setSelectedTools([...selectedTools, tool])
   }
 
   const handleSelectAssistant = async (assistant: Tables<"assistants">) => {

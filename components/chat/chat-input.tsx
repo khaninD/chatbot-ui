@@ -1,4 +1,11 @@
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useAssistantStore,
+  useChatInputStore,
+  useChatRuntimeStore,
+  useChatStore,
+  usePresetStore,
+  useToolStore
+} from "@/stores"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
@@ -9,7 +16,7 @@ import {
   IconSend
 } from "@tabler/icons-react"
 import Image from "next/image"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Input } from "../ui/input"
@@ -32,30 +39,36 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
   const [isTyping, setIsTyping] = useState<boolean>(false)
 
-  const {
-    isAssistantPickerOpen,
-    focusAssistant,
-    setFocusAssistant,
-    userInput,
-    chatMessages,
-    isGenerating,
-    selectedPreset,
-    selectedAssistant,
-    focusPrompt,
-    setFocusPrompt,
-    focusFile,
-    focusTool,
-    setFocusTool,
-    isToolPickerOpen,
-    isPromptPickerOpen,
-    setIsPromptPickerOpen,
-    isFilePickerOpen,
-    setFocusFile,
-    chatSettings,
-    selectedTools,
-    setSelectedTools,
-    assistantImages
-  } = useContext(ChatbotUIContext)
+  const isAssistantPickerOpen = useChatInputStore(
+    state => state.isAssistantPickerOpen
+  )
+  const focusAssistant = useChatInputStore(state => state.focusAssistant)
+  const setFocusAssistant = useChatInputStore(state => state.setFocusAssistant)
+  const focusPrompt = useChatInputStore(state => state.focusPrompt)
+  const setFocusPrompt = useChatInputStore(state => state.setFocusPrompt)
+  const focusFile = useChatInputStore(state => state.focusFile)
+  const setFocusFile = useChatInputStore(state => state.setFocusFile)
+  const focusTool = useChatInputStore(state => state.focusTool)
+  const setFocusTool = useChatInputStore(state => state.setFocusTool)
+  const isToolPickerOpen = useChatInputStore(state => state.isToolPickerOpen)
+  const isPromptPickerOpen = useChatInputStore(
+    state => state.isPromptPickerOpen
+  )
+  const setIsPromptPickerOpen = useChatInputStore(
+    state => state.setIsPromptPickerOpen
+  )
+  const isFilePickerOpen = useChatInputStore(state => state.isFilePickerOpen)
+
+  const userInput = useChatStore(state => state.userInput)
+  const chatMessages = useChatStore(state => state.chatMessages)
+  const chatSettings = useChatStore(state => state.chatSettings)
+
+  const isGenerating = useChatRuntimeStore(state => state.isGenerating)
+  const selectedPreset = usePresetStore(state => state.selectedPreset)
+  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
+  const assistantImages = useAssistantStore(state => state.assistantImages)
+  const selectedTools = useToolStore(state => state.selectedTools)
+  const setSelectedTools = useToolStore(state => state.setSelectedTools)
 
   const {
     chatInputRef,

@@ -1,7 +1,7 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useProfileStore } from "@/stores"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { IconLoader2, IconSend } from "@tabler/icons-react"
-import { FC, useContext, useState } from "react"
+import { FC, useState } from "react"
 import { Dialog, DialogContent } from "../ui/dialog"
 import { TextareaAutosize } from "../ui/textarea-autosize"
 
@@ -10,7 +10,7 @@ interface CommandKProps {}
 export const CommandK: FC<CommandKProps> = ({}) => {
   useHotkey("k", () => setIsOpen(prevState => !prevState))
 
-  const { profile } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
 
   const [isOpen, setIsOpen] = useState(false)
   const [value, setValue] = useState("")

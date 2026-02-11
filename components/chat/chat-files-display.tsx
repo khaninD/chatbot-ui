@@ -1,4 +1,4 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useAttachmentsStore, useItemsStore, useRetrievalStore } from "@/stores"
 import { getFileFromStorage } from "@/db/storage/files"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { cn } from "@/lib/utils"
@@ -16,7 +16,7 @@ import {
   IconX
 } from "@tabler/icons-react"
 import Image from "next/image"
-import { FC, useContext, useState } from "react"
+import { FC, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "../ui/button"
 import { FilePreview } from "../ui/file-preview"
@@ -30,20 +30,24 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
   useHotkey("f", () => setShowFilesDisplay(prev => !prev))
   useHotkey("e", () => setUseRetrieval(prev => !prev))
 
-  const {
-    files,
-    newMessageImages,
-    setNewMessageImages,
-    newMessageFiles,
-    setNewMessageFiles,
-    setShowFilesDisplay,
-    showFilesDisplay,
-    chatFiles,
-    chatImages,
-    setChatImages,
-    setChatFiles,
-    setUseRetrieval
-  } = useContext(ChatbotUIContext)
+  const files = useItemsStore(state => state.files)
+  const newMessageImages = useAttachmentsStore(state => state.newMessageImages)
+  const setNewMessageImages = useAttachmentsStore(
+    state => state.setNewMessageImages
+  )
+  const newMessageFiles = useAttachmentsStore(state => state.newMessageFiles)
+  const setNewMessageFiles = useAttachmentsStore(
+    state => state.setNewMessageFiles
+  )
+  const setShowFilesDisplay = useAttachmentsStore(
+    state => state.setShowFilesDisplay
+  )
+  const showFilesDisplay = useAttachmentsStore(state => state.showFilesDisplay)
+  const chatFiles = useAttachmentsStore(state => state.chatFiles)
+  const chatImages = useAttachmentsStore(state => state.chatImages)
+  const setChatImages = useAttachmentsStore(state => state.setChatImages)
+  const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
+  const setUseRetrieval = useRetrievalStore(state => state.setUseRetrieval)
 
   const [selectedFile, setSelectedFile] = useState<ChatFile | null>(null)
   const [selectedImage, setSelectedImage] = useState<MessageImage | null>(null)
@@ -261,7 +265,8 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
 
 const RetrievalToggle = ({}) => {
   const { t } = useTranslation()
-  const { useRetrieval, setUseRetrieval } = useContext(ChatbotUIContext)
+  const useRetrieval = useRetrievalStore(state => state.useRetrieval)
+  const setUseRetrieval = useRetrievalStore(state => state.setUseRetrieval)
 
   return (
     <div className="flex items-center">

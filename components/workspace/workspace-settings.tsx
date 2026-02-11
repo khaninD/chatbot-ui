@@ -1,4 +1,9 @@
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useChatStore,
+  useItemsStore,
+  useProfileStore,
+  useWorkspaceStore
+} from "@/stores"
 import { WORKSPACE_INSTRUCTIONS_MAX } from "@/db/limits"
 import {
   getWorkspaceImageFromStorage,
@@ -8,7 +13,7 @@ import { updateWorkspace } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { LLMID } from "@/types"
 import { IconHome, IconSettings } from "@tabler/icons-react"
-import { FC, useContext, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "../ui/button"
@@ -33,15 +38,15 @@ interface WorkspaceSettingsProps {}
 
 export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
   const { t } = useTranslation()
-  const {
-    profile,
-    selectedWorkspace,
-    setSelectedWorkspace,
-    setWorkspaces,
-    setChatSettings,
-    workspaceImages,
-    setWorkspaceImages
-  } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const setSelectedWorkspace = useWorkspaceStore(
+    state => state.setSelectedWorkspace
+  )
+  const setWorkspaces = useItemsStore(state => state.setWorkspaces)
+  const setChatSettings = useChatStore(state => state.setChatSettings)
+  const workspaceImages = useWorkspaceStore(state => state.workspaceImages)
+  const addWorkspaceImage = useWorkspaceStore(state => state.addWorkspaceImage)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -92,15 +97,12 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
         const blob = await response.blob()
         const base64 = await convertBlobToBase64(blob)
 
-        setWorkspaceImages(prev => [
-          ...prev,
-          {
-            workspaceId: selectedWorkspace.id,
-            path: imagePath,
-            base64,
-            url
-          }
-        ])
+        addWorkspaceImage({
+          workspaceId: selectedWorkspace.id,
+          path: imagePath,
+          base64,
+          url
+        })
       }
     }
 

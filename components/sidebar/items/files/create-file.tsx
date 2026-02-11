@@ -2,10 +2,10 @@ import { ACCEPTED_FILE_TYPES } from "@/components/chat/chat-hooks/use-select-fil
 import { SidebarCreateItem } from "@/components/sidebar/items/all/sidebar-create-item"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChatbotUIContext } from "@/context/context"
+import { useProfileStore, useWorkspaceStore } from "@/stores"
 import { FILE_DESCRIPTION_MAX, FILE_NAME_MAX } from "@/db/limits"
 import { TablesInsert } from "@/supabase/types"
-import { FC, useContext, useState } from "react"
+import { FC, useState } from "react"
 
 interface CreateFileProps {
   isOpen: boolean
@@ -13,7 +13,8 @@ interface CreateFileProps {
 }
 
 export const CreateFile: FC<CreateFileProps> = ({ isOpen, onOpenChange }) => {
-  const { profile, selectedWorkspace } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
 
   const [name, setName] = useState("")
   const [isTyping, setIsTyping] = useState(false)

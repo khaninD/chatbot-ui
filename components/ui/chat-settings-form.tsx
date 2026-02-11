@@ -1,10 +1,15 @@
 "use client"
 
-import { ChatbotUIContext } from "@/context/context"
+import {
+  useItemsStore,
+  useModelsStore,
+  useProfileStore,
+  useWorkspaceStore
+} from "@/stores"
 import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
 import { ChatSettings } from "@/types"
 import { IconInfoCircle } from "@tabler/icons-react"
-import { FC, useContext } from "react"
+import { FC } from "react"
 import { useTranslation } from "react-i18next"
 import { ModelSelect } from "../models/model-select"
 import { AdvancedSettings } from "./advanced-settings"
@@ -37,7 +42,8 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
   showTooltip = true
 }) => {
   const { t } = useTranslation()
-  const { profile, models } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const models = useItemsStore(state => state.models)
 
   if (!profile) return null
 
@@ -107,14 +113,16 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
   showTooltip
 }) => {
   const { t } = useTranslation()
-  const {
-    profile,
-    selectedWorkspace,
-    availableOpenRouterModels,
-    models,
-    mcpServers,
-    availableHostedModels
-  } = useContext(ChatbotUIContext)
+  const profile = useProfileStore(state => state.profile)
+  const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
+  const availableOpenRouterModels = useModelsStore(
+    state => state.availableOpenRouterModels
+  )
+  const models = useItemsStore(state => state.models)
+  const mcpServers = useItemsStore(state => state.mcpServers)
+  const availableHostedModels = useModelsStore(
+    state => state.availableHostedModels
+  )
 
   const isCustomModel = models.some(
     model => model.model_id === chatSettings.model
