@@ -3,7 +3,7 @@
  * Tests the error handling mechanisms added to prevent agent hanging
  */
 
-import { runAgentStream } from "@/lib/llamaindex/agent"
+import { createAgent, runAgentStream } from "@/lib/llamaindex/agent"
 
 // Mock dependencies
 jest.mock("@llamaindex/openai", () => ({
@@ -32,8 +32,36 @@ jest.mock("@llamaindex/workflow", () => ({
 }))
 
 describe("LlamaIndex Agent Error Handling", () => {
+  const runStreamWithAgent = (createAgentFn: typeof createAgent) =>
+    runAgentStream(
+      "test query",
+      "test prompt",
+      "test-api-key",
+      "deepseek-chat",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      createAgentFn
+    )
+
   beforeEach(() => {
     jest.clearAllMocks()
+    const workflow = require("@llamaindex/workflow")
+    workflow.agentStreamEvent.include.mockImplementation(
+      (event: { type?: string }) => event.type === "text_delta"
+    )
+    workflow.agentToolCallEvent.include.mockImplementation(
+      (event: { type?: string }) => event.type === "tool_call"
+    )
+    workflow.agentToolCallResultEvent.include.mockImplementation(
+      (event: { type?: string }) => event.type === "tool_result"
+    )
   })
 
   it("should handle stream errors gracefully", async () => {
@@ -45,8 +73,7 @@ describe("LlamaIndex Agent Error Handling", () => {
       })
     }
 
-    // Mock createAgent to return our mock agent
-    jest.spyOn(require("@/lib/llamaindex/agent"), "createAgent").mockResolvedValue({
+    const createAgentFn = jest.fn().mockResolvedValue({
       agent: mockAgent,
       servers: []
     })
@@ -54,12 +81,7 @@ describe("LlamaIndex Agent Error Handling", () => {
     const events: any[] = []
 
     try {
-      for await (const event of runAgentStream(
-        "test query",
-        "test prompt",
-        "test-api-key",
-        "deepseek-chat"
-      )) {
+      for await (const event of runStreamWithAgent(createAgentFn)) {
         events.push(event)
       }
     } catch (error) {
@@ -86,18 +108,14 @@ describe("LlamaIndex Agent Error Handling", () => {
       })
     }
 
-    jest.spyOn(require("@/lib/llamaindex/agent"), "createAgent").mockResolvedValue({
+    const createAgentFn = jest.fn().mockResolvedValue({
       agent: mockAgent,
       servers: []
     })
 
     const events: any[] = []
 
-    for await (const event of runAgentStream(
-      "test query",
-      "test prompt",
-      "test-api-key"
-    )) {
+    for await (const event of runStreamWithAgent(createAgentFn)) {
       events.push(event)
     }
 
@@ -120,17 +138,13 @@ describe("LlamaIndex Agent Error Handling", () => {
       })
     }
 
-    jest.spyOn(require("@/lib/llamaindex/agent"), "createAgent").mockResolvedValue({
+    const createAgentFn = jest.fn().mockResolvedValue({
       agent: mockAgent,
       servers: [mockServer]
     })
 
     try {
-      for await (const event of runAgentStream(
-        "test query",
-        "test prompt",
-        "test-api-key"
-      )) {
+      for await (const event of runStreamWithAgent(createAgentFn)) {
         // Consume events
       }
     } catch (error) {
@@ -151,18 +165,14 @@ describe("LlamaIndex Agent Error Handling", () => {
       })
     }
 
-    jest.spyOn(require("@/lib/llamaindex/agent"), "createAgent").mockResolvedValue({
+    const createAgentFn = jest.fn().mockResolvedValue({
       agent: mockAgent,
       servers: []
     })
 
     const events: any[] = []
 
-    for await (const event of runAgentStream(
-      "test query",
-      "test prompt",
-      "test-api-key"
-    )) {
+    for await (const event of runStreamWithAgent(createAgentFn)) {
       events.push(event)
     }
 

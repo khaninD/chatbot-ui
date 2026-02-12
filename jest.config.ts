@@ -9,7 +9,13 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const config: Config = {
   coverageProvider: "v8",
-  testEnvironment: "jsdom"
+  testEnvironment: "jsdom",
+  testPathIgnorePatterns: ["<rootDir>/__tests__/playwright-test/"],
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/$1",
+    "^@llamaindex/core/tools$": "<rootDir>/__mocks__/llamaindex-core-tools.ts",
+    "^@llamaindex/env$": "<rootDir>/__mocks__/llamaindex-env.ts"
+  }
   // Add more setup options before each test is run
   // setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 }

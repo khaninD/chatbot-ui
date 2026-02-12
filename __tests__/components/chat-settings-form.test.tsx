@@ -26,6 +26,46 @@ jest.mock("@/components/models/model-select", () => ({
   )
 }))
 
+jest.mock("@/components/ui/button", () => ({
+  Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props}>{children}</button>
+  )
+}))
+
+jest.mock("@/components/ui/select", () => ({
+  Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({
+    children,
+    value
+  }: {
+    children: React.ReactNode
+    value: string
+  }) => (
+    <div data-value={value} value={value}>
+      {children}
+    </div>
+  ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button" role="combobox">
+      {children}
+    </button>
+  ),
+  SelectValue: ({ children }: { children?: React.ReactNode }) => (
+    <span>{children}</span>
+  )
+}))
+
+jest.mock("@/components/ui/slider", () => ({
+  Slider: () => <div data-testid="slider" />
+}))
+
+jest.mock("@/components/ui/checkbox", () => ({
+  Checkbox: () => <input type="checkbox" />
+}))
+
 jest.mock("@/components/ui/advanced-settings", () => ({
   AdvancedSettings: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="advanced-settings">{children}</div>
@@ -146,7 +186,8 @@ describe("ChatSettingsForm - Image Model Selection", () => {
 
     const settings: ChatSettings = {
       ...defaultChatSettings,
-      model: cometModel.modelId
+      model: cometModel.modelId,
+      modelProvider: "comet"
     }
 
     renderWithContext(settings)
@@ -163,7 +204,8 @@ describe("ChatSettingsForm - Image Model Selection", () => {
 
     const settings: ChatSettings = {
       ...defaultChatSettings,
-      model: openaiModel.modelId
+      model: openaiModel.modelId,
+      modelProvider: "openai"
     }
 
     renderWithContext(settings)
@@ -180,7 +222,8 @@ describe("ChatSettingsForm - Image Model Selection", () => {
 
     const settings: ChatSettings = {
       ...defaultChatSettings,
-      model: cometModel.modelId
+      model: cometModel.modelId,
+      modelProvider: "comet"
     }
 
     const { container } = renderWithContext(settings)
@@ -228,6 +271,7 @@ describe("ChatSettingsForm - Image Model Selection", () => {
     const settings: ChatSettings = {
       ...defaultChatSettings,
       model: cometModel.modelId,
+      modelProvider: "comet",
       imageModel: undefined
     }
 
@@ -247,7 +291,8 @@ describe("ChatSettingsForm - Image Model Selection", () => {
 
     const settings: ChatSettings = {
       ...defaultChatSettings,
-      model: cometModel.modelId
+      model: cometModel.modelId,
+      modelProvider: "comet"
     }
 
     renderWithContext(settings, {}, mockOnChange)

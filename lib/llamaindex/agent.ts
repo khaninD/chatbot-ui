@@ -219,7 +219,8 @@ export async function* runAgentStream(
   images?: string[],
   userId?: string,
   imageModel?: string,
-  customAPIBaseURL?: string
+  customAPIBaseURL?: string,
+  createAgentFn: typeof createAgent = createAgent
 ) {
   // Determine if we have images from conversation history
   const hasImages = images && images.length > 0
@@ -239,7 +240,7 @@ export async function* runAgentStream(
   }
 
   // Create agent with image edit tool enabled if images are present
-  const { agent: sqlAgent, servers } = await createAgent(
+  const { agent: sqlAgent, servers } = await createAgentFn(
     finalSystemPrompt,
     apiKey,
     model,
