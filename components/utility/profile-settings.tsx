@@ -23,7 +23,7 @@ import {
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { FC, useCallback, useRef, useState } from "react"
+import { FC, useCallback, useRef, useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { SIDEBAR_ICON_SIZE } from "../sidebar/sidebar-switcher"
@@ -78,7 +78,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
   const [username, setUsername] = useState(profile?.username || "")
   const [usernameAvailable, setUsernameAvailable] = useState(true)
   const [loadingUsername, setLoadingUsername] = useState(false)
-  const [profileImageSrc, setProfileImageSrc] = useState(
+  const [profileImagePreviewSrc, setProfileImagePreviewSrc] = useState(
     profile?.image_url || ""
   )
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
@@ -316,7 +316,15 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     }
   }
 
+  useEffect(() => {
+    setProfileImagePreviewSrc(profile?.image_url || "")
+  }, [profile?.image_url])
+
   if (!profile) return null
+
+  const profileImageUrl = profile.image_url
+    ? `${profile.image_url}${profile.updated_at ? `?v=${profile.updated_at}` : ""}`
+    : ""
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -324,7 +332,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
         {profile.image_url ? (
           <Image
             className="mt-2 size-[34px] cursor-pointer rounded hover:opacity-50"
-            src={profile.image_url + "?" + new Date().getTime()}
+            src={profileImageUrl}
             height={34}
             width={34}
             alt={"Image"}
@@ -420,11 +428,11 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                 <Label>{t("profile.profileImage")}</Label>
 
                 <ImagePicker
-                  src={profileImageSrc}
+                  src={profileImagePreviewSrc || profileImageUrl}
                   image={profileImageFile}
                   height={50}
                   width={50}
-                  onSrcChange={setProfileImageSrc}
+                  onSrcChange={setProfileImagePreviewSrc}
                   onImageChange={setProfileImageFile}
                 />
               </div>
