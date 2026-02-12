@@ -77,7 +77,10 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
     (state: unknown, workspaceId: string) => Promise<unknown>
   > = {
     chats: (state, workspaceId) =>
-      createChat(state as TablesInsert<"chats">, workspaceId),
+      createChat({
+        ...(state as TablesInsert<"chats">),
+        workspace_id: workspaceId
+      }),
     presets: (state, workspaceId) =>
       createPreset(state as TablesInsert<"presets">, workspaceId),
     prompts: (state, workspaceId) =>

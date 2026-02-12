@@ -32,7 +32,10 @@ jest.mock("@/components/ui/advanced-settings", () => ({
   )
 }))
 
-const mockProfile = {
+const mockProfile: Tables<"profiles"> = {
+  id: "test-profile-id",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
   user_id: "test-user-id",
   has_onboarded: true,
   image_url: "",

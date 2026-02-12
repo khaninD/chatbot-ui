@@ -13,7 +13,7 @@ interface SidebarItemProps {
   contentType: ContentType
   icon: React.ReactNode
   updateState: unknown
-  renderInputs: (renderState: unknown) => React.JSX.Element
+  renderInputs: (renderState: any) => React.JSX.Element
 }
 
 export const SidebarItem: FC<SidebarItemProps> = ({
@@ -44,7 +44,7 @@ export const SidebarItem: FC<SidebarItemProps> = ({
       prompts: async () => {},
       files: async () => {},
       collections: async () => {},
-      assistants: async (assistant: Tables<"assistants">) => {
+      assistants: (async (assistant: Tables<"assistants">) => {
         if (!selectedWorkspace) return
 
         const createdChat = await createChat({
@@ -66,7 +66,7 @@ export const SidebarItem: FC<SidebarItemProps> = ({
         setSelectedAssistant(assistant)
 
         return router.push(`/${selectedWorkspace.id}/chat/${createdChat.id}`)
-      },
+      }) as (item: DataItemType) => Promise<void>,
       tools: async () => {},
       models: async () => {},
       mcp_servers: async () => {}

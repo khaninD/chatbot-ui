@@ -80,10 +80,10 @@ export const FilePicker: FC<FilePickerProps> = ({
       } else if (e.key === "Enter") {
         e.preventDefault()
 
-        if (type === "file") {
-          handleSelectFile(item)
-        } else {
-          handleSelectCollection(item)
+        if (type === "file" && "file_path" in item) {
+          handleSelectFile(item as Tables<"files">)
+        } else if (type === "collection") {
+          handleSelectCollection(item as Tables<"collections">)
         }
       } else if (
         (e.key === "Tab" || e.key === "ArrowDown") &&
@@ -127,21 +127,23 @@ export const FilePicker: FC<FilePickerProps> = ({
                   tabIndex={0}
                   className="flex cursor-pointer items-center rounded p-2 hover:bg-accent focus:bg-accent focus:outline-none"
                   onClick={() => {
-                    if ("type" in item) {
+                    if ("type" in item && "file_path" in item) {
                       handleSelectFile(item as Tables<"files">)
                     } else {
-                      handleSelectCollection(item)
+                      handleSelectCollection(item as Tables<"collections">)
                     }
                   }}
                   onKeyDown={e =>
                     getKeyDownHandler(
                       index,
-                      "type" in item ? "file" : "collection",
+                      "type" in item && "file_path" in item
+                        ? "file"
+                        : "collection",
                       item
                     )(e)
                   }
                 >
-                  {"type" in item ? (
+                  {"type" in item && "file_path" in item ? (
                     <FileIcon type={(item as Tables<"files">).type} size={32} />
                   ) : (
                     <IconBooks size={32} />

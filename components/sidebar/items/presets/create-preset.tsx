@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { useProfileStore, useWorkspaceStore } from "@/stores"
 import { PRESET_NAME_MAX } from "@/db/limits"
 import { TablesInsert } from "@/supabase/types"
-import { ChatSettings } from "@/types"
+import { ChatSettings, LLMID } from "@/types"
 import { FC, useState } from "react"
 
 interface CreatePresetProps {
@@ -24,14 +24,16 @@ export const CreatePreset: FC<CreatePresetProps> = ({
   const [isTyping, setIsTyping] = useState(false)
   const [description, setDescription] = useState("")
   const [presetChatSettings, setPresetChatSettings] = useState<ChatSettings>({
-    model: selectedWorkspace?.default_model,
-    prompt: selectedWorkspace?.default_prompt,
-    temperature: selectedWorkspace?.default_temperature,
-    contextLength: selectedWorkspace?.default_context_length,
-    includeProfileContext: selectedWorkspace?.include_profile_context,
+    model: (selectedWorkspace?.default_model as LLMID) || "gpt-4o",
+    prompt:
+      selectedWorkspace?.default_prompt || "You are a helpful AI assistant.",
+    temperature: selectedWorkspace?.default_temperature || 0.5,
+    contextLength: selectedWorkspace?.default_context_length || 4000,
+    includeProfileContext: selectedWorkspace?.include_profile_context || true,
     includeWorkspaceInstructions:
-      selectedWorkspace?.include_workspace_instructions,
-    embeddingsProvider: selectedWorkspace?.embeddings_provider
+      selectedWorkspace?.include_workspace_instructions || true,
+    embeddingsProvider:
+      (selectedWorkspace?.embeddings_provider as "openai" | "local") || "openai"
   })
 
   if (!profile) return null

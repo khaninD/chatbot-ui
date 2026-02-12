@@ -25,7 +25,7 @@ interface AttachmentsActions {
   setNewMessageImages: (
     images: MessageImage[] | ((prev: MessageImage[]) => MessageImage[])
   ) => void
-  setShowFilesDisplay: (value: boolean) => void
+  setShowFilesDisplay: (value: boolean | ((prev: boolean) => boolean)) => void
 }
 
 const initialState: AttachmentsState = AttachmentsStateSchema.parse({
@@ -66,5 +66,11 @@ export const useAttachmentsStore = create<
           ? newMessageImages(state.newMessageImages)
           : newMessageImages
     })),
-  setShowFilesDisplay: showFilesDisplay => set({ showFilesDisplay })
+  setShowFilesDisplay: showFilesDisplay =>
+    set(state => ({
+      showFilesDisplay:
+        typeof showFilesDisplay === "function"
+          ? showFilesDisplay(state.showFilesDisplay)
+          : showFilesDisplay
+    }))
 }))

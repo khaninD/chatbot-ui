@@ -9,8 +9,8 @@ const RetrievalStateSchema = z.object({
 type RetrievalState = z.infer<typeof RetrievalStateSchema>
 
 interface RetrievalActions {
-  setUseRetrieval: (value: boolean) => void
-  setSourceCount: (value: number) => void
+  setUseRetrieval: (value: boolean | ((prev: boolean) => boolean)) => void
+  setSourceCount: (value: number | ((prev: number) => number)) => void
 }
 
 const initialState: RetrievalState = RetrievalStateSchema.parse({
@@ -21,7 +21,19 @@ const initialState: RetrievalState = RetrievalStateSchema.parse({
 export const useRetrievalStore = create<RetrievalState & RetrievalActions>(
   set => ({
     ...initialState,
-    setUseRetrieval: useRetrieval => set({ useRetrieval }),
-    setSourceCount: sourceCount => set({ sourceCount })
+    setUseRetrieval: useRetrieval =>
+      set(state => ({
+        useRetrieval:
+          typeof useRetrieval === "function"
+            ? useRetrieval(state.useRetrieval)
+            : useRetrieval
+      })),
+    setSourceCount: sourceCount =>
+      set(state => ({
+        sourceCount:
+          typeof sourceCount === "function"
+            ? sourceCount(state.sourceCount)
+            : sourceCount
+      }))
   })
 )

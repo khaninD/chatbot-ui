@@ -10,8 +10,12 @@ const ChatRuntimeStateSchema = z.object({
 type ChatRuntimeState = z.infer<typeof ChatRuntimeStateSchema>
 
 interface ChatRuntimeActions {
-  setIsGenerating: (isGenerating: boolean) => void
-  setFirstTokenReceived: (firstTokenReceived: boolean) => void
+  setIsGenerating: (
+    isGenerating: boolean | ((prev: boolean) => boolean)
+  ) => void
+  setFirstTokenReceived: (
+    firstTokenReceived: boolean | ((prev: boolean) => boolean)
+  ) => void
   setAbortController: (abortController: AbortController | null) => void
 }
 
@@ -25,7 +29,19 @@ export const useChatRuntimeStore = create<
   ChatRuntimeState & ChatRuntimeActions
 >(set => ({
   ...initialState,
-  setIsGenerating: isGenerating => set({ isGenerating }),
-  setFirstTokenReceived: firstTokenReceived => set({ firstTokenReceived }),
+  setIsGenerating: isGenerating =>
+    set(state => ({
+      isGenerating:
+        typeof isGenerating === "function"
+          ? isGenerating(state.isGenerating)
+          : isGenerating
+    })),
+  setFirstTokenReceived: firstTokenReceived =>
+    set(state => ({
+      firstTokenReceived:
+        typeof firstTokenReceived === "function"
+          ? firstTokenReceived(state.firstTokenReceived)
+          : firstTokenReceived
+    })),
   setAbortController: abortController => set({ abortController })
 }))

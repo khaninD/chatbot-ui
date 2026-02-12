@@ -6,6 +6,7 @@ import { createFiles } from "@/db/files"
 import { createPresets } from "@/db/presets"
 import { createPrompts } from "@/db/prompts"
 import { createTools } from "@/db/tools"
+import { Tables, TablesInsert } from "@/supabase/types"
 import { IconUpload, IconX } from "@tabler/icons-react"
 import { FC, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -176,19 +177,31 @@ export const Import: FC<ImportProps> = ({}) => {
     })
 
     const createdItems = {
-      chats: await createChats(saveData.chats),
-      presets: await createPresets(saveData.presets, selectedWorkspace.id),
-      prompts: await createPrompts(saveData.prompts, selectedWorkspace.id),
-      files: await createFiles(saveData.files, selectedWorkspace.id),
+      chats: await createChats(saveData.chats as TablesInsert<"chats">[]),
+      presets: await createPresets(
+        saveData.presets as TablesInsert<"presets">[],
+        selectedWorkspace.id
+      ),
+      prompts: await createPrompts(
+        saveData.prompts as TablesInsert<"prompts">[],
+        selectedWorkspace.id
+      ),
+      files: await createFiles(
+        saveData.files as TablesInsert<"files">[],
+        selectedWorkspace.id
+      ),
       collections: await createCollections(
-        saveData.collections,
+        saveData.collections as TablesInsert<"collections">[],
         selectedWorkspace.id
       ),
       assistants: await createAssistants(
-        saveData.assistants,
+        saveData.assistants as TablesInsert<"assistants">[],
         selectedWorkspace.id
       ),
-      tools: await createTools(saveData.tools, selectedWorkspace.id)
+      tools: await createTools(
+        saveData.tools as TablesInsert<"tools">[],
+        selectedWorkspace.id
+      )
     }
 
     setChats([...chats, ...createdItems.chats])
@@ -256,10 +269,14 @@ export const Import: FC<ImportProps> = ({}) => {
 
                     <div className="flex items-center space-x-2 truncate">
                       <Badge>
-                        {item.contentType.slice(0, -1).toUpperCase()}
+                        {(item.contentType as string | undefined)
+                          ?.slice(0, -1)
+                          .toUpperCase() || "ITEM"}
                       </Badge>
 
-                      <div className="truncate">{item.name}</div>
+                      <div className="truncate">
+                        {(item.name as string) || "Unnamed"}
+                      </div>
                     </div>
                   </div>
                 ))}

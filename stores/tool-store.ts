@@ -11,7 +11,7 @@ type ToolState = z.infer<typeof ToolStateSchema>
 
 interface ToolActions {
   setSelectedTools: (tools: Tables<"tools">[]) => void
-  setToolInUse: (toolInUse: string) => void
+  setToolInUse: (toolInUse: string | ((prev: string) => string)) => void
 }
 
 const initialState: ToolState = ToolStateSchema.parse({
@@ -22,5 +22,9 @@ const initialState: ToolState = ToolStateSchema.parse({
 export const useToolStore = create<ToolState & ToolActions>(set => ({
   ...initialState,
   setSelectedTools: selectedTools => set({ selectedTools }),
-  setToolInUse: toolInUse => set({ toolInUse })
+  setToolInUse: toolInUse =>
+    set(state => ({
+      toolInUse:
+        typeof toolInUse === "function" ? toolInUse(state.toolInUse) : toolInUse
+    }))
 }))

@@ -128,11 +128,13 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   }
 
   const handleDelete = async () => {
-    const deleteFunction = deleteFunctions[contentType]
+    const deleteFunction = deleteFunctions[contentType] as (
+      item: unknown
+    ) => Promise<void>
 
     if (!deleteFunction) return
 
-    await deleteFunction(item as DataItemType)
+    await deleteFunction(item)
 
     updateStateList(prevItems =>
       prevItems.filter(prevItem => prevItem.id !== item.id)

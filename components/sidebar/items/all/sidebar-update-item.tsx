@@ -298,8 +298,11 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       workspaceId: string
     ) => Promise<boolean>,
     createWorkspaceFn: (
-      workspaces: { user_id: string; item_id: string; workspace_id: string }[]
-    ) => Promise<void>,
+      workspaces: ({
+        user_id: string
+        workspace_id: string
+      } & Record<string, string>)[]
+    ) => Promise<unknown>,
     itemIdKey: string
   ) => {
     if (!selectedWorkspace) return
@@ -339,8 +342,14 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     )
   }
 
-  const updateFunctions = {
-    chats: updateChat,
+  const updateFunctions: Record<
+    ContentType,
+    (id: string, state: any) => Promise<DataItemType>
+  > = {
+    chats: updateChat as (
+      id: string,
+      state: TablesUpdate<"chats">
+    ) => Promise<Tables<"chats">>,
     presets: async (presetId: string, updateState: TablesUpdate<"presets">) => {
       const updatedPreset = await updatePreset(presetId, updateState)
 
@@ -349,12 +358,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         presetId,
         deletePresetWorkspace,
-        createPresetWorkspaces as (
-          workspaces: {
-            user_id: string
-            preset_id: string
-            workspace_id: string
-          }[]
+        createPresetWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "preset_id"
       )
@@ -369,12 +374,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         promptId,
         deletePromptWorkspace,
-        createPromptWorkspaces as (
-          workspaces: {
-            user_id: string
-            prompt_id: string
-            workspace_id: string
-          }[]
+        createPromptWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "prompt_id"
       )
@@ -389,12 +390,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         fileId,
         deleteFileWorkspace,
-        createFileWorkspaces as (
-          workspaces: {
-            user_id: string
-            file_id: string
-            workspace_id: string
-          }[]
+        createFileWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "file_id"
       )
@@ -403,9 +400,9 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     },
     collections: async (
       collectionId: string,
-      updateState: TablesUpdate<"assistants">
+      updateState: TablesUpdate<"collections">
     ) => {
-      if (!profile) return
+      if (!profile) return null as unknown as DataItemType
 
       const { ...rest } = updateState
 
@@ -441,12 +438,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         collectionId,
         deleteCollectionWorkspace,
-        createCollectionWorkspaces as (
-          workspaces: {
-            user_id: string
-            collection_id: string
-            workspace_id: string
-          }[]
+        createCollectionWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "collection_id"
       )
@@ -573,12 +566,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         assistantId,
         deleteAssistantWorkspace,
-        createAssistantWorkspaces as (
-          workspaces: {
-            user_id: string
-            assistant_id: string
-            workspace_id: string
-          }[]
+        createAssistantWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "assistant_id"
       )
@@ -593,12 +582,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         toolId,
         deleteToolWorkspace,
-        createToolWorkspaces as (
-          workspaces: {
-            user_id: string
-            tool_id: string
-            workspace_id: string
-          }[]
+        createToolWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "tool_id"
       )
@@ -613,12 +598,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         modelId,
         deleteModelWorkspace,
-        createModelWorkspaces as (
-          workspaces: {
-            user_id: string
-            model_id: string
-            workspace_id: string
-          }[]
+        createModelWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "model_id"
       )
@@ -636,12 +617,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         selectedWorkspaces,
         mcpServerId,
         deleteMcpServerWorkspace,
-        createMcpServerWorkspaces as (
-          workspaces: {
-            user_id: string
-            mcp_server_id: string
-            workspace_id: string
-          }[]
+        createMcpServerWorkspaces as unknown as (
+          workspaces: unknown
         ) => Promise<void>,
         "mcp_server_id"
       )

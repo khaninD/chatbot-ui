@@ -42,7 +42,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
 
       <SidebarDataList
         contentType={contentType}
-        data={filteredData}
+        data={filteredData as DataListType}
         folders={folders}
       />
     </div>

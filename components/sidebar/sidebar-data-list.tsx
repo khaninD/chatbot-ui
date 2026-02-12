@@ -134,14 +134,11 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
             return true
         }
       })
-      .sort(
-        (
-          a: { updated_at: string; created_at: string },
-          b: { updated_at: string; created_at: string }
-        ) =>
-          new Date(b.updated_at || b.created_at).getTime() -
-          new Date(a.updated_at || a.created_at).getTime()
-      )
+      .sort((a: DataItemType, b: DataItemType) => {
+        const aDate = new Date(a.updated_at || a.created_at || 0).getTime()
+        const bDate = new Date(b.updated_at || b.created_at || 0).getTime()
+        return bDate - aDate
+      })
   }
 
   const updateFunctions = {
@@ -300,7 +297,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                   { key: "Older", translation: "sidebar.older" }
                 ].map(({ key: dateCategory, translation }) => {
                   const sortedData = getSortedData(
-                    dataWithoutFolders,
+                    dataWithoutFolders as DataListType,
                     dateCategory as
                       | "Today"
                       | "Yesterday"
