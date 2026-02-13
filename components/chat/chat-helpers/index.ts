@@ -197,6 +197,7 @@ export const handleHostedChat = async (
   newAbortController: AbortController,
   newMessageImages: MessageImage[],
   chatImages: MessageImage[],
+  sessionId: string,
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
@@ -204,8 +205,8 @@ export const handleHostedChat = async (
 ) => {
   const draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
-  // All requests now go through LlamaIndex agent
-  const apiEndpoint = "/api/chat/llamaindex"
+  // All requests now go through agent-server proxy
+  const apiEndpoint = "/api/chat/agent"
 
   // Use the selected model as the agent model
   const agentModel = modelData.hostedId || modelData.modelId
@@ -218,7 +219,8 @@ export const handleHostedChat = async (
     messages: draftMessages,
     // Always pass file items for RAG support
     messageFileItems: payload.messageFileItems,
-    chatFileItems: payload.chatFileItems
+    chatFileItems: payload.chatFileItems,
+    sessionId
   }
 
   const response = await fetchChatResponse(
@@ -426,7 +428,7 @@ export const handleCreateChat = async (
   profile: Tables<"profiles">,
   selectedWorkspace: Tables<"workspaces">,
   messageContent: string,
-  selectedAssistant: Tables<"assistants">,
+  selectedAssistant: Tables<"assistants"> | null,
   newMessageFiles: ChatFile[],
   setSelectedChat: React.Dispatch<React.SetStateAction<Tables<"chats"> | null>>,
   setChats: React.Dispatch<React.SetStateAction<Tables<"chats">[]>>,

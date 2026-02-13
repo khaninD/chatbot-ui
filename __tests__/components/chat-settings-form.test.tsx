@@ -44,7 +44,7 @@ jest.mock("@/components/ui/select", () => ({
     children: React.ReactNode
     value: string
   }) => (
-    <div data-value={value} value={value}>
+    <div data-value={value}>
       {children}
     </div>
   ),

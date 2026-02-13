@@ -367,6 +367,20 @@ export const useChatHandler = () => {
           generatedText = result.text
           contentBlocks = result.contentBlocks
         } else {
+          if (!currentChat) {
+            currentChat = await handleCreateChat(
+              chatSettings!,
+              profile!,
+              selectedWorkspace!,
+              messageContent,
+              selectedAssistant,
+              newMessageFiles,
+              setSelectedChat,
+              setChats,
+              setChatFiles
+            )
+          }
+
           const result = await handleHostedChat(
             payload,
             profile!,
@@ -376,6 +390,7 @@ export const useChatHandler = () => {
             newAbortController,
             newMessageImages,
             chatImages,
+            currentChat.id,
             setIsGenerating,
             setFirstTokenReceived,
             setChatMessages,
@@ -392,7 +407,7 @@ export const useChatHandler = () => {
           profile!,
           selectedWorkspace!,
           messageContent,
-          selectedAssistant!,
+          selectedAssistant,
           newMessageFiles,
           setSelectedChat,
           setChats,
