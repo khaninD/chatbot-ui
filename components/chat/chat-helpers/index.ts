@@ -17,6 +17,7 @@ import {
   ChatPayload,
   ChatSettings,
   LLM,
+  LLMID,
   MessageImage
 } from "@/types"
 import i18next from "i18next"
@@ -205,13 +206,17 @@ export const handleHostedChat = async (
   // All requests now go through agent-server proxy
   const apiEndpoint = "/api/chat/agent"
 
-  // Use the selected model as the agent model
-  const agentModel = modelData.hostedId || modelData.modelId
+  // Use the hostedId if available, otherwise use modelId
+  // For custom models, hostedId is the database UUID, so we prefer modelId (the actual model string)
+  const finalModelId =
+    modelData.provider === "custom"
+      ? modelData.modelId
+      : modelData.hostedId || modelData.modelId
 
   const requestBody = {
     chatSettings: {
       ...payload.chatSettings,
-      agentModel: agentModel // Pass selected model to LlamaIndex
+      model: finalModelId as LLMID
     },
     messages: draftMessages,
     // Always pass file items for RAG support
@@ -442,7 +447,6 @@ export const handleCreateChat = async (
     prompt: chatSettings.prompt,
     embeddings_provider: chatSettings.embeddingsProvider,
     mcp_server_ids: chatSettings.mcpServerIds || [],
-    agent_model: chatSettings.agentModel || null,
     use_advanced_rag: chatSettings.useAdvancedRAG || false,
     use_reranking: chatSettings.useReranking || false,
     enable_image_generation: true, // Always enabled

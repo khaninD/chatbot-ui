@@ -67,7 +67,7 @@ const sendStreamError = (
 export async function POST(request: Request) {
   const json = (await request.json()) as AgentChatRequestBody
   const { chatSettings, messages, messageFileItems, sessionId } = json
-  console.log("ChatSettings agent Model:", chatSettings.agentModel)
+  console.log("ChatSettings Model:", chatSettings.model)
   try {
     if (!sessionId) {
       return new Response("Missing sessionId", { status: 400 })
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
           const ragQueryEngine = await createRAGQueryEngine(
             messageFileItems,
             apiKey,
-            chatSettings.agentModel || "gpt-4o",
+            chatSettings.model || "gpt-4o",
             !!cometApiKey,
             chatSettings.useReranking || false,
             profile.openai_embedding_model
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
       llmConfig: {
         provider: "openai",
         apiKey,
-        model: chatSettings.agentModel || "gpt-4o",
+        model: chatSettings.model || "gpt-4o",
         baseURL
       }
     })
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
       llmConfig: {
         provider: "openai",
         apiKey,
-        model: chatSettings.agentModel || "gpt-4o",
+        model: chatSettings.model || "gpt-4o",
         baseURL
       }
     })

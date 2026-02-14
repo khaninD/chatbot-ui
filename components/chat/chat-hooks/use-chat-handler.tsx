@@ -410,7 +410,6 @@ export const useChatHandler = () => {
             chatSettings!.includeWorkspaceInstructions,
           embeddings_provider: chatSettings!.embeddingsProvider,
           mcp_server_ids: chatSettings!.mcpServerIds || [],
-          agent_model: chatSettings!.agentModel || null,
           use_advanced_rag: chatSettings!.useAdvancedRAG || false,
           use_reranking: chatSettings!.useReranking || false,
           enable_image_generation: true, // Always enabled

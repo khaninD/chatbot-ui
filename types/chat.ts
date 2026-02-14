@@ -9,7 +9,6 @@ export interface ChatSettings {
   includeWorkspaceInstructions: boolean
   embeddingsProvider: "openai" | "local"
   mcpServerIds?: string[]
-  agentModel?: string
   useAdvancedRAG?: boolean
   useReranking?: boolean
   enableImageGeneration?: boolean

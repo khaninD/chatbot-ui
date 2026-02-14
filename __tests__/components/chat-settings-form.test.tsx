@@ -119,7 +119,6 @@ const defaultChatSettings: ChatSettings = {
   includeProfileContext: false,
   includeWorkspaceInstructions: false,
   embeddingsProvider: "openai",
-  agentModel: "gpt-4o",
   imageModel: "gpt-image-1.5"
 }
 

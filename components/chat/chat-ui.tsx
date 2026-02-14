@@ -194,7 +194,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
       mcpServerIds: chat.mcp_server_ids?.length
         ? chat.mcp_server_ids
         : undefined,
-      agentModel: chat.agent_model || undefined,
       useAdvancedRAG: chat.use_advanced_rag || false,
       useReranking: chat.use_reranking || false,
       enableImageGeneration: chat.enable_image_generation || false,
