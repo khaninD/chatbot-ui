@@ -5,7 +5,6 @@ import { ContentType } from "@/types"
 import { IconFolderPlus, IconPlus } from "@tabler/icons-react"
 import { FC, useState } from "react"
 import { Button } from "../ui/button"
-import { CreateCollection } from "./items/collections/create-collection"
 import { CreateFile } from "./items/files/create-file"
 import { CreateMcpServer } from "./items/mcp-servers/create-mcp-server"
 import { CreateModel } from "./items/models/create-model"
@@ -29,7 +28,6 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
 
   const [isCreatingPrompt, setIsCreatingPrompt] = useState(false)
   const [isCreatingFile, setIsCreatingFile] = useState(false)
-  const [isCreatingCollection, setIsCreatingCollection] = useState(false)
   const [isCreatingTool, setIsCreatingTool] = useState(false)
   const [isCreatingModel, setIsCreatingModel] = useState(false)
   const [isCreatingMcpServer, setIsCreatingMcpServer] = useState(false)
@@ -63,11 +61,6 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
       case "files":
         return async () => {
           setIsCreatingFile(true)
-        }
-
-      case "collections":
-        return async () => {
-          setIsCreatingCollection(true)
         }
 
       case "tools":
@@ -114,13 +107,6 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
 
       {isCreatingFile && (
         <CreateFile isOpen={isCreatingFile} onOpenChange={setIsCreatingFile} />
-      )}
-
-      {isCreatingCollection && (
-        <CreateCollection
-          isOpen={isCreatingCollection}
-          onOpenChange={setIsCreatingCollection}
-        />
       )}
 
       {isCreatingTool && (

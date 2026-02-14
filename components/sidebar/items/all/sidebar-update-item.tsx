@@ -12,17 +12,6 @@ import { AssignWorkspaces } from "@/components/workspace/assign-workspaces"
 import { useItemsStore, useProfileStore, useWorkspaceStore } from "@/stores"
 import { updateChat } from "@/db/chats"
 import {
-  createCollectionFile,
-  deleteCollectionFile,
-  getCollectionFilesByCollectionId
-} from "@/db/collection-files"
-import {
-  createCollectionWorkspaces,
-  deleteCollectionWorkspace,
-  getCollectionWorkspacesByCollectionId,
-  updateCollection
-} from "@/db/collections"
-import {
   createFileWorkspaces,
   deleteFileWorkspace,
   getFileWorkspacesByFileId,
@@ -53,7 +42,7 @@ import {
   updateMcpServer
 } from "@/db/mcp-servers"
 import { Tables, TablesUpdate } from "@/supabase/types"
-import { CollectionFile, ContentType, DataItemType } from "@/types"
+import { ContentType, DataItemType } from "@/types"
 import { FC, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { SidebarDeleteItem } from "./sidebar-delete-item"
@@ -80,7 +69,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
   const setChats = useItemsStore(state => state.setChats)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
-  const setCollections = useItemsStore(state => state.setCollections)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
@@ -96,14 +84,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     Tables<"workspaces">[]
   >([])
 
-  // Collections Render State
-  const [startingCollectionFiles, setStartingCollectionFiles] = useState<
-    CollectionFile[]
-  >([])
-  const [selectedCollectionFiles, setSelectedCollectionFiles] = useState<
-    CollectionFile[]
-  >([])
-
   useEffect(() => {
     if (isOpen) {
       const fetchData = async () => {
@@ -114,8 +94,9 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         }
 
         const fetchDataFunction = fetchDataFunctions[contentType]
-        if (!fetchDataFunction) return
-        await fetchDataFunction(item.id)
+        if (fetchDataFunction) {
+          await (fetchDataFunction as (id: string) => Promise<void>)(item.id)
+        }
       }
 
       fetchData()
@@ -126,12 +107,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     chats: null,
     prompts: null,
     files: null,
-    collections: {
-      startingCollectionFiles,
-      setStartingCollectionFiles,
-      selectedCollectionFiles,
-      setSelectedCollectionFiles
-    },
     tools: null,
     models: null,
     mcp_servers: null
@@ -141,12 +116,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     chats: null,
     prompts: null,
     files: null,
-    collections: async (collectionId: string) => {
-      const collectionFiles =
-        await getCollectionFilesByCollectionId(collectionId)
-      setStartingCollectionFiles(collectionFiles.files)
-      setSelectedCollectionFiles([])
-    },
     tools: null,
     models: null,
     mcp_servers: null
@@ -160,10 +129,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     },
     files: async (fileId: string) => {
       const item = await getFileWorkspacesByFileId(fileId)
-      return item.workspaces
-    },
-    collections: async (collectionId: string) => {
-      const item = await getCollectionWorkspacesByCollectionId(collectionId)
       return item.workspaces
     },
     tools: async (toolId: string) => {
@@ -283,54 +248,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
 
       return updatedFile
     },
-    collections: async (
-      collectionId: string,
-      updateState: TablesUpdate<"collections">
-    ) => {
-      if (!profile) return null as unknown as DataItemType
-
-      const { ...rest } = updateState
-
-      const filesToAdd = selectedCollectionFiles.filter(
-        selectedFile =>
-          !startingCollectionFiles.some(
-            startingFile => startingFile.id === selectedFile.id
-          )
-      )
-
-      const filesToRemove = startingCollectionFiles.filter(startingFile =>
-        selectedCollectionFiles.some(
-          selectedFile => selectedFile.id === startingFile.id
-        )
-      )
-
-      for (const file of filesToAdd) {
-        await createCollectionFile({
-          user_id: item.user_id,
-          collection_id: collectionId,
-          file_id: file.id
-        })
-      }
-
-      for (const file of filesToRemove) {
-        await deleteCollectionFile(collectionId, file.id)
-      }
-
-      const updatedCollection = await updateCollection(collectionId, rest)
-
-      await handleWorkspaceUpdates(
-        startingWorkspaces,
-        selectedWorkspaces,
-        collectionId,
-        deleteCollectionWorkspace,
-        createCollectionWorkspaces as unknown as (
-          workspaces: unknown
-        ) => Promise<void>,
-        "collection_id"
-      )
-
-      return updatedCollection
-    },
     tools: async (toolId: string, updateState: TablesUpdate<"tools">) => {
       const updatedTool = await updateTool(toolId, updateState)
 
@@ -398,11 +315,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         break
       case "files":
         setFiles(prev => updater(prev as DataItemType[]) as Tables<"files">[])
-        break
-      case "collections":
-        setCollections(
-          prev => updater(prev as DataItemType[]) as Tables<"collections">[]
-        )
         break
       case "tools":
         setTools(prev => updater(prev as DataItemType[]) as Tables<"tools">[])

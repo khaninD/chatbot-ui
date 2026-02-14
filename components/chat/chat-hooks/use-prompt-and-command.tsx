@@ -5,7 +5,6 @@ import {
   useRetrievalStore,
   useToolStore
 } from "@/stores"
-import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import { Tables } from "@/supabase/types"
 
 export const usePromptAndCommand = () => {
@@ -94,37 +93,6 @@ export const usePromptAndCommand = () => {
     setUserInput(userInput.replace(/#[^ ]*$/, ""))
   }
 
-  const handleSelectUserCollection = async (
-    collection: Tables<"collections">
-  ) => {
-    setShowFilesDisplay(true)
-    setIsFilePickerOpen(false)
-    setUseRetrieval(true)
-
-    const collectionFiles = await getCollectionFilesByCollectionId(
-      collection.id
-    )
-
-    const newFiles = collectionFiles.files
-      .filter(
-        file =>
-          !newMessageFiles.some(prevFile => prevFile.id === file.id) &&
-          !chatFiles.some(chatFile => chatFile.id === file.id)
-      )
-      .map(file => ({
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        file: null
-      }))
-
-    if (newFiles.length > 0) {
-      setNewMessageFiles([...newMessageFiles, ...newFiles])
-    }
-
-    setUserInput(userInput.replace(/#[^ ]*$/, ""))
-  }
-
   const handleSelectTool = (tool: Tables<"tools">) => {
     setIsToolPickerOpen(false)
     setUserInput(userInput.replace(/![^ ]*$/, ""))
@@ -135,7 +103,6 @@ export const usePromptAndCommand = () => {
     handleInputChange,
     handleSelectPrompt,
     handleSelectUserFile,
-    handleSelectUserCollection,
     handleSelectTool
   }
 }

@@ -2,7 +2,6 @@ import { ContentType } from "@/types"
 import {
   IconAdjustmentsHorizontal,
   IconBolt,
-  IconBooks,
   IconFile,
   IconMessage,
   IconPencil,
@@ -48,12 +47,6 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
         <SidebarSwitchItem
           icon={<IconFile size={SIDEBAR_ICON_SIZE} />}
           contentType="files"
-          onContentTypeChange={onContentTypeChange}
-        />
-
-        <SidebarSwitchItem
-          icon={<IconBooks size={SIDEBAR_ICON_SIZE} />}
-          contentType="collections"
           onContentTypeChange={onContentTypeChange}
         />
 

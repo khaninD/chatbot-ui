@@ -20,10 +20,6 @@ export const PROMPT_CONTENT_MAX = 100000
 export const FILE_NAME_MAX = 100
 export const FILE_DESCRIPTION_MAX = 500
 
-// Collections
-export const COLLECTION_NAME_MAX = 100
-export const COLLECTION_DESCRIPTION_MAX = 500
-
 // Tools
 export const TOOL_NAME_MAX = 100
 export const TOOL_DESCRIPTION_MAX = 500

@@ -39,7 +39,6 @@ export const SidebarItem: FC<SidebarItemProps> = ({
       chats: async () => {},
       prompts: async () => {},
       files: async () => {},
-      collections: async () => {},
       tools: async () => {},
       models: async () => {},
       mcp_servers: async () => {}

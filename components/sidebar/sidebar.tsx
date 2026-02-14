@@ -18,7 +18,6 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
   const chats = useItemsStore(state => state.chats)
   const prompts = useItemsStore(state => state.prompts)
   const files = useItemsStore(state => state.files)
-  const collections = useItemsStore(state => state.collections)
   const tools = useItemsStore(state => state.tools)
   const models = useItemsStore(state => state.models)
   const mcpServers = useItemsStore(state => state.mcpServers)
@@ -26,9 +25,6 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
   const chatFolders = folders.filter(folder => folder.type === "chats")
   const promptFolders = folders.filter(folder => folder.type === "prompts")
   const filesFolders = folders.filter(folder => folder.type === "files")
-  const collectionFolders = folders.filter(
-    folder => folder.type === "collections"
-  )
   const toolFolders = folders.filter(folder => folder.type === "tools")
   const modelFolders = folders.filter(folder => folder.type === "models")
   const mcpServerFolders = folders.filter(
@@ -73,13 +69,6 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
 
             case "files":
               return renderSidebarContent("files", files, filesFolders)
-
-            case "collections":
-              return renderSidebarContent(
-                "collections",
-                collections,
-                collectionFolders
-              )
 
             case "tools":
               return renderSidebarContent("tools", tools, toolFolders)

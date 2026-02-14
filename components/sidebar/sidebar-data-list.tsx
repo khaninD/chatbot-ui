@@ -1,6 +1,5 @@
 import { useItemsStore } from "@/stores"
 import { updateChat } from "@/db/chats"
-import { updateCollection } from "@/db/collections"
 import { updateFile } from "@/db/files"
 import { updateMcpServer } from "@/db/mcp-servers"
 import { updateModel } from "@/db/models"
@@ -13,7 +12,6 @@ import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Separator } from "../ui/separator"
 import { ChatItem } from "./items/chat/chat-item"
-import { CollectionItem } from "./items/collections/collection-item"
 import { FileItem } from "./items/files/file-item"
 import { Folder } from "./items/folders/folder-item"
 import { McpServerItem } from "./items/mcp-servers/mcp-server-item"
@@ -36,7 +34,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   const setChats = useItemsStore(state => state.setChats)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
-  const setCollections = useItemsStore(state => state.setCollections)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
@@ -59,14 +56,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
       case "files":
         return <FileItem key={item.id} file={item as Tables<"files">} />
-
-      case "collections":
-        return (
-          <CollectionItem
-            key={item.id}
-            collection={item as Tables<"collections">}
-          />
-        )
 
       case "tools":
         return <ToolItem key={item.id} tool={item as Tables<"tools">} />
@@ -128,7 +117,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     chats: updateChat,
     prompts: updatePrompt,
     files: updateFile,
-    collections: updateCollection,
     tools: updateTool,
     models: updateModel,
     mcp_servers: updateMcpServer
@@ -159,9 +147,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
         break
       case "files":
         setFiles(updatedItems as Tables<"files">[])
-        break
-      case "collections":
-        setCollections(updatedItems as Tables<"collections">[])
         break
       case "tools":
         setTools(updatedItems as Tables<"tools">[])

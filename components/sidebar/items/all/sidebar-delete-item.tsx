@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog"
 import { useItemsStore } from "@/stores"
 import { deleteChat } from "@/db/chats"
-import { deleteCollection } from "@/db/collections"
 import { deleteFile } from "@/db/files"
 import { deleteMcpServer } from "@/db/mcp-servers"
 import { deleteModel } from "@/db/models"
@@ -35,7 +34,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   const setChats = useItemsStore(state => state.setChats)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
-  const setCollections = useItemsStore(state => state.setCollections)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
@@ -54,9 +52,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     files: async (file: Tables<"files">) => {
       await deleteFileFromStorage(file.file_path)
       await deleteFile(file.id)
-    },
-    collections: async (collection: Tables<"collections">) => {
-      await deleteCollection(collection.id)
     },
     tools: async (tool: Tables<"tools">) => {
       await deleteTool(tool.id)
@@ -83,11 +78,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
         break
       case "files":
         setFiles(prev => updater(prev as DataItemType[]) as Tables<"files">[])
-        break
-      case "collections":
-        setCollections(
-          prev => updater(prev as DataItemType[]) as Tables<"collections">[]
-        )
         break
       case "tools":
         setTools(prev => updater(prev as DataItemType[]) as Tables<"tools">[])

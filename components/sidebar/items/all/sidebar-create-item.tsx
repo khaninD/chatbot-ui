@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/sheet"
 import { useItemsStore, useWorkspaceStore } from "@/stores"
 import { createChat } from "@/db/chats"
-import { createCollectionFiles } from "@/db/collection-files"
-import { createCollection } from "@/db/collections"
 import { createFileBasedOnExtension } from "@/db/files"
 import { createMcpServer } from "@/db/mcp-servers"
 import { createModel } from "@/db/models"
@@ -42,14 +40,12 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   const prompts = useItemsStore(state => state.prompts)
   const mcpServers = useItemsStore(state => state.mcpServers)
   const files = useItemsStore(state => state.files)
-  const collections = useItemsStore(state => state.collections)
   const tools = useItemsStore(state => state.tools)
   const models = useItemsStore(state => state.models)
   const setChats = useItemsStore(state => state.setChats)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
   const setFiles = useItemsStore(state => state.setFiles)
-  const setCollections = useItemsStore(state => state.setCollections)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
 
@@ -85,24 +81,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
       return createdFile
     },
-    collections: async (state, workspaceId) => {
-      const createState = state as {
-        image: File
-        collectionFiles: TablesInsert<"collection_files">[]
-      } & Tables<"collections">
-      const { collectionFiles, ...rest } = createState
-
-      const createdCollection = await createCollection(rest, workspaceId)
-
-      const finalCollectionFiles = collectionFiles.map(collectionFile => ({
-        ...collectionFile,
-        collection_id: createdCollection.id
-      }))
-
-      await createCollectionFiles(finalCollectionFiles)
-
-      return createdCollection
-    },
     tools: (state, workspaceId) =>
       createTool(state as TablesInsert<"tools">, workspaceId),
     models: (state, workspaceId) =>
@@ -134,9 +112,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
           break
         case "files":
           setFiles([...files, newItem as Tables<"files">])
-          break
-        case "collections":
-          setCollections([...collections, newItem as Tables<"collections">])
           break
         case "tools":
           setTools([...tools, newItem as Tables<"tools">])

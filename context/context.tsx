@@ -16,8 +16,6 @@ interface ChatbotUIContext {
   setProfile: Dispatch<SetStateAction<Tables<"profiles"> | null>>
 
   // ITEMS STORE
-  collections: Tables<"collections">[]
-  setCollections: Dispatch<SetStateAction<Tables<"collections">[]>>
   chats: Tables<"chats">[]
   setChats: Dispatch<SetStateAction<Tables<"chats">[]>>
   files: Tables<"files">[]
@@ -120,8 +118,6 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setProfile: () => {},
 
   // ITEMS STORE
-  collections: [],
-  setCollections: () => {},
   chats: [],
   setChats: () => {},
   files: [],

@@ -17,8 +17,7 @@ export const ChatCommandInput: FC<ChatCommandInputProps> = ({}) => {
   const hashtagCommand = useChatInputStore(state => state.hashtagCommand)
   const focusFile = useChatInputStore(state => state.focusFile)
 
-  const { handleSelectUserFile, handleSelectUserCollection } =
-    usePromptAndCommand()
+  const { handleSelectUserFile } = usePromptAndCommand()
 
   return (
     <>
@@ -31,9 +30,7 @@ export const ChatCommandInput: FC<ChatCommandInputProps> = ({}) => {
         selectedFileIds={[...newMessageFiles, ...chatFiles].map(
           file => file.id
         )}
-        selectedCollectionIds={[]}
         onSelectFile={handleSelectUserFile}
-        onSelectCollection={handleSelectUserCollection}
         isFocused={focusFile}
       />
 

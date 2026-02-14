@@ -1,6 +1,5 @@
 import { useChatInputStore, useItemsStore } from "@/stores"
 import { Tables } from "@/supabase/types"
-import { IconBooks } from "@tabler/icons-react"
 import { FC, useEffect, useRef } from "react"
 import { FileIcon } from "../ui/file-icon"
 
@@ -9,9 +8,7 @@ interface FilePickerProps {
   searchQuery: string
   onOpenChange: (isOpen: boolean) => void
   selectedFileIds: string[]
-  selectedCollectionIds: string[]
   onSelectFile: (file: Tables<"files">) => void
-  onSelectCollection: (collection: Tables<"collections">) => void
   isFocused: boolean
 }
 
@@ -20,13 +17,10 @@ export const FilePicker: FC<FilePickerProps> = ({
   searchQuery,
   onOpenChange,
   selectedFileIds,
-  selectedCollectionIds,
   onSelectFile,
-  onSelectCollection,
   isFocused
 }) => {
   const files = useItemsStore(state => state.files)
-  const collections = useItemsStore(state => state.collections)
   const setIsFilePickerOpen = useChatInputStore(
     state => state.setIsFilePickerOpen
   )
@@ -45,12 +39,6 @@ export const FilePicker: FC<FilePickerProps> = ({
       !selectedFileIds.includes(file.id)
   )
 
-  const filteredCollections = collections.filter(
-    collection =>
-      collection.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !selectedCollectionIds.includes(collection.id)
-  )
-
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen)
   }
@@ -60,17 +48,8 @@ export const FilePicker: FC<FilePickerProps> = ({
     handleOpenChange(false)
   }
 
-  const handleSelectCollection = (collection: Tables<"collections">) => {
-    onSelectCollection(collection)
-    handleOpenChange(false)
-  }
-
   const getKeyDownHandler =
-    (
-      index: number,
-      type: "file" | "collection",
-      item: Tables<"files"> | Tables<"collections">
-    ) =>
+    (index: number, item: Tables<"files">) =>
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (e.key === "Escape") {
         e.preventDefault()
@@ -79,16 +58,11 @@ export const FilePicker: FC<FilePickerProps> = ({
         e.preventDefault()
       } else if (e.key === "Enter") {
         e.preventDefault()
-
-        if (type === "file" && "file_path" in item) {
-          handleSelectFile(item as Tables<"files">)
-        } else if (type === "collection") {
-          handleSelectCollection(item as Tables<"collections">)
-        }
+        handleSelectFile(item)
       } else if (
         (e.key === "Tab" || e.key === "ArrowDown") &&
         !e.shiftKey &&
-        index === filteredFiles.length + filteredCollections.length - 1
+        index === filteredFiles.length - 1
       ) {
         e.preventDefault()
         itemsRef.current[0]?.focus()
@@ -112,13 +86,13 @@ export const FilePicker: FC<FilePickerProps> = ({
     <>
       {isOpen && (
         <div className="flex flex-col space-y-1 rounded-xl border-2 bg-background p-2 text-sm">
-          {filteredFiles.length === 0 && filteredCollections.length === 0 ? (
+          {filteredFiles.length === 0 ? (
             <div className="text-md flex h-14 cursor-pointer items-center justify-center italic hover:opacity-50">
               No matching files.
             </div>
           ) : (
             <>
-              {[...filteredFiles, ...filteredCollections].map((item, index) => (
+              {filteredFiles.map((item, index) => (
                 <div
                   key={item.id}
                   ref={ref => {
@@ -126,28 +100,10 @@ export const FilePicker: FC<FilePickerProps> = ({
                   }}
                   tabIndex={0}
                   className="flex cursor-pointer items-center rounded p-2 hover:bg-accent focus:bg-accent focus:outline-none"
-                  onClick={() => {
-                    if ("type" in item && "file_path" in item) {
-                      handleSelectFile(item as Tables<"files">)
-                    } else {
-                      handleSelectCollection(item as Tables<"collections">)
-                    }
-                  }}
-                  onKeyDown={e =>
-                    getKeyDownHandler(
-                      index,
-                      "type" in item && "file_path" in item
-                        ? "file"
-                        : "collection",
-                      item
-                    )(e)
-                  }
+                  onClick={() => handleSelectFile(item)}
+                  onKeyDown={e => getKeyDownHandler(index, item)(e)}
                 >
-                  {"type" in item && "file_path" in item ? (
-                    <FileIcon type={(item as Tables<"files">).type} size={32} />
-                  ) : (
-                    <IconBooks size={32} />
-                  )}
+                  <FileIcon type={item.type} size={32} />
 
                   <div className="ml-3 flex flex-col">
                     <div className="font-bold">{item.name}</div>

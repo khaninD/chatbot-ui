@@ -9,7 +9,6 @@ import {
   useWorkspaceStore
 } from "@/stores"
 import { getChatsByWorkspaceId } from "@/db/chats"
-import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
 import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 import { getFoldersByWorkspaceId } from "@/db/folders"
 import { getMcpServerWorkspacesByWorkspaceId } from "@/db/mcp-servers"
@@ -37,7 +36,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   const setChatSettings = useChatStore(state => state.setChatSettings)
   const setChats = useItemsStore(state => state.setChats)
-  const setCollections = useItemsStore(state => state.setCollections)
   const setFolders = useItemsStore(state => state.setFolders)
   const setFiles = useItemsStore(state => state.setFiles)
   const setPrompts = useItemsStore(state => state.setPrompts)
@@ -106,10 +104,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     const chats = await getChatsByWorkspaceId(workspaceId)
     setChats(chats)
-
-    const collectionData =
-      await getCollectionWorkspacesByWorkspaceId(workspaceId)
-    setCollections(collectionData.collections)
 
     const folders = await getFoldersByWorkspaceId(workspaceId)
     setFolders(folders)
