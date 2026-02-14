@@ -67,31 +67,12 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     handleFocusChatInput
   } = useChatHandler()
 
-  const handleInputChange = (value: string) => {
-    const slashTextRegex = /\/([^ ]*)$/
-    const hashtagTextRegex = /#([^ ]*)$/
-    const toolTextRegex = /!([^ ]*)$/
-    const slashMatch = value.match(slashTextRegex)
-    const hashtagMatch = value.match(hashtagTextRegex)
-    const toolMatch = value.match(toolTextRegex)
-
-    if (slashMatch) {
-      setIsPromptPickerOpen(true)
-      // setSlashCommand(slashMatch[1])
-    } else if (hashtagMatch) {
-      // setIsFilePickerOpen(true)
-      // setHashtagCommand(hashtagMatch[1])
-    } else if (toolMatch) {
-      // setIsToolPickerOpen(true)
-      // setToolCommand(toolMatch[1])
-    } else {
-      setIsPromptPickerOpen(false)
-      // setIsFilePickerOpen(false)
-      // setIsToolPickerOpen(false)
-    }
-
-    setUserInput(value)
-  }
+  const {
+    handleInputChange,
+    handleSelectPrompt,
+    handleSelectUserFile,
+    handleSelectTool
+  } = usePromptAndCommand()
 
   const { filesToAccept, handleSelectDeviceFile } = useSelectFileHandler()
 

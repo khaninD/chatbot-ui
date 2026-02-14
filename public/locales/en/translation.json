@@ -20,8 +20,8 @@
     "canvasError": "Unable to create canvas context."
   },
   "chat": {
-    "askAnything": "Ask anything. Type @  /  #  !",
-    "askAnythingLong": "Ask anything. Type \"/\" for prompts, \"@\" for files, and \"#\" for tools.",
+    "askAnything": "Ask anything. Type /  #  !",
+    "askAnythingLong": "Ask anything. Type \"/\" for prompts, \"#\" for files, and \"!\" for tools.",
     "enterMessage": "Enter message...",
     "newChat": "New Chat",
     "startNewChat": "Start a new chat",
