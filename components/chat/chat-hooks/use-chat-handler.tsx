@@ -181,13 +181,15 @@ export const useChatHandler = () => {
       // Claude Code strategy: Collect external IDs for the RAG service
       const attachedFiles = [...newMessageFiles, ...chatFiles]
       const currentStoreFiles = useItemsStore.getState().files
-      const fileIds = attachedFiles
-        .map(file => {
-          // Find the actual file record in items store to get external_id
-          const fileRecord = currentStoreFiles.find(f => f.id === file.id)
-          return fileRecord?.external_id
-        })
-        .filter(Boolean) as string[]
+      const fileIds = useRetrieval
+        ? (attachedFiles
+            .map(file => {
+              // Find the actual file record in items store to get external_id
+              const fileRecord = currentStoreFiles.find(f => f.id === file.id)
+              return fileRecord?.external_id
+            })
+            .filter(Boolean) as string[])
+        : []
 
       // Save the original length before adding temp messages
       const originalMessagesLength = chatMessages.length
