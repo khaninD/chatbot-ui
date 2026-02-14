@@ -26,6 +26,11 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
 
   const [isOpen, setIsOpen] = useState(false)
 
+  const isMac =
+    typeof window !== "undefined" &&
+    navigator.userAgent.toUpperCase().indexOf("MAC") >= 0
+  const modifier = isMac ? "⌘" : "Ctrl"
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -33,48 +38,11 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <div className="flex space-x-2">
-            <Link
-              className="cursor-pointer hover:opacity-50"
-              href="https://twitter.com/ChatbotUI"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <IconBrandX />
-            </Link>
-
-            <Link
-              className="cursor-pointer hover:opacity-50"
-              href="https://github.com/mckaywrigley/chatbot-ui"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <IconBrandGithub />
-            </Link>
-          </div>
-
-          <div className="flex space-x-2">
-            <Announcements />
-
-            <Link
-              className="cursor-pointer hover:opacity-50"
-              href="/help"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <IconHelpCircle size={24} />
-            </Link>
-          </div>
-        </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
         <DropdownMenuItem className="flex justify-between">
           <div>{t("help.showHelp")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -89,7 +57,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           <div>{t("help.showWorkspaces")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -104,7 +72,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           <div>{t("chat.newChat")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -119,7 +87,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           <div>{t("chat.focusChat")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -134,7 +102,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           <div>{t("help.toggleFiles")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -149,7 +117,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           <div>{t("help.toggleRetrieval")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -164,7 +132,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           <div>{t("help.openSettings")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
@@ -176,25 +144,10 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
         </DropdownMenuItem>
 
         <DropdownMenuItem className="flex justify-between">
-          <div>{t("help.openQuickSettings")}</div>
-          <div className="flex opacity-60">
-            <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
-            </div>
-            <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              Shift
-            </div>
-            <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              P
-            </div>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem className="flex justify-between">
           <div>{t("help.toggleSidebar")}</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
-              ⌘
+              {modifier}
             </div>
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
               Shift
