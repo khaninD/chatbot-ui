@@ -8,11 +8,9 @@ import {
 import { updateProfile } from "@/db/profile"
 import { uploadProfileImage } from "@/db/storage/profile-images"
 import { exportLocalStorageAsJSON } from "@/lib/export-old-data"
-import { fetchOpenRouterModels } from "@/lib/models/fetch-models"
 import { LLM_LIST_MAP } from "@/lib/models/llm/llm-list"
 import { supabase } from "@/lib/supabase/browser-client"
 import { cn } from "@/lib/utils"
-import { OpenRouterLLM } from "@/types"
 import {
   IconCircleCheckFilled,
   IconCircleXFilled,
@@ -60,12 +58,6 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
   const envKeyMap = useModelsStore(state => state.envKeyMap)
   const setAvailableHostedModels = useModelsStore(
     state => state.setAvailableHostedModels
-  )
-  const setAvailableOpenRouterModels = useModelsStore(
-    state => state.setAvailableOpenRouterModels
-  )
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
   )
 
   const router = useRouter()
@@ -219,34 +211,18 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       if (!envKeyActive) {
         const hasApiKey = !!updatedProfile[providerKey]
 
-        if (provider === "openrouter") {
-          if (hasApiKey && availableOpenRouterModels.length === 0) {
-            const openrouterModels: OpenRouterLLM[] =
-              await fetchOpenRouterModels()
-            setAvailableOpenRouterModels(prev => {
-              const newModels = openrouterModels.filter(
-                model =>
-                  !prev.some(prevModel => prevModel.modelId === model.modelId)
-              )
-              return [...prev, ...newModels]
-            })
-          } else {
-            setAvailableOpenRouterModels([])
-          }
-        } else {
-          if (hasApiKey && Array.isArray(models)) {
-            setAvailableHostedModels(prev => {
-              const newModels = models.filter(
-                model =>
-                  !prev.some(prevModel => prevModel.modelId === model.modelId)
-              )
-              return [...prev, ...newModels]
-            })
-          } else if (!hasApiKey && Array.isArray(models)) {
-            setAvailableHostedModels(prev =>
-              prev.filter(model => !models.includes(model))
+        if (hasApiKey && Array.isArray(models)) {
+          setAvailableHostedModels(prev => {
+            const newModels = models.filter(
+              model =>
+                !prev.some(prevModel => prevModel.modelId === model.modelId)
             )
-          }
+            return [...prev, ...newModels]
+          })
+        } else if (!hasApiKey && Array.isArray(models)) {
+          setAvailableHostedModels(prev =>
+            prev.filter(model => !models.includes(model))
+          )
         }
       }
     })

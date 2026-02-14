@@ -23,7 +23,6 @@ export async function createAgent(
   apiKey?: string,
   model?: string,
   toolUrls?: string[],
-  temperature?: number,
   useCustomAPI?: boolean,
   enableImageGeneration?: boolean,
   userId?: string,
@@ -102,7 +101,7 @@ export async function createAgent(
     } = {
       model: modelId,
       apiKey: apiKey || process.env.OPENAI_API_KEY || "",
-      temperature: temperature !== undefined ? temperature : 1
+      temperature: 1
     }
 
     // Determine which provider to use
@@ -212,7 +211,6 @@ export async function* runAgentStream(
   apiKey?: string,
   model?: string,
   toolUrls?: string[],
-  temperature?: number,
   chatHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   useCustomAPI?: boolean,
   enableImageGeneration?: boolean,
@@ -245,7 +243,6 @@ export async function* runAgentStream(
     apiKey,
     model,
     toolUrls,
-    temperature,
     useCustomAPI,
     enableImageGeneration,
     userId,

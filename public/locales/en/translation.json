@@ -48,8 +48,6 @@
   "settings": {
     "model": "Model:",
     "prompt": "Prompt:",
-    "temperature": "Temperature:",
-    "contextLength": "Context Length:",
     "profileContext": "Profile Context:",
     "workspaceInstructions": "Workspace Instructions:",
     "embeddingsProvider": "Embeddings Provider:",
@@ -106,7 +104,6 @@
     "modelId": "Model ID...",
     "baseUrl": "Base URL...",
     "apiKey": "API Key...",
-    "maxTokens": "4096",
     "selectModel": "Select a model",
     "unlockModels": "Unlock models by entering API keys in your profile settings.",
     "hosted": "Hosted",

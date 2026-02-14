@@ -4,11 +4,7 @@ import { getProfileByUserId } from "@/db/profile"
 import { getWorkspaceImageFromStorage } from "@/db/storage/workspace-images"
 import { getWorkspacesByUserId } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
-import {
-  fetchHostedModels,
-  fetchOllamaModels,
-  fetchOpenRouterModels
-} from "@/lib/models/fetch-models"
+import { fetchHostedModels } from "@/lib/models/fetch-models"
 import { supabase } from "@/lib/supabase/browser-client"
 import {
   useItemsStore,
@@ -32,12 +28,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const setAvailableHostedModels = useModelsStore(
     state => state.setAvailableHostedModels
   )
-  const setAvailableOpenRouterModels = useModelsStore(
-    state => state.setAvailableOpenRouterModels
-  )
-  const setAvailableLocalModels = useModelsStore(
-    state => state.setAvailableLocalModels
-  )
 
   useEffect(() => {
     ;(async () => {
@@ -49,29 +39,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
 
         setEnvKeyMap(hostedModelRes.envKeyMap)
         setAvailableHostedModels(hostedModelRes.hostedModels)
-
-        if (
-          profile["openrouter_api_key"] ||
-          hostedModelRes.envKeyMap["openrouter"]
-        ) {
-          const openRouterModels = await fetchOpenRouterModels()
-          if (!openRouterModels) return
-          setAvailableOpenRouterModels(openRouterModels)
-        }
-      }
-
-      if (process.env.NEXT_PUBLIC_OLLAMA_URL) {
-        const localModels = await fetchOllamaModels()
-        if (!localModels) return
-        setAvailableLocalModels(localModels)
       }
     })()
-  }, [
-    setAvailableHostedModels,
-    setAvailableLocalModels,
-    setAvailableOpenRouterModels,
-    setEnvKeyMap
-  ])
+  }, [setAvailableHostedModels, setEnvKeyMap])
 
   const fetchStartingData = async () => {
     const session = (await supabase.auth.getSession()).data.session

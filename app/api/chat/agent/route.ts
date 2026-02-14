@@ -67,7 +67,7 @@ const sendStreamError = (
 export async function POST(request: Request) {
   const json = (await request.json()) as AgentChatRequestBody
   const { chatSettings, messages, messageFileItems, sessionId } = json
-
+  console.log("ChatSettings agent Model:", chatSettings.agentModel)
   try {
     if (!sessionId) {
       return new Response("Missing sessionId", { status: 400 })
@@ -189,11 +189,6 @@ export async function POST(request: Request) {
       }
     })
 
-    console.log(
-      `[AgentServer] Streaming with model: ${chatSettings.agentModel || "gpt-4o"}`
-    )
-    console.log("[AgentServer] Using API: OpenAI")
-    console.log(`[AgentServer] MCP Server URLs:`, mcpUrls)
     const agentResponse = await fetch(
       `${agentServerUrl.replace(/\/$/, "")}/api/stream`,
       {

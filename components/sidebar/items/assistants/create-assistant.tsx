@@ -28,8 +28,6 @@ export const CreateAssistant: FC<CreateAssistantProps> = ({
   const [assistantChatSettings, setAssistantChatSettings] = useState({
     model: selectedWorkspace?.default_model,
     prompt: selectedWorkspace?.default_prompt,
-    temperature: selectedWorkspace?.default_temperature,
-    contextLength: selectedWorkspace?.default_context_length,
     includeProfileContext: false,
     includeWorkspaceInstructions: false,
     embeddingsProvider: selectedWorkspace?.embeddings_provider
@@ -118,11 +116,9 @@ export const CreateAssistant: FC<CreateAssistantProps> = ({
           include_profile_context: assistantChatSettings.includeProfileContext,
           include_workspace_instructions:
             assistantChatSettings.includeWorkspaceInstructions,
-          context_length: assistantChatSettings.contextLength,
           model: assistantChatSettings.model,
           image_path: "",
           prompt: assistantChatSettings.prompt,
-          temperature: assistantChatSettings.temperature,
           embeddings_provider: assistantChatSettings.embeddingsProvider,
           files: selectedAssistantRetrievalItems.filter(item =>
             item.hasOwnProperty("type")

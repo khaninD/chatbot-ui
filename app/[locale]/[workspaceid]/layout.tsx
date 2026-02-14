@@ -185,8 +185,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       prompt:
         workspace?.default_prompt ||
         "You are a friendly, helpful AI assistant.",
-      temperature: workspace?.default_temperature || 0.5,
-      contextLength: workspace?.default_context_length || 4096,
       includeProfileContext: workspace?.include_profile_context || true,
       includeWorkspaceInstructions:
         workspace?.include_workspace_instructions || true,

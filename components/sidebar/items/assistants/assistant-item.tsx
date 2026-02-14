@@ -27,8 +27,6 @@ export const AssistantItem: FC<AssistantItemProps> = ({ assistant }) => {
   const [assistantChatSettings, setAssistantChatSettings] = useState({
     model: assistant.model,
     prompt: assistant.prompt,
-    temperature: assistant.temperature,
-    contextLength: assistant.context_length,
     includeProfileContext: assistant.include_profile_context,
     includeWorkspaceInstructions: assistant.include_workspace_instructions
   })
@@ -134,11 +132,9 @@ export const AssistantItem: FC<AssistantItemProps> = ({ assistant }) => {
         include_profile_context: assistantChatSettings.includeProfileContext,
         include_workspace_instructions:
           assistantChatSettings.includeWorkspaceInstructions,
-        context_length: assistantChatSettings.contextLength,
         model: assistantChatSettings.model,
         image_path: assistant.image_path,
-        prompt: assistantChatSettings.prompt,
-        temperature: assistantChatSettings.temperature
+        prompt: assistantChatSettings.prompt
       }}
       renderInputs={(renderState: {
         startingAssistantFiles: Tables<"files">[]

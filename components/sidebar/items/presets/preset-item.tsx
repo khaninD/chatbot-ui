@@ -19,8 +19,6 @@ export const PresetItem: FC<PresetItemProps> = ({ preset }) => {
   const [presetChatSettings, setPresetChatSettings] = useState({
     model: preset.model,
     prompt: preset.prompt,
-    temperature: preset.temperature,
-    contextLength: preset.context_length,
     includeProfileContext: preset.include_profile_context,
     includeWorkspaceInstructions: preset.include_workspace_instructions
   })
@@ -45,10 +43,8 @@ export const PresetItem: FC<PresetItemProps> = ({ preset }) => {
         include_profile_context: presetChatSettings.includeProfileContext,
         include_workspace_instructions:
           presetChatSettings.includeWorkspaceInstructions,
-        context_length: presetChatSettings.contextLength,
         model: presetChatSettings.model,
-        prompt: presetChatSettings.prompt,
-        temperature: presetChatSettings.temperature
+        prompt: presetChatSettings.prompt
       }}
       renderInputs={() => (
         <>

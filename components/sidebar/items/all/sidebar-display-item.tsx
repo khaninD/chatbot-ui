@@ -51,14 +51,12 @@ export const SidebarItem: FC<SidebarItemProps> = ({
           user_id: assistant.user_id,
           workspace_id: selectedWorkspace.id,
           assistant_id: assistant.id,
-          context_length: assistant.context_length,
           include_profile_context: assistant.include_profile_context,
           include_workspace_instructions:
             assistant.include_workspace_instructions,
           model: assistant.model,
           name: `Chat with ${assistant.name}`,
           prompt: assistant.prompt,
-          temperature: assistant.temperature,
           embeddings_provider: assistant.embeddings_provider
         })
 

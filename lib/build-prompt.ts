@@ -51,7 +51,7 @@ export async function buildFinalMessages(
     assistant
   )
 
-  const CHUNK_SIZE = chatSettings.contextLength
+  const CHUNK_SIZE = 128000
   const PROMPT_TOKENS = encode(chatSettings.prompt).length
 
   // Claude Code strategy: Reserve tokens for system prompt and response

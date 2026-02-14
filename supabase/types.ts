@@ -192,7 +192,7 @@ export type Database = {
       }
       assistants: {
         Row: {
-          context_length: number
+          context_length?: number
           created_at: string
           description: string
           embeddings_provider: string
@@ -205,12 +205,12 @@ export type Database = {
           name: string
           prompt: string
           sharing: string
-          temperature: number
+          temperature?: number
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          context_length: number
+          context_length?: number
           created_at?: string
           description: string
           embeddings_provider: string
@@ -223,7 +223,7 @@ export type Database = {
           name: string
           prompt: string
           sharing?: string
-          temperature: number
+          temperature?: number
           updated_at?: string | null
           user_id: string
         }
@@ -297,7 +297,7 @@ export type Database = {
       chats: {
         Row: {
           assistant_id: string | null
-          context_length: number
+          context_length?: number
           created_at: string
           embeddings_provider: string
           folder_id: string | null
@@ -308,7 +308,7 @@ export type Database = {
           name: string
           prompt: string
           sharing: string
-          temperature: number
+          temperature?: number
           updated_at: string | null
           user_id: string
           workspace_id: string
@@ -321,7 +321,7 @@ export type Database = {
         }
         Insert: {
           assistant_id?: string | null
-          context_length: number
+          context_length?: number
           created_at?: string
           embeddings_provider: string
           folder_id?: string | null
@@ -332,7 +332,7 @@ export type Database = {
           name: string
           prompt: string
           sharing?: string
-          temperature: number
+          temperature?: number
           updated_at?: string | null
           user_id: string
           workspace_id: string
@@ -829,7 +829,7 @@ export type Database = {
         Row: {
           api_key: string
           base_url: string
-          context_length: number
+          context_length?: number
           created_at: string
           description: string
           folder_id: string | null
@@ -919,7 +919,7 @@ export type Database = {
       }
       presets: {
         Row: {
-          context_length: number
+          context_length?: number
           created_at: string
           description: string
           embeddings_provider: string
@@ -931,12 +931,12 @@ export type Database = {
           name: string
           prompt: string
           sharing: string
-          temperature: number
+          temperature?: number
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          context_length: number
+          context_length?: number
           created_at?: string
           description: string
           embeddings_provider: string
@@ -948,7 +948,7 @@ export type Database = {
           name: string
           prompt: string
           sharing?: string
-          temperature: number
+          temperature?: number
           updated_at?: string | null
           user_id: string
         }
@@ -1333,10 +1333,10 @@ export type Database = {
       workspaces: {
         Row: {
           created_at: string
-          default_context_length: number
+          default_context_length?: number
           default_model: string
           default_prompt: string
-          default_temperature: number
+          default_temperature?: number
           description: string
           embeddings_provider: string
           id: string
@@ -1352,10 +1352,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          default_context_length: number
+          default_context_length?: number
           default_model: string
           default_prompt: string
-          default_temperature: number
+          default_temperature?: number
           description: string
           embeddings_provider: string
           id?: string

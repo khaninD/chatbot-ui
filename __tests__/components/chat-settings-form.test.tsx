@@ -2,7 +2,7 @@ import React from "react"
 import { render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom"
 import { ChatSettingsForm } from "@/components/ui/chat-settings-form"
-import { ChatSettings, LLM, OpenRouterLLM } from "@/types"
+import { ChatSettings, LLM } from "@/types"
 import { Tables } from "@/supabase/types"
 import {
   useItemsStore,
@@ -110,15 +110,12 @@ type ContextOverrides = Partial<{
   models: Tables<"models">[]
   mcpServers: Tables<"mcp_servers">[]
   selectedWorkspace: Tables<"workspaces"> | null
-  availableOpenRouterModels: OpenRouterLLM[]
   availableHostedModels: LLM[]
 }>
 
 const defaultChatSettings: ChatSettings = {
   model: "gpt-4o",
   prompt: "",
-  temperature: 0.5,
-  contextLength: 4096,
   includeProfileContext: false,
   includeWorkspaceInstructions: false,
   embeddingsProvider: "openai",
@@ -139,7 +136,6 @@ describe("ChatSettingsForm - Image Model Selection", () => {
     })
     useWorkspaceStore.setState({ selectedWorkspace: null })
     useModelsStore.setState({
-      availableOpenRouterModels: [],
       availableHostedModels: []
     })
 
@@ -155,11 +151,6 @@ describe("ChatSettingsForm - Image Model Selection", () => {
     if (contextOverrides.selectedWorkspace !== undefined) {
       useWorkspaceStore.setState({
         selectedWorkspace: contextOverrides.selectedWorkspace
-      })
-    }
-    if (contextOverrides.availableOpenRouterModels) {
-      useModelsStore.setState({
-        availableOpenRouterModels: contextOverrides.availableOpenRouterModels
       })
     }
     if (contextOverrides.availableHostedModels) {

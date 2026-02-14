@@ -32,13 +32,6 @@ export const ChatSecondaryButtons: FC<ChatSecondaryButtonsProps> = ({}) => {
                   </div>
 
                   <div>
-                    {t("settings.temperature")} {selectedChat.temperature}
-                  </div>
-                  <div>
-                    {t("settings.contextLength")} {selectedChat.context_length}
-                  </div>
-
-                  <div>
                     {t("settings.profileContext")}{" "}
                     {selectedChat.include_profile_context
                       ? t("common.enabled")

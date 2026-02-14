@@ -19,12 +19,6 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
   const availableHostedModels = useModelsStore(
     state => state.availableHostedModels
   )
-  const availableLocalModels = useModelsStore(
-    state => state.availableLocalModels
-  )
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
-  )
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -33,22 +27,6 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
       buttonRef.current.click()
     }
   }
-
-  useEffect(() => {
-    if (!chatSettings) return
-
-    setChatSettings({
-      ...chatSettings,
-      temperature: Math.min(
-        chatSettings.temperature,
-        CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_TEMPERATURE || 1
-      ),
-      contextLength: Math.min(
-        chatSettings.contextLength,
-        CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_CONTEXT_LENGTH || 4096
-      )
-    })
-  }, [chatSettings?.model])
 
   if (!chatSettings) return null
 
@@ -61,9 +39,7 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
       platformLink: "",
       imageInput: false
     })),
-    ...availableHostedModels,
-    ...availableLocalModels,
-    ...availableOpenRouterModels
+    ...availableHostedModels
   ]
 
   const fullModel = allModels.find(llm => llm.modelId === chatSettings.model)

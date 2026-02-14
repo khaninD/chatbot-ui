@@ -142,7 +142,3 @@ export interface LLM {
     outputCost?: number
   }
 }
-
-export interface OpenRouterLLM extends LLM {
-  maxContext: number
-}

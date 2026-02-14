@@ -48,8 +48,6 @@
   "settings": {
     "model": "Модель:",
     "prompt": "Промпт:",
-    "temperature": "Температура:",
-    "contextLength": "Длина контекста:",
     "profileContext": "Контекст профиля:",
     "workspaceInstructions": "Инструкции рабочей области:",
     "embeddingsProvider": "Провайдер эмбеддингов:",
@@ -106,7 +104,6 @@
     "modelId": "ID модели...",
     "baseUrl": "Базовый URL...",
     "apiKey": "API ключ...",
-    "maxTokens": "4096",
     "selectModel": "Выберите модель",
     "unlockModels": "Разблокируйте модели, введя API ключи в настройках профиля.",
     "hosted": "Облачные",

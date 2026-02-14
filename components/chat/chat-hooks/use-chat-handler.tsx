@@ -81,13 +81,6 @@ export const useChatHandler = () => {
   const setToolInUse = useToolStore(state => state.setToolInUse)
   const selectedTools = useToolStore(state => state.selectedTools)
 
-  const availableLocalModels = useModelsStore(
-    state => state.availableLocalModels
-  )
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
-  )
-
   const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
   const selectedPreset = usePresetStore(state => state.selectedPreset)
   const models = useItemsStore(state => state.models)
@@ -141,8 +134,6 @@ export const useChatHandler = () => {
       setChatSettings({
         model: selectedAssistant.model as LLMID,
         prompt: selectedAssistant.prompt,
-        temperature: selectedAssistant.temperature,
-        contextLength: selectedAssistant.context_length,
         includeProfileContext: selectedAssistant.include_profile_context,
         includeWorkspaceInstructions:
           selectedAssistant.include_workspace_instructions,
@@ -185,8 +176,6 @@ export const useChatHandler = () => {
       setChatSettings({
         model: selectedPreset.model as LLMID,
         prompt: selectedPreset.prompt,
-        temperature: selectedPreset.temperature,
-        contextLength: selectedPreset.context_length,
         includeProfileContext: selectedPreset.include_profile_context,
         includeWorkspaceInstructions:
           selectedPreset.include_workspace_instructions,
@@ -252,9 +241,7 @@ export const useChatHandler = () => {
           platformLink: "",
           imageInput: false
         })),
-        ...LLM_LIST,
-        ...availableLocalModels,
-        ...availableOpenRouterModels
+        ...LLM_LIST
       ].find(llm => llm.modelId === chatSettings?.model)
 
       validateChatSettings(
@@ -418,8 +405,6 @@ export const useChatHandler = () => {
           updated_at: new Date().toISOString(),
           model: chatSettings!.model,
           prompt: chatSettings!.prompt,
-          temperature: chatSettings!.temperature,
-          context_length: chatSettings!.contextLength,
           include_profile_context: chatSettings!.includeProfileContext,
           include_workspace_instructions:
             chatSettings!.includeWorkspaceInstructions,

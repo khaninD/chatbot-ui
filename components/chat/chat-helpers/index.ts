@@ -164,10 +164,7 @@ export const handleLocalChat = async (
     process.env.NEXT_PUBLIC_OLLAMA_URL + "/api/chat",
     {
       model: chatSettings.model,
-      messages: formattedMessages,
-      options: {
-        temperature: payload.chatSettings.temperature
-      }
+      messages: formattedMessages
     },
     false,
     newAbortController,
@@ -438,13 +435,11 @@ export const handleCreateChat = async (
     user_id: profile.user_id,
     workspace_id: selectedWorkspace.id,
     assistant_id: selectedAssistant?.id || null,
-    context_length: chatSettings.contextLength,
     include_profile_context: chatSettings.includeProfileContext,
     include_workspace_instructions: chatSettings.includeWorkspaceInstructions,
     model: chatSettings.model,
     name: messageContent.substring(0, 100),
     prompt: chatSettings.prompt,
-    temperature: chatSettings.temperature,
     embeddings_provider: chatSettings.embeddingsProvider,
     mcp_server_ids: chatSettings.mcpServerIds || [],
     agent_model: chatSettings.agentModel || null,

@@ -24,13 +24,7 @@ interface ChatItemProps {
 export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const selectedChat = useChatStore(state => state.selectedChat)
-  const availableLocalModels = useModelsStore(
-    state => state.availableLocalModels
-  )
   const assistantImages = useAssistantStore(state => state.assistantImages)
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
-  )
 
   const router = useRouter()
   const params = useParams()
@@ -50,11 +44,7 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
     }
   }
 
-  const MODEL_DATA = [
-    ...LLM_LIST,
-    ...availableLocalModels,
-    ...availableOpenRouterModels
-  ].find(llm => llm.modelId === chat.model) as LLM
+  const MODEL_DATA = LLM_LIST.find(llm => llm.modelId === chat.model) as LLM
 
   const assistantImage = assistantImages.find(
     image => image.assistantId === chat.assistant_id

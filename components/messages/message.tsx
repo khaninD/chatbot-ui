@@ -68,12 +68,6 @@ export const Message: FC<MessageProps> = ({
   const firstTokenReceived = useChatRuntimeStore(
     state => state.firstTokenReceived
   )
-  const availableLocalModels = useModelsStore(
-    state => state.availableLocalModels
-  )
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
-  )
   const chatMessages = useChatStore(state => state.chatMessages)
   const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
   const chatImages = useAttachmentsStore(state => state.chatImages)
@@ -153,9 +147,7 @@ export const Message: FC<MessageProps> = ({
       platformLink: "",
       imageInput: false
     })),
-    ...LLM_LIST,
-    ...availableLocalModels,
-    ...availableOpenRouterModels
+    ...LLM_LIST
   ].find(llm => llm.modelId === message.model) as LLM
 
   const messageAssistantImage = assistantImages.find(

@@ -188,8 +188,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     setChatSettings({
       model: chat.model as LLMID,
       prompt: chat.prompt,
-      temperature: chat.temperature,
-      contextLength: chat.context_length,
       includeProfileContext: chat.include_profile_context,
       includeWorkspaceInstructions: chat.include_workspace_instructions,
       embeddingsProvider: chat.embeddings_provider as "openai" | "local",

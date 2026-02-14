@@ -27,8 +27,6 @@ export const CreatePreset: FC<CreatePresetProps> = ({
     model: (selectedWorkspace?.default_model as LLMID) || "gpt-4o",
     prompt:
       selectedWorkspace?.default_prompt || "You are a helpful AI assistant.",
-    temperature: selectedWorkspace?.default_temperature || 0.5,
-    contextLength: selectedWorkspace?.default_context_length || 4000,
     includeProfileContext: selectedWorkspace?.include_profile_context || true,
     includeWorkspaceInstructions:
       selectedWorkspace?.include_workspace_instructions || true,
@@ -53,10 +51,8 @@ export const CreatePreset: FC<CreatePresetProps> = ({
           include_profile_context: presetChatSettings.includeProfileContext,
           include_workspace_instructions:
             presetChatSettings.includeWorkspaceInstructions,
-          context_length: presetChatSettings.contextLength,
           model: presetChatSettings.model,
           prompt: presetChatSettings.prompt,
-          temperature: presetChatSettings.temperature,
           embeddings_provider: presetChatSettings.embeddingsProvider
         } as TablesInsert<"presets">
       }

@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger
 } from "../ui/dropdown-menu"
 import { Input } from "../ui/input"
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 import { ModelIcon } from "./model-icon"
 import { ModelOption } from "./model-option"
 
@@ -31,19 +30,12 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   const availableHostedModels = useModelsStore(
     state => state.availableHostedModels
   )
-  const availableLocalModels = useModelsStore(
-    state => state.availableLocalModels
-  )
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
-  )
 
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
 
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
-  const [tab, setTab] = useState<"hosted" | "local">("hosted")
 
   useEffect(() => {
     if (isOpen) {
@@ -67,9 +59,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       platformLink: "",
       imageInput: false
     })),
-    ...availableHostedModels,
-    ...availableLocalModels,
-    ...availableOpenRouterModels
+    ...availableHostedModels
   ]
 
   const groupedModels = allModels.reduce<Record<string, LLM[]>>(
@@ -160,16 +150,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
         style={{ width: triggerRef.current?.offsetWidth }}
         align="start"
       >
-        <Tabs value={tab} onValueChange={(value: any) => setTab(value)}>
-          {availableLocalModels.length > 0 && (
-            <TabsList defaultValue="hosted" className="grid grid-cols-2">
-              <TabsTrigger value="hosted">{t("model.hosted")}</TabsTrigger>
-
-              <TabsTrigger value="local">{t("model.local")}</TabsTrigger>
-            </TabsList>
-          )}
-        </Tabs>
-
         <Input
           ref={inputRef}
           className="w-full"
@@ -181,11 +161,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
         <div className="max-h-[300px] overflow-auto">
           {Object.entries(groupedModels).map(([provider, models]) => {
             const filteredModels = models
-              .filter(model => {
-                if (tab === "hosted") return model.provider !== "ollama"
-                if (tab === "local") return model.provider === "ollama"
-                if (tab === "openrouter") return model.provider === "openrouter"
-              })
               .filter(model =>
                 model.modelName.toLowerCase().includes(search.toLowerCase())
               )

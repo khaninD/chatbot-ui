@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  useItemsStore,
-  useModelsStore,
-  useProfileStore,
-  useWorkspaceStore
-} from "@/stores"
-import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
+import { useItemsStore, useProfileStore, useWorkspaceStore } from "@/stores"
 import { ChatSettings } from "@/types"
 import { IconInfoCircle } from "@tabler/icons-react"
 import { FC } from "react"
@@ -22,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue
 } from "./select"
-import { Slider } from "./slider"
 import { TextareaAutosize } from "./textarea-autosize"
 import { WithTooltip } from "./with-tooltip"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
@@ -115,22 +108,8 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
   const { t } = useTranslation()
   const profile = useProfileStore(state => state.profile)
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
-  const availableOpenRouterModels = useModelsStore(
-    state => state.availableOpenRouterModels
-  )
-  const models = useItemsStore(state => state.models)
   const mcpServers = useItemsStore(state => state.mcpServers)
-  const availableHostedModels = useModelsStore(
-    state => state.availableHostedModels
-  )
 
-  const isCustomModel = models.some(
-    model => model.model_id === chatSettings.model
-  )
-
-  function findOpenRouterModel(modelId: string) {
-    return availableOpenRouterModels.find(model => model.modelId === modelId)
-  }
   // Find selected model from LLM_LIST to get provider
   // Use both modelId and modelProvider for unique identification
   const selectedModel = LLM_LIST.find(model => {
@@ -145,62 +124,9 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
     return model.modelId === chatSettings.model
   })
   const isCometProvider = selectedModel?.provider === "comet"
-  const MODEL_LIMITS = CHAT_SETTING_LIMITS[chatSettings.model] || {
-    MIN_TEMPERATURE: 0,
-    MAX_TEMPERATURE: 1,
-    MAX_CONTEXT_LENGTH:
-      findOpenRouterModel(chatSettings.model)?.maxContext || 4096
-  }
 
   return (
     <div className="mt-5">
-      <div className="space-y-3">
-        <Label className="flex items-center space-x-1">
-          <div>{t("settings.temperature")}</div>
-
-          <div>{chatSettings.temperature}</div>
-        </Label>
-
-        <Slider
-          value={[chatSettings.temperature]}
-          onValueChange={temperature => {
-            onChangeChatSettings({
-              ...chatSettings,
-              temperature: temperature[0]
-            })
-          }}
-          min={MODEL_LIMITS.MIN_TEMPERATURE}
-          max={MODEL_LIMITS.MAX_TEMPERATURE}
-          step={0.01}
-        />
-      </div>
-
-      <div className="mt-6 space-y-3">
-        <Label className="flex items-center space-x-1">
-          <div>{t("settings.contextLength")}</div>
-
-          <div>{chatSettings.contextLength}</div>
-        </Label>
-
-        <Slider
-          value={[chatSettings.contextLength]}
-          onValueChange={contextLength => {
-            onChangeChatSettings({
-              ...chatSettings,
-              contextLength: contextLength[0]
-            })
-          }}
-          min={0}
-          max={
-            isCustomModel
-              ? models.find(model => model.model_id === chatSettings.model)
-                  ?.context_length
-              : MODEL_LIMITS.MAX_CONTEXT_LENGTH
-          }
-          step={1}
-        />
-      </div>
-
       <div className="mt-7 flex items-center space-x-2">
         <Checkbox
           checked={chatSettings.includeProfileContext}

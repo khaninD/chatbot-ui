@@ -38,8 +38,6 @@ const initialState: ChatState = ChatStateSchema.parse({
   chatSettings: {
     model: "gpt-4o",
     prompt: "You are a helpful AI assistant.",
-    temperature: 0.5,
-    contextLength: 4000,
     includeProfileContext: true,
     includeWorkspaceInstructions: true,
     embeddingsProvider: "openai"

@@ -1,13 +1,11 @@
 import { create } from "zustand"
 import { z } from "zod"
-import { LLM, OpenRouterLLM } from "@/types"
+import { LLM } from "@/types"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 
 const ModelsStateSchema = z.object({
   envKeyMap: z.record(z.string(), z.custom<VALID_ENV_KEYS>()),
-  availableHostedModels: z.custom<LLM[]>(),
-  availableLocalModels: z.custom<LLM[]>(),
-  availableOpenRouterModels: z.custom<OpenRouterLLM[]>()
+  availableHostedModels: z.custom<LLM[]>()
 })
 
 type ModelsState = z.infer<typeof ModelsStateSchema>
@@ -17,17 +15,11 @@ interface ModelsActions {
   setAvailableHostedModels: (
     models: LLM[] | ((prev: LLM[]) => LLM[])
   ) => void
-  setAvailableLocalModels: (models: LLM[]) => void
-  setAvailableOpenRouterModels: (
-    models: OpenRouterLLM[] | ((prev: OpenRouterLLM[]) => OpenRouterLLM[])
-  ) => void
 }
 
 const initialState: ModelsState = ModelsStateSchema.parse({
   envKeyMap: {},
-  availableHostedModels: [],
-  availableLocalModels: [],
-  availableOpenRouterModels: []
+  availableHostedModels: []
 })
 
 export const useModelsStore = create<ModelsState & ModelsActions>(set => ({
@@ -38,14 +30,6 @@ export const useModelsStore = create<ModelsState & ModelsActions>(set => ({
       availableHostedModels:
         typeof models === "function"
           ? models(state.availableHostedModels)
-          : models
-    })),
-  setAvailableLocalModels: models => set({ availableLocalModels: models }),
-  setAvailableOpenRouterModels: models =>
-    set(state => ({
-      availableOpenRouterModels:
-        typeof models === "function"
-          ? models(state.availableOpenRouterModels)
           : models
     }))
 }))

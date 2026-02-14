@@ -118,8 +118,6 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
         setChatSettings({
           model: selectedWorkspace.default_model as LLMID,
           prompt: selectedWorkspace.default_prompt,
-          temperature: selectedWorkspace.default_temperature,
-          contextLength: selectedWorkspace.default_context_length,
           includeProfileContext: selectedWorkspace.include_profile_context,
           includeWorkspaceInstructions:
             selectedWorkspace.include_workspace_instructions,
@@ -134,8 +132,6 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
     setChatSettings({
       model: item.model as LLMID,
       prompt: item.prompt,
-      temperature: item.temperature,
-      contextLength: item.context_length,
       includeProfileContext: item.include_profile_context,
       includeWorkspaceInstructions: item.include_workspace_instructions,
       embeddingsProvider: item.embeddings_provider as "openai" | "local"
@@ -151,10 +147,8 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
           chatSettings?.includeProfileContext ||
         selectedPreset.include_workspace_instructions !==
           chatSettings.includeWorkspaceInstructions ||
-        selectedPreset.context_length !== chatSettings.contextLength ||
         selectedPreset.model !== chatSettings.model ||
-        selectedPreset.prompt !== chatSettings.prompt ||
-        selectedPreset.temperature !== chatSettings.temperature
+        selectedPreset.prompt !== chatSettings.prompt
       )
     } else if (selectedAssistant) {
       return (
@@ -162,10 +156,8 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
           chatSettings.includeProfileContext ||
         selectedAssistant.include_workspace_instructions !==
           chatSettings.includeWorkspaceInstructions ||
-        selectedAssistant.context_length !== chatSettings.contextLength ||
         selectedAssistant.model !== chatSettings.model ||
-        selectedAssistant.prompt !== chatSettings.prompt ||
-        selectedAssistant.temperature !== chatSettings.temperature
+        selectedAssistant.prompt !== chatSettings.prompt
       )
     }
 
