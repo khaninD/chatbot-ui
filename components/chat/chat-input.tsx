@@ -2,7 +2,6 @@ import {
   useChatInputStore,
   useChatRuntimeStore,
   useChatStore,
-  usePresetStore,
   useToolStore
 } from "@/stores"
 import useHotkey from "@/lib/hooks/use-hotkey"
@@ -58,7 +57,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
   const chatSettings = useChatStore(state => state.chatSettings)
 
   const isGenerating = useChatRuntimeStore(state => state.isGenerating)
-  const selectedPreset = usePresetStore(state => state.selectedPreset)
   const selectedTools = useToolStore(state => state.selectedTools)
   const setSelectedTools = useToolStore(state => state.setSelectedTools)
 
@@ -103,12 +101,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
   } = useChatHistoryHandler()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    setTimeout(() => {
-      handleFocusChatInput()
-    }, 200) // FIX: hacky
-  }, [selectedPreset])
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!isTyping && event.key === "Enter" && !event.shiftKey) {

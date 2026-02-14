@@ -4,7 +4,6 @@ import { updateCollection } from "@/db/collections"
 import { updateFile } from "@/db/files"
 import { updateMcpServer } from "@/db/mcp-servers"
 import { updateModel } from "@/db/models"
-import { updatePreset } from "@/db/presets"
 import { updatePrompt } from "@/db/prompts"
 import { updateTool } from "@/db/tools"
 import { cn } from "@/lib/utils"
@@ -19,7 +18,6 @@ import { FileItem } from "./items/files/file-item"
 import { Folder } from "./items/folders/folder-item"
 import { McpServerItem } from "./items/mcp-servers/mcp-server-item"
 import { ModelItem } from "./items/models/model-item"
-import { PresetItem } from "./items/presets/preset-item"
 import { PromptItem } from "./items/prompts/prompt-item"
 import { ToolItem } from "./items/tools/tool-item"
 
@@ -36,7 +34,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 }) => {
   const { t } = useTranslation()
   const setChats = useItemsStore(state => state.setChats)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
@@ -56,9 +53,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     switch (contentType) {
       case "chats":
         return <ChatItem key={item.id} chat={item as Tables<"chats">} />
-
-      case "presets":
-        return <PresetItem key={item.id} preset={item as Tables<"presets">} />
 
       case "prompts":
         return <PromptItem key={item.id} prompt={item as Tables<"prompts">} />
@@ -132,7 +126,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
   const updateFunctions = {
     chats: updateChat,
-    presets: updatePreset,
     prompts: updatePrompt,
     files: updateFile,
     collections: updateCollection,
@@ -160,9 +153,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     switch (contentType) {
       case "chats":
         setChats(updatedItems as Tables<"chats">[])
-        break
-      case "presets":
-        setPresets(updatedItems as Tables<"presets">[])
         break
       case "prompts":
         setPrompts(updatedItems as Tables<"prompts">[])

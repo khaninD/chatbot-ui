@@ -8,7 +8,6 @@ const ItemsStateSchema = z.object({
   files: z.custom<Tables<"files">[]>(),
   folders: z.custom<Tables<"folders">[]>(),
   models: z.custom<Tables<"models">[]>(),
-  presets: z.custom<Tables<"presets">[]>(),
   prompts: z.custom<Tables<"prompts">[]>(),
   mcpServers: z.custom<Tables<"mcp_servers">[]>(),
   tools: z.custom<Tables<"tools">[]>(),
@@ -43,11 +42,6 @@ interface ItemsActions {
       | Tables<"models">[]
       | ((prev: Tables<"models">[]) => Tables<"models">[])
   ) => void
-  setPresets: (
-    presets:
-      | Tables<"presets">[]
-      | ((prev: Tables<"presets">[]) => Tables<"presets">[])
-  ) => void
   setPrompts: (
     prompts:
       | Tables<"prompts">[]
@@ -76,7 +70,6 @@ const initialState: ItemsState = ItemsStateSchema.parse({
   files: [],
   folders: [],
   models: [],
-  presets: [],
   prompts: [],
   mcpServers: [],
   tools: [],
@@ -107,10 +100,6 @@ export const useItemsStore = create<ItemsState & ItemsActions>(set => ({
   setModels: models =>
     set(state => ({
       models: typeof models === "function" ? models(state.models) : models
-    })),
-  setPresets: presets =>
-    set(state => ({
-      presets: typeof presets === "function" ? presets(state.presets) : presets
     })),
   setPrompts: prompts =>
     set(state => ({

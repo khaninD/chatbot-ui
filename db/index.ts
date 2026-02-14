@@ -1,9 +1,7 @@
-import "./chats"
-import "./file-items"
-import "./files"
-import "./folders"
-import "./messages"
-import "./presets"
-import "./profile"
-import "./prompts"
-import "./workspaces"
+import { updateProfile } from "./profile"
+import {
+  createPrompt,
+  deletePrompt,
+  getPromptById,
+  updatePrompt
+} from "./prompts"

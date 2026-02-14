@@ -26,8 +26,6 @@ interface ChatbotUIContext {
   setFolders: Dispatch<SetStateAction<Tables<"folders">[]>>
   models: Tables<"models">[]
   setModels: Dispatch<SetStateAction<Tables<"models">[]>>
-  presets: Tables<"presets">[]
-  setPresets: Dispatch<SetStateAction<Tables<"presets">[]>>
   prompts: Tables<"prompts">[]
   setPrompts: Dispatch<SetStateAction<Tables<"prompts">[]>>
   mcpServers: Tables<"mcp_servers">[]
@@ -48,10 +46,6 @@ interface ChatbotUIContext {
   setSelectedWorkspace: Dispatch<SetStateAction<Tables<"workspaces"> | null>>
   workspaceImages: WorkspaceImage[]
   setWorkspaceImages: Dispatch<SetStateAction<WorkspaceImage[]>>
-
-  // PRESET STORE
-  selectedPreset: Tables<"presets"> | null
-  setSelectedPreset: Dispatch<SetStateAction<Tables<"presets"> | null>>
 
   // PASSIVE CHAT STORE
   userInput: string
@@ -136,8 +130,6 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setFolders: () => {},
   models: [],
   setModels: () => {},
-  presets: [],
-  setPresets: () => {},
   prompts: [],
   setPrompts: () => {},
   tools: [],
@@ -158,10 +150,6 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setSelectedWorkspace: () => {},
   workspaceImages: [],
   setWorkspaceImages: () => {},
-
-  // PRESET STORE
-  selectedPreset: null,
-  setSelectedPreset: () => {},
 
   // PASSIVE CHAT STORE
   userInput: "",

@@ -35,12 +35,6 @@ import {
   updateModel
 } from "@/db/models"
 import {
-  createPresetWorkspaces,
-  deletePresetWorkspace,
-  getPresetWorkspacesByPresetId,
-  updatePreset
-} from "@/db/presets"
-import {
   createPromptWorkspaces,
   deletePromptWorkspace,
   getPromptWorkspacesByPromptId,
@@ -84,7 +78,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
   const workspaces = useItemsStore(state => state.workspaces)
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const setChats = useItemsStore(state => state.setChats)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
@@ -131,7 +124,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
 
   const renderState = {
     chats: null,
-    presets: null,
     prompts: null,
     files: null,
     collections: {
@@ -147,7 +139,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
 
   const fetchDataFunctions = {
     chats: null,
-    presets: null,
     prompts: null,
     files: null,
     collections: async (collectionId: string) => {
@@ -163,10 +154,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
 
   const fetchWorkpaceFunctions = {
     chats: null,
-    presets: async (presetId: string) => {
-      const item = await getPresetWorkspacesByPresetId(presetId)
-      return item.workspaces
-    },
     prompts: async (promptId: string) => {
       const item = await getPromptWorkspacesByPromptId(promptId)
       return item.workspaces
@@ -264,22 +251,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       id: string,
       state: TablesUpdate<"chats">
     ) => Promise<Tables<"chats">>,
-    presets: async (presetId: string, updateState: TablesUpdate<"presets">) => {
-      const updatedPreset = await updatePreset(presetId, updateState)
-
-      await handleWorkspaceUpdates(
-        startingWorkspaces,
-        selectedWorkspaces,
-        presetId,
-        deletePresetWorkspace,
-        createPresetWorkspaces as unknown as (
-          workspaces: unknown
-        ) => Promise<void>,
-        "preset_id"
-      )
-
-      return updatedPreset
-    },
     prompts: async (promptId: string, updateState: TablesUpdate<"prompts">) => {
       const updatedPrompt = await updatePrompt(promptId, updateState)
 
@@ -419,11 +390,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     switch (contentType) {
       case "chats":
         setChats(prev => updater(prev as DataItemType[]) as Tables<"chats">[])
-        break
-      case "presets":
-        setPresets(
-          prev => updater(prev as DataItemType[]) as Tables<"presets">[]
-        )
         break
       case "prompts":
         setPrompts(

@@ -13,7 +13,6 @@ import { createCollection } from "@/db/collections"
 import { createFileBasedOnExtension } from "@/db/files"
 import { createMcpServer } from "@/db/mcp-servers"
 import { createModel } from "@/db/models"
-import { createPreset } from "@/db/presets"
 import { createPrompt } from "@/db/prompts"
 import { createTool } from "@/db/tools"
 import { Tables, TablesInsert } from "@/supabase/types"
@@ -40,7 +39,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 }) => {
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const chats = useItemsStore(state => state.chats)
-  const presets = useItemsStore(state => state.presets)
   const prompts = useItemsStore(state => state.prompts)
   const mcpServers = useItemsStore(state => state.mcpServers)
   const files = useItemsStore(state => state.files)
@@ -48,7 +46,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   const tools = useItemsStore(state => state.tools)
   const models = useItemsStore(state => state.models)
   const setChats = useItemsStore(state => state.setChats)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
   const setFiles = useItemsStore(state => state.setFiles)
@@ -69,8 +66,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
         ...(state as TablesInsert<"chats">),
         workspace_id: workspaceId
       }),
-    presets: (state, workspaceId) =>
-      createPreset(state as TablesInsert<"presets">, workspaceId),
     prompts: (state, workspaceId) =>
       createPrompt(state as TablesInsert<"prompts">, workspaceId),
     mcp_servers: (state, workspaceId) =>
@@ -130,9 +125,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
       switch (contentType) {
         case "chats":
           setChats([...chats, newItem as Tables<"chats">])
-          break
-        case "presets":
-          setPresets([...presets, newItem as Tables<"presets">])
           break
         case "prompts":
           setPrompts([...prompts, newItem as Tables<"prompts">])

@@ -2,7 +2,6 @@ import { useItemsStore, useProfileStore, useWorkspaceStore } from "@/stores"
 import { createChats } from "@/db/chats"
 import { createCollections } from "@/db/collections"
 import { createFiles } from "@/db/files"
-import { createPresets } from "@/db/presets"
 import { createPrompts } from "@/db/prompts"
 import { createTools } from "@/db/tools"
 import { Tables, TablesInsert } from "@/supabase/types"
@@ -27,13 +26,11 @@ export const Import: FC<ImportProps> = ({}) => {
   const profile = useProfileStore(state => state.profile)
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const chats = useItemsStore(state => state.chats)
-  const presets = useItemsStore(state => state.presets)
   const prompts = useItemsStore(state => state.prompts)
   const files = useItemsStore(state => state.files)
   const collections = useItemsStore(state => state.collections)
   const tools = useItemsStore(state => state.tools)
   const setChats = useItemsStore(state => state.setChats)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
@@ -44,7 +41,6 @@ export const Import: FC<ImportProps> = ({}) => {
 
   type ImportContentType =
     | "chats"
-    | "presets"
     | "prompts"
     | "files"
     | "collections"
@@ -58,7 +54,6 @@ export const Import: FC<ImportProps> = ({}) => {
   const [importList, setImportList] = useState<ImportItem[]>([])
   const [importCounts, setImportCounts] = useState<ImportCounts>({
     chats: 0,
-    presets: 0,
     prompts: 0,
     files: 0,
     collections: 0,
@@ -97,7 +92,6 @@ export const Import: FC<ImportProps> = ({}) => {
       setImportCounts(prevCounts => {
         const countTypes: ImportContentType[] = [
           "chats",
-          "presets",
           "prompts",
           "files",
           "collections",
@@ -135,7 +129,6 @@ export const Import: FC<ImportProps> = ({}) => {
     setImportList([])
     setImportCounts({
       chats: 0,
-      presets: 0,
       prompts: 0,
       files: 0,
       collections: 0,
@@ -153,7 +146,6 @@ export const Import: FC<ImportProps> = ({}) => {
       Array<Record<string, unknown>>
     > = {
       chats: [],
-      presets: [],
       prompts: [],
       files: [],
       collections: [],
@@ -170,10 +162,6 @@ export const Import: FC<ImportProps> = ({}) => {
 
     const createdItems = {
       chats: await createChats(saveData.chats as TablesInsert<"chats">[]),
-      presets: await createPresets(
-        saveData.presets as TablesInsert<"presets">[],
-        selectedWorkspace.id
-      ),
       prompts: await createPrompts(
         saveData.prompts as TablesInsert<"prompts">[],
         selectedWorkspace.id
@@ -193,7 +181,6 @@ export const Import: FC<ImportProps> = ({}) => {
     }
 
     setChats([...chats, ...createdItems.chats])
-    setPresets([...presets, ...createdItems.presets])
     setPrompts([...prompts, ...createdItems.prompts])
     setFiles([...files, ...createdItems.files])
     setCollections([...collections, ...createdItems.collections])
@@ -204,7 +191,6 @@ export const Import: FC<ImportProps> = ({}) => {
     setImportList([])
     setImportCounts({
       chats: 0,
-      presets: 0,
       prompts: 0,
       files: 0,
       collections: 0,

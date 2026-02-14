@@ -28,7 +28,6 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
 }) => {
   const setChats = useItemsStore(state => state.setChats)
   const setFolders = useItemsStore(state => state.setFolders)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
@@ -48,9 +47,6 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
     switch (contentType) {
       case "chats":
         setChats(prev => updater(prev) as Tables<"chats">[])
-        break
-      case "presets":
-        setPresets(prev => updater(prev) as Tables<"presets">[])
         break
       case "prompts":
         setPrompts(prev => updater(prev) as Tables<"prompts">[])

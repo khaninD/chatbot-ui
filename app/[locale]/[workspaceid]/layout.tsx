@@ -14,7 +14,6 @@ import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 import { getFoldersByWorkspaceId } from "@/db/folders"
 import { getMcpServerWorkspacesByWorkspaceId } from "@/db/mcp-servers"
 import { getModelWorkspacesByWorkspaceId } from "@/db/models"
-import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
 import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
 import { getWorkspaceById } from "@/db/workspaces"
@@ -41,7 +40,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const setCollections = useItemsStore(state => state.setCollections)
   const setFolders = useItemsStore(state => state.setFolders)
   const setFiles = useItemsStore(state => state.setFiles)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
   const setTools = useItemsStore(state => state.setTools)
@@ -118,9 +116,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
     setFiles(fileData.files)
-
-    const presetData = await getPresetWorkspacesByWorkspaceId(workspaceId)
-    setPresets(presetData.presets)
 
     const promptData = await getPromptWorkspacesByWorkspaceId(workspaceId)
     setPrompts(promptData.prompts)

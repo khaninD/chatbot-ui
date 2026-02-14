@@ -16,7 +16,6 @@ interface SidebarProps {
 export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
   const folders = useItemsStore(state => state.folders)
   const chats = useItemsStore(state => state.chats)
-  const presets = useItemsStore(state => state.presets)
   const prompts = useItemsStore(state => state.prompts)
   const files = useItemsStore(state => state.files)
   const collections = useItemsStore(state => state.collections)
@@ -25,7 +24,6 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
   const mcpServers = useItemsStore(state => state.mcpServers)
 
   const chatFolders = folders.filter(folder => folder.type === "chats")
-  const presetFolders = folders.filter(folder => folder.type === "presets")
   const promptFolders = folders.filter(folder => folder.type === "prompts")
   const filesFolders = folders.filter(folder => folder.type === "files")
   const collectionFolders = folders.filter(
@@ -69,9 +67,6 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
           switch (contentType) {
             case "chats":
               return renderSidebarContent("chats", chats, chatFolders)
-
-            case "presets":
-              return renderSidebarContent("presets", presets, presetFolders)
 
             case "prompts":
               return renderSidebarContent("prompts", prompts, promptFolders)

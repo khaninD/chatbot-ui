@@ -8,7 +8,6 @@ const resetItemsStore = () => {
     files: [],
     folders: [],
     models: [],
-    presets: [],
     prompts: [],
     mcpServers: [],
     tools: [],

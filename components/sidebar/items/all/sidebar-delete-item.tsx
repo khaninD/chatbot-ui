@@ -14,7 +14,6 @@ import { deleteCollection } from "@/db/collections"
 import { deleteFile } from "@/db/files"
 import { deleteMcpServer } from "@/db/mcp-servers"
 import { deleteModel } from "@/db/models"
-import { deletePreset } from "@/db/presets"
 import { deletePrompt } from "@/db/prompts"
 import { deleteFileFromStorage } from "@/db/storage/files"
 import { deleteTool } from "@/db/tools"
@@ -34,7 +33,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
 }) => {
   const { t } = useTranslation()
   const setChats = useItemsStore(state => state.setChats)
-  const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
@@ -49,9 +47,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   const deleteFunctions = {
     chats: async (chat: Tables<"chats">) => {
       await deleteChat(chat.id)
-    },
-    presets: async (preset: Tables<"presets">) => {
-      await deletePreset(preset.id)
     },
     prompts: async (prompt: Tables<"prompts">) => {
       await deletePrompt(prompt.id)
@@ -80,11 +75,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     switch (contentType) {
       case "chats":
         setChats(prev => updater(prev as DataItemType[]) as Tables<"chats">[])
-        break
-      case "presets":
-        setPresets(
-          prev => updater(prev as DataItemType[]) as Tables<"presets">[]
-        )
         break
       case "prompts":
         setPrompts(

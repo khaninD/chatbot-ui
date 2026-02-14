@@ -37,7 +37,6 @@ export const SidebarItem: FC<SidebarItemProps> = ({
   const actionMap: Record<ContentType, (item: DataItemType) => Promise<void>> =
     {
       chats: async () => {},
-      presets: async () => {},
       prompts: async () => {},
       files: async () => {},
       collections: async () => {},

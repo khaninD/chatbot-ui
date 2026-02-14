@@ -9,7 +9,6 @@ import { CreateCollection } from "./items/collections/create-collection"
 import { CreateFile } from "./items/files/create-file"
 import { CreateMcpServer } from "./items/mcp-servers/create-mcp-server"
 import { CreateModel } from "./items/models/create-model"
-import { CreatePreset } from "./items/presets/create-preset"
 import { CreatePrompt } from "./items/prompts/create-prompt"
 import { CreateTool } from "./items/tools/create-tool"
 
@@ -29,7 +28,6 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
   const { handleNewChat } = useChatHandler()
 
   const [isCreatingPrompt, setIsCreatingPrompt] = useState(false)
-  const [isCreatingPreset, setIsCreatingPreset] = useState(false)
   const [isCreatingFile, setIsCreatingFile] = useState(false)
   const [isCreatingCollection, setIsCreatingCollection] = useState(false)
   const [isCreatingTool, setIsCreatingTool] = useState(false)
@@ -55,11 +53,6 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
       case "chats":
         return async () => {
           handleNewChat()
-        }
-
-      case "presets":
-        return async () => {
-          setIsCreatingPreset(true)
         }
 
       case "prompts":
@@ -116,13 +109,6 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
         <CreatePrompt
           isOpen={isCreatingPrompt}
           onOpenChange={setIsCreatingPrompt}
-        />
-      )}
-
-      {isCreatingPreset && (
-        <CreatePreset
-          isOpen={isCreatingPreset}
-          onOpenChange={setIsCreatingPreset}
         />
       )}
 
