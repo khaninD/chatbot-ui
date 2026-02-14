@@ -241,6 +241,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          external_id: string | null
           file_path: string
           folder_id: string | null
           id: string
@@ -255,6 +256,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description: string
+          external_id?: string | null
           file_path: string
           folder_id?: string | null
           id?: string
@@ -269,6 +271,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string
+          external_id?: string | null
           file_path?: string
           folder_id?: string | null
           id?: string

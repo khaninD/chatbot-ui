@@ -64,48 +64,16 @@ export const createFileBasedOnExtension = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
-  const fileExtension = file.name.split(".").pop()
-
-  if (fileExtension === "docx") {
-    const arrayBuffer = await file.arrayBuffer()
-    const result = await mammoth.extractRawText({
-      arrayBuffer
-    })
-
-    return createDocXFile(
-      result.value,
-      file,
-      fileRecord,
-      workspace_id,
-      embeddingsProvider
-    )
-  } else {
-    return createFile(file, fileRecord, workspace_id, embeddingsProvider)
-  }
+  return createFile(file, fileRecord, workspace_id, embeddingsProvider)
 }
 
-// For non-docx files
+// For all files using external RAG service
 export const createFile = async (
   file: File,
   fileRecord: TablesInsert<"files">,
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
-  const validFilename = fileRecord.name
-    .replace(/[^a-z0-9.]/gi, "_")
-    .toLowerCase()
-  const extension = file.name.split(".").pop()
-  const extensionIndex = validFilename.lastIndexOf(".")
-  const baseName = validFilename.substring(
-    0,
-    extensionIndex < 0 ? undefined : extensionIndex
-  )
-  const maxBaseNameLength = 100 - (extension?.length || 0) - 1
-  if (baseName.length > maxBaseNameLength) {
-    fileRecord.name = baseName.substring(0, maxBaseNameLength) + "." + extension
-  } else {
-    fileRecord.name = baseName + "." + extension
-  }
   const { data: createdFile, error } = await supabase
     .from("files")
     .insert([fileRecord])
@@ -128,37 +96,44 @@ export const createFile = async (
     file_id: createdFile.name
   })
 
-  await updateFile(createdFile.id, {
-    file_path: filePath
-  })
-
+  // 1. Upload to external RAG service
   const formData = new FormData()
-  formData.append("file_id", createdFile.id)
-  formData.append("embeddingsProvider", embeddingsProvider)
+  formData.append("files", file)
+  formData.append("workspaceId", workspace_id)
 
-  const response = await fetch("/api/retrieval/process", {
+  const ragServerUrl =
+    process.env.NEXT_PUBLIC_LLAMAINDEX_AGENT_URL || "http://localhost:3001"
+
+  const response = await fetch(`${ragServerUrl}/api/rag/ingest`, {
     method: "POST",
     body: formData
   })
 
   if (!response.ok) {
-    const jsonText = await response.text()
-    const json = JSON.parse(jsonText)
+    const errorText = await response.text()
     console.error(
-      `Error processing file:${createdFile.id}, status:${response.status}, response:${json.message}`
+      `Error processing file in external RAG service:${createdFile.id}, status:${response.status}, response:${errorText}`
     )
-    toast.error("Failed to process file. Reason:" + json.message, {
-      duration: 10000
-    })
+    toast.error("Failed to process file in RAG service.")
     await deleteFile(createdFile.id)
+    throw new Error("RAG ingestion failed")
   }
+
+  const ragData = await response.json()
+  const externalId = ragData.fileIds[0]
+
+  // 2. Update record with external_id and path
+  await updateFile(createdFile.id, {
+    file_path: filePath,
+    external_id: externalId
+  })
 
   const fetchedFile = await getFileById(createdFile.id)
 
   return fetchedFile
 }
 
-// // Handle docx files
+// Handle docx files (Deprecated - redirected to createFile)
 export const createDocXFile = async (
   text: string,
   file: File,
@@ -166,60 +141,7 @@ export const createDocXFile = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
-  const { data: createdFile, error } = await supabase
-    .from("files")
-    .insert([fileRecord])
-    .select("*")
-    .single()
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  await createFileWorkspace({
-    user_id: createdFile.user_id,
-    file_id: createdFile.id,
-    workspace_id
-  })
-
-  const filePath = await uploadFile(file, {
-    name: createdFile.name,
-    user_id: createdFile.user_id,
-    file_id: createdFile.name
-  })
-
-  await updateFile(createdFile.id, {
-    file_path: filePath
-  })
-
-  const response = await fetch("/api/retrieval/process/docx", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text: text,
-      fileId: createdFile.id,
-      embeddingsProvider,
-      fileExtension: "docx"
-    })
-  })
-
-  if (!response.ok) {
-    const jsonText = await response.text()
-    const json = JSON.parse(jsonText)
-    console.error(
-      `Error processing file:${createdFile.id}, status:${response.status}, response:${json.message}`
-    )
-    toast.error("Failed to process file. Reason:" + json.message, {
-      duration: 10000
-    })
-    await deleteFile(createdFile.id)
-  }
-
-  const fetchedFile = await getFileById(createdFile.id)
-
-  return fetchedFile
+  return createFile(file, fileRecord, workspace_id, embeddingsProvider)
 }
 
 export const createFiles = async (

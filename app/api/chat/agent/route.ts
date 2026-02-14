@@ -29,6 +29,8 @@ interface AgentChatRequestBody {
   messageFileItems?: Tables<"file_items">[]
   chatFileItems?: Tables<"file_items">[]
   sessionId?: string
+  workspaceId?: string
+  fileIds?: string[]
 }
 
 const sendSseEvent = (
@@ -66,7 +68,7 @@ const sendStreamError = (
 
 export async function POST(request: Request) {
   const json = (await request.json()) as AgentChatRequestBody
-  const { chatSettings, messages, messageFileItems, sessionId } = json
+  const { chatSettings, messages, sessionId, workspaceId, fileIds } = json
   console.log("ChatSettings Model:", chatSettings.model)
   try {
     if (!sessionId) {
@@ -75,7 +77,6 @@ export async function POST(request: Request) {
 
     const profile = await getServerProfile()
 
-    const cometApiKey = profile.comet_api_key || process.env.COMET_API_KEY
     const apiKey = process.env.LLM_API_KEY
     if (!apiKey) {
       return new Response("Missing API key", { status: 400 })
@@ -92,31 +93,6 @@ export async function POST(request: Request) {
         if (part.type === "text" && part.text) {
           userQuery += part.text
         }
-      }
-    }
-
-    if (messageFileItems && messageFileItems.length > 0) {
-      if (chatSettings.useAdvancedRAG) {
-        try {
-          const ragQueryEngine = await createRAGQueryEngine(
-            messageFileItems,
-            apiKey,
-            chatSettings.model || "gpt-4o",
-            !!cometApiKey,
-            chatSettings.useReranking || false,
-            profile.openai_embedding_model
-          )
-
-          const ragResult = await queryRAG(ragQueryEngine, userQuery)
-          userQuery = `Original question: ${userQuery}\n\nContext from documents: ${ragResult.response}`
-        } catch (error) {
-          console.error("[AgentServer] Advanced RAG error:", error)
-          const retrievalText = buildRetrievalText(messageFileItems)
-          userQuery = `${userQuery}\n\n${retrievalText}`
-        }
-      } else {
-        const retrievalText = buildRetrievalText(messageFileItems)
-        userQuery = `${userQuery}\n\n${retrievalText}`
       }
     }
 
@@ -166,9 +142,11 @@ export async function POST(request: Request) {
     }
     console.log("AGENT-server Config:", {
       sessionId,
+      workspaceId,
       query: userQuery,
       systemPrompt,
       mcpUrls,
+      fileIds,
       llmConfig: {
         provider: "openai",
         apiKey,
@@ -178,9 +156,11 @@ export async function POST(request: Request) {
     })
     const agentRequest = buildAgentServerStreamRequest({
       sessionId,
+      workspaceId,
       query: userQuery,
       systemPrompt,
       mcpUrls,
+      fileIds,
       llmConfig: {
         provider: "openai",
         apiKey,

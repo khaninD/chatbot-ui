@@ -16,10 +16,12 @@ export interface AgentServerSubAgent {
 
 export interface AgentServerStreamRequest {
   sessionId: string
+  workspaceId?: string
   query: string
   llmConfig: AgentServerLlmConfig
   systemPrompt?: string
   mcpUrls?: string[]
+  fileIds?: string[]
   subAgents?: AgentServerSubAgent[]
 }
 

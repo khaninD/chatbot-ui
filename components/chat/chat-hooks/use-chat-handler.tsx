@@ -178,20 +178,16 @@ export const useChatHandler = () => {
 
       let retrievedFileItems: Tables<"file_items">[] = []
 
-      if (
-        (newMessageFiles.length > 0 || chatFiles.length > 0) &&
-        useRetrieval
-      ) {
-        setToolInUse("retrieval")
-
-        retrievedFileItems = await handleRetrieval(
-          userInput,
-          newMessageFiles,
-          chatFiles,
-          chatSettings!.embeddingsProvider,
-          sourceCount
-        )
-      }
+      // Claude Code strategy: Collect external IDs for the RAG service
+      const attachedFiles = [...newMessageFiles, ...chatFiles]
+      const currentStoreFiles = useItemsStore.getState().files
+      const fileIds = attachedFiles
+        .map(file => {
+          // Find the actual file record in items store to get external_id
+          const fileRecord = currentStoreFiles.find(f => f.id === file.id)
+          return fileRecord?.external_id
+        })
+        .filter(Boolean) as string[]
 
       // Save the original length before adding temp messages
       const originalMessagesLength = chatMessages.length
@@ -294,11 +290,13 @@ export const useChatHandler = () => {
             newAbortController,
             newMessageImages,
             chatImages,
-            currentChat.id,
+            currentChat.id, // History session
             setIsGenerating,
             setFirstTokenReceived,
             setChatMessages,
-            setToolInUse
+            setToolInUse,
+            fileIds, // Pass external file IDs
+            selectedWorkspace.id // Workspace for RAG
           )
           generatedText = result.text
           contentBlocks = result.contentBlocks

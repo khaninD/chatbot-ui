@@ -196,7 +196,9 @@ export const handleHostedChat = async (
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<string>>
+  setToolInUse: React.Dispatch<React.SetStateAction<string>>,
+  fileIds: string[] = [], // External RAG file IDs
+  workspaceId?: string // External RAG workspace ID
 ) => {
   const draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
@@ -219,7 +221,9 @@ export const handleHostedChat = async (
     // Always pass file items for RAG support
     messageFileItems: payload.messageFileItems,
     chatFileItems: payload.chatFileItems,
-    sessionId
+    sessionId,
+    workspaceId, // External RAG workspace ID
+    fileIds // External RAG file IDs
   }
 
   const response = await fetchChatResponse(

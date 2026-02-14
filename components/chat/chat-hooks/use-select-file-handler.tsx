@@ -124,8 +124,8 @@ export const useSelectFileHandler = () => {
 
           setFiles([...files, createdFile])
 
-          setNewMessageFiles(
-            newMessageFiles.map(item =>
+          setNewMessageFiles(prev =>
+            prev.map(item =>
               item.id === "loading"
                 ? {
                     id: createdFile.id,
@@ -185,8 +185,8 @@ export const useSelectFileHandler = () => {
 
             setFiles([...files, createdFile])
 
-            setNewMessageFiles(
-              newMessageFiles.map(item =>
+            setNewMessageFiles(prev =>
+              prev.map(item =>
                 item.id === "loading"
                   ? {
                       id: createdFile.id,
