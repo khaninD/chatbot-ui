@@ -4,7 +4,6 @@ export type ContentType =
   | "prompts"
   | "files"
   | "collections"
-  | "assistants"
   | "tools"
   | "models"
   | "mcp_servers"

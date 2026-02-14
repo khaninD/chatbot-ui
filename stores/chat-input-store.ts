@@ -10,10 +10,7 @@ const ChatInputStateSchema = z.object({
   toolCommand: z.string(),
   focusPrompt: z.boolean(),
   focusFile: z.boolean(),
-  focusTool: z.boolean(),
-  focusAssistant: z.boolean(),
-  atCommand: z.string(),
-  isAssistantPickerOpen: z.boolean()
+  focusTool: z.boolean()
 })
 
 type ChatInputState = z.infer<typeof ChatInputStateSchema>
@@ -28,9 +25,6 @@ interface ChatInputActions {
   setFocusPrompt: (value: boolean) => void
   setFocusFile: (value: boolean) => void
   setFocusTool: (value: boolean) => void
-  setFocusAssistant: (value: boolean) => void
-  setAtCommand: (value: string) => void
-  setIsAssistantPickerOpen: (value: boolean) => void
 }
 
 const initialState: ChatInputState = ChatInputStateSchema.parse({
@@ -42,10 +36,7 @@ const initialState: ChatInputState = ChatInputStateSchema.parse({
   toolCommand: "",
   focusPrompt: false,
   focusFile: false,
-  focusTool: false,
-  focusAssistant: false,
-  atCommand: "",
-  isAssistantPickerOpen: false
+  focusTool: false
 })
 
 export const useChatInputStore = create<ChatInputState & ChatInputActions>(
@@ -59,10 +50,6 @@ export const useChatInputStore = create<ChatInputState & ChatInputActions>(
     setToolCommand: toolCommand => set({ toolCommand }),
     setFocusPrompt: focusPrompt => set({ focusPrompt }),
     setFocusFile: focusFile => set({ focusFile }),
-    setFocusTool: focusTool => set({ focusTool }),
-    setFocusAssistant: focusAssistant => set({ focusAssistant }),
-    setAtCommand: atCommand => set({ atCommand }),
-    setIsAssistantPickerOpen: isAssistantPickerOpen =>
-      set({ isAssistantPickerOpen })
+    setFocusTool: focusTool => set({ focusTool })
   })
 )

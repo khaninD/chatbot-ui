@@ -161,7 +161,7 @@ export async function createAgent(
         `[LlamaIndex Agent] Creating single agent for model (no tool_choice support): ${modelId}`
       )
       sqlAgent = agent({
-        name: "SQL Assistant",
+        name: "AI Agent",
         systemPrompt: finalSystemPrompt,
         tools: allTools as Parameters<typeof agent>[0]["tools"],
         llm,

@@ -3,7 +3,6 @@ import { z } from "zod"
 import { Tables } from "@/supabase/types"
 
 const ItemsStateSchema = z.object({
-  assistants: z.custom<Tables<"assistants">[]>(),
   collections: z.custom<Tables<"collections">[]>(),
   chats: z.custom<Tables<"chats">[]>(),
   files: z.custom<Tables<"files">[]>(),
@@ -19,11 +18,6 @@ const ItemsStateSchema = z.object({
 type ItemsState = z.infer<typeof ItemsStateSchema>
 
 interface ItemsActions {
-  setAssistants: (
-    assistants:
-      | Tables<"assistants">[]
-      | ((prev: Tables<"assistants">[]) => Tables<"assistants">[])
-  ) => void
   setCollections: (
     collections:
       | Tables<"collections">[]
@@ -77,7 +71,6 @@ interface ItemsActions {
 }
 
 const initialState: ItemsState = ItemsStateSchema.parse({
-  assistants: [],
   collections: [],
   chats: [],
   files: [],
@@ -92,13 +85,6 @@ const initialState: ItemsState = ItemsStateSchema.parse({
 
 export const useItemsStore = create<ItemsState & ItemsActions>(set => ({
   ...initialState,
-  setAssistants: assistants =>
-    set(state => ({
-      assistants:
-        typeof assistants === "function"
-          ? assistants(state.assistants)
-          : assistants
-    })),
   setCollections: collections =>
     set(state => ({
       collections:

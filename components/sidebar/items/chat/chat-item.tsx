@@ -1,17 +1,10 @@
 import { ModelIcon } from "@/components/models/model-icon"
 import { WithTooltip } from "@/components/ui/with-tooltip"
-import {
-  useAssistantStore,
-  useChatStore,
-  useModelsStore,
-  useWorkspaceStore
-} from "@/stores"
+import { useChatStore, useWorkspaceStore } from "@/stores"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
 import { LLM } from "@/types"
-import { IconRobotFace } from "@tabler/icons-react"
-import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { FC, useRef } from "react"
 import { DeleteChat } from "./delete-chat"
@@ -24,7 +17,6 @@ interface ChatItemProps {
 export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const selectedChat = useChatStore(state => state.selectedChat)
-  const assistantImages = useAssistantStore(state => state.assistantImages)
 
   const router = useRouter()
   const params = useParams()
@@ -46,10 +38,6 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
 
   const MODEL_DATA = LLM_LIST.find(llm => llm.modelId === chat.model) as LLM
 
-  const assistantImage = assistantImages.find(
-    image => image.assistantId === chat.assistant_id
-  )?.base64
-
   return (
     <div
       ref={itemRef}
@@ -61,31 +49,13 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
       onKeyDown={handleKeyDown}
       onClick={handleClick}
     >
-      {chat.assistant_id ? (
-        assistantImage ? (
-          <Image
-            style={{ width: "30px", height: "30px" }}
-            className="rounded"
-            src={assistantImage}
-            alt="Assistant image"
-            width={30}
-            height={30}
-          />
-        ) : (
-          <IconRobotFace
-            className="rounded border-DEFAULT border-primary bg-primary p-1 text-secondary"
-            size={30}
-          />
-        )
-      ) : (
-        <WithTooltip
-          delayDuration={200}
-          display={<div>{MODEL_DATA?.modelName}</div>}
-          trigger={
-            <ModelIcon provider={MODEL_DATA?.provider} height={30} width={30} />
-          }
-        />
-      )}
+      <WithTooltip
+        delayDuration={200}
+        display={<div>{MODEL_DATA?.modelName}</div>}
+        trigger={
+          <ModelIcon provider={MODEL_DATA?.provider} height={30} width={30} />
+        }
+      />
 
       <div className="ml-3 flex-1 truncate text-sm font-semibold">
         {chat.name}

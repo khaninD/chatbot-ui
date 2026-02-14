@@ -1,5 +1,4 @@
 import {
-  useAssistantStore,
   useAttachmentsStore,
   useChatInputStore,
   useChatRuntimeStore,
@@ -12,9 +11,6 @@ import {
   useToolStore,
   useWorkspaceStore
 } from "@/stores"
-import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
-import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
-import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
 import { updateChat } from "@/db/chats"
 import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import { deleteMessagesIncludingAndAfter } from "@/db/messages"
@@ -81,7 +77,6 @@ export const useChatHandler = () => {
   const setToolInUse = useToolStore(state => state.setToolInUse)
   const selectedTools = useToolStore(state => state.selectedTools)
 
-  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
   const selectedPreset = usePresetStore(state => state.selectedPreset)
   const models = useItemsStore(state => state.models)
 
@@ -130,49 +125,7 @@ export const useChatHandler = () => {
     setSelectedTools([])
     setToolInUse("none")
 
-    if (selectedAssistant) {
-      setChatSettings({
-        model: selectedAssistant.model as LLMID,
-        prompt: selectedAssistant.prompt,
-        includeProfileContext: selectedAssistant.include_profile_context,
-        includeWorkspaceInstructions:
-          selectedAssistant.include_workspace_instructions,
-        embeddingsProvider: selectedAssistant.embeddings_provider as
-          | "openai"
-          | "local"
-      })
-
-      let allFiles = []
-
-      const assistantFiles = (
-        await getAssistantFilesByAssistantId(selectedAssistant.id)
-      ).files
-      allFiles = [...assistantFiles]
-      const assistantCollections = (
-        await getAssistantCollectionsByAssistantId(selectedAssistant.id)
-      ).collections
-      for (const collection of assistantCollections) {
-        const collectionFiles = (
-          await getCollectionFilesByCollectionId(collection.id)
-        ).files
-        allFiles = [...allFiles, ...collectionFiles]
-      }
-      const assistantTools = (
-        await getAssistantToolsByAssistantId(selectedAssistant.id)
-      ).tools
-
-      setSelectedTools(assistantTools)
-      setChatFiles(
-        allFiles.map(file => ({
-          id: file.id,
-          name: file.name,
-          type: file.type,
-          file: null
-        }))
-      )
-
-      if (allFiles.length > 0) setShowFilesDisplay(true)
-    } else if (selectedPreset) {
+    if (selectedPreset) {
       setChatSettings({
         model: selectedPreset.model as LLMID,
         prompt: selectedPreset.prompt,
@@ -283,8 +236,7 @@ export const useChatHandler = () => {
           chatSettings!,
           b64Images,
           isRegeneration,
-          setChatMessages,
-          selectedAssistant
+          setChatMessages
         )
 
       const payload: ChatPayload = {
@@ -293,7 +245,6 @@ export const useChatHandler = () => {
         chatMessages: isRegeneration
           ? [...chatMessages]
           : [...chatMessages, tempUserChatMessage],
-        assistant: selectedChat?.assistant_id ? selectedAssistant : null,
         messageFileItems: retrievedFileItems,
         chatFileItems: chatFileItems
       }
@@ -360,7 +311,6 @@ export const useChatHandler = () => {
               profile!,
               selectedWorkspace!,
               messageContent,
-              selectedAssistant,
               newMessageFiles,
               setSelectedChat,
               setChats,
@@ -391,13 +341,19 @@ export const useChatHandler = () => {
       if (!currentChat) {
         currentChat = await handleCreateChat(
           chatSettings!,
+
           profile!,
+
           selectedWorkspace!,
+
           messageContent,
-          selectedAssistant,
+
           newMessageFiles,
+
           setSelectedChat,
+
           setChats,
+
           setChatFiles
         )
       } else {
@@ -438,7 +394,6 @@ export const useChatHandler = () => {
         setChatMessages,
         setChatFileItems,
         setChatImages,
-        selectedAssistant,
         contentBlocks,
         originalMessagesLength
       )

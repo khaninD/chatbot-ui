@@ -3,7 +3,6 @@ import { Tables } from "@/supabase/types"
 
 const resetItemsStore = () => {
   useItemsStore.setState({
-    assistants: [],
     collections: [],
     chats: [],
     files: [],

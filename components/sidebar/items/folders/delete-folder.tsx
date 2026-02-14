@@ -32,7 +32,6 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
-  const setAssistants = useItemsStore(state => state.setAssistants)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
@@ -61,9 +60,6 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
         break
       case "collections":
         setCollections(prev => updater(prev) as Tables<"collections">[])
-        break
-      case "assistants":
-        setAssistants(prev => updater(prev) as Tables<"assistants">[])
         break
       case "tools":
         setTools(prev => updater(prev) as Tables<"tools">[])

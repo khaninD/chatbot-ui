@@ -6,11 +6,7 @@ import {
   SheetHeader,
   SheetTitle
 } from "@/components/ui/sheet"
-import { useAssistantStore, useItemsStore, useWorkspaceStore } from "@/stores"
-import { createAssistantCollections } from "@/db/assistant-collections"
-import { createAssistantFiles } from "@/db/assistant-files"
-import { createAssistantTools } from "@/db/assistant-tools"
-import { createAssistant, updateAssistant } from "@/db/assistants"
+import { useItemsStore, useWorkspaceStore } from "@/stores"
 import { createChat } from "@/db/chats"
 import { createCollectionFiles } from "@/db/collection-files"
 import { createCollection } from "@/db/collections"
@@ -19,12 +15,7 @@ import { createMcpServer } from "@/db/mcp-servers"
 import { createModel } from "@/db/models"
 import { createPreset } from "@/db/presets"
 import { createPrompt } from "@/db/prompts"
-import {
-  getAssistantImageFromStorage,
-  uploadAssistantImage
-} from "@/db/storage/assistant-images"
 import { createTool } from "@/db/tools"
-import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { Tables, TablesInsert } from "@/supabase/types"
 import { ContentType } from "@/types"
 import { FC, useRef, useState } from "react"
@@ -54,7 +45,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   const mcpServers = useItemsStore(state => state.mcpServers)
   const files = useItemsStore(state => state.files)
   const collections = useItemsStore(state => state.collections)
-  const assistants = useItemsStore(state => state.assistants)
   const tools = useItemsStore(state => state.tools)
   const models = useItemsStore(state => state.models)
   const setChats = useItemsStore(state => state.setChats)
@@ -63,8 +53,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   const setMcpServers = useItemsStore(state => state.setMcpServers)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
-  const setAssistants = useItemsStore(state => state.setAssistants)
-  const addAssistantImage = useAssistantStore(state => state.addAssistantImage)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
 
@@ -120,66 +108,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
       return createdCollection
     },
-    assistants: async (state, workspaceId) => {
-      const createState = state as {
-        image: File
-        files: Tables<"files">[]
-        collections: Tables<"collections">[]
-        tools: Tables<"tools">[]
-      } & Tables<"assistants">
-      const { image, files, collections, tools, ...rest } = createState
-
-      const createdAssistant = await createAssistant(rest, workspaceId)
-
-      let updatedAssistant = createdAssistant
-
-      if (image) {
-        const filePath = await uploadAssistantImage(createdAssistant, image)
-
-        updatedAssistant = await updateAssistant(createdAssistant.id, {
-          image_path: filePath
-        })
-
-        const url = (await getAssistantImageFromStorage(filePath)) || ""
-
-        if (url) {
-          const response = await fetch(url)
-          const blob = await response.blob()
-          const base64 = await convertBlobToBase64(blob)
-
-          addAssistantImage({
-            assistantId: updatedAssistant.id,
-            path: filePath,
-            base64,
-            url
-          })
-        }
-      }
-
-      const assistantFiles = files.map(file => ({
-        user_id: rest.user_id,
-        assistant_id: createdAssistant.id,
-        file_id: file.id
-      }))
-
-      const assistantCollections = collections.map(collection => ({
-        user_id: rest.user_id,
-        assistant_id: createdAssistant.id,
-        collection_id: collection.id
-      }))
-
-      const assistantTools = tools.map(tool => ({
-        user_id: rest.user_id,
-        assistant_id: createdAssistant.id,
-        tool_id: tool.id
-      }))
-
-      await createAssistantFiles(assistantFiles)
-      await createAssistantCollections(assistantCollections)
-      await createAssistantTools(assistantTools)
-
-      return updatedAssistant
-    },
     tools: (state, workspaceId) =>
       createTool(state as TablesInsert<"tools">, workspaceId),
     models: (state, workspaceId) =>
@@ -217,9 +145,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
           break
         case "collections":
           setCollections([...collections, newItem as Tables<"collections">])
-          break
-        case "assistants":
-          setAssistants([...assistants, newItem as Tables<"assistants">])
           break
         case "tools":
           setTools([...tools, newItem as Tables<"tools">])

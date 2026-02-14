@@ -1,5 +1,4 @@
 import { useItemsStore, useProfileStore, useWorkspaceStore } from "@/stores"
-import { createAssistants } from "@/db/assistants"
 import { createChats } from "@/db/chats"
 import { createCollections } from "@/db/collections"
 import { createFiles } from "@/db/files"
@@ -32,14 +31,12 @@ export const Import: FC<ImportProps> = ({}) => {
   const prompts = useItemsStore(state => state.prompts)
   const files = useItemsStore(state => state.files)
   const collections = useItemsStore(state => state.collections)
-  const assistants = useItemsStore(state => state.assistants)
   const tools = useItemsStore(state => state.tools)
   const setChats = useItemsStore(state => state.setChats)
   const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
-  const setAssistants = useItemsStore(state => state.setAssistants)
   const setTools = useItemsStore(state => state.setTools)
 
   const inputRef = useRef<HTMLInputElement>(null)
@@ -51,7 +48,6 @@ export const Import: FC<ImportProps> = ({}) => {
     | "prompts"
     | "files"
     | "collections"
-    | "assistants"
     | "tools"
   type ImportItem = Record<string, unknown> & {
     contentType?: ImportContentType
@@ -66,7 +62,6 @@ export const Import: FC<ImportProps> = ({}) => {
     prompts: 0,
     files: 0,
     collections: 0,
-    assistants: 0,
     tools: 0
   })
 
@@ -106,7 +101,6 @@ export const Import: FC<ImportProps> = ({}) => {
           "prompts",
           "files",
           "collections",
-          "assistants",
           "tools"
         ]
         const newCounts: ImportCounts = { ...prevCounts }
@@ -145,7 +139,6 @@ export const Import: FC<ImportProps> = ({}) => {
       prompts: 0,
       files: 0,
       collections: 0,
-      assistants: 0,
       tools: 0
     })
     setIsOpen(false)
@@ -164,7 +157,6 @@ export const Import: FC<ImportProps> = ({}) => {
       prompts: [],
       files: [],
       collections: [],
-      assistants: [],
       tools: []
     }
 
@@ -194,10 +186,6 @@ export const Import: FC<ImportProps> = ({}) => {
         saveData.collections as TablesInsert<"collections">[],
         selectedWorkspace.id
       ),
-      assistants: await createAssistants(
-        saveData.assistants as TablesInsert<"assistants">[],
-        selectedWorkspace.id
-      ),
       tools: await createTools(
         saveData.tools as TablesInsert<"tools">[],
         selectedWorkspace.id
@@ -209,7 +197,6 @@ export const Import: FC<ImportProps> = ({}) => {
     setPrompts([...prompts, ...createdItems.prompts])
     setFiles([...files, ...createdItems.files])
     setCollections([...collections, ...createdItems.collections])
-    setAssistants([...assistants, ...createdItems.assistants])
     setTools([...tools, ...createdItems.tools])
 
     toast.success("Data imported successfully!")
@@ -221,7 +208,6 @@ export const Import: FC<ImportProps> = ({}) => {
       prompts: 0,
       files: 0,
       collections: 0,
-      assistants: 0,
       tools: 0
     })
     setIsOpen(false)

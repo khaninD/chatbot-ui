@@ -1,14 +1,12 @@
 import Loading from "@/app/[locale]/loading"
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
 import {
-  useAssistantStore,
   useAttachmentsStore,
   useChatStore,
   useItemsStore,
   useRetrievalStore,
   useToolStore
 } from "@/stores"
-import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
 import { getChatFilesByChatId } from "@/db/chat-files"
 import { getChatById } from "@/db/chats"
 import { getMessageFileItemsByMessageId } from "@/db/message-file-items"
@@ -46,10 +44,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     state => state.setShowFilesDisplay
   )
 
-  const assistants = useItemsStore(state => state.assistants)
-  const setSelectedAssistant = useAssistantStore(
-    state => state.setSelectedAssistant
-  )
   const setUseRetrieval = useRetrievalStore(state => state.setUseRetrieval)
   const setSelectedTools = useToolStore(state => state.setSelectedTools)
 
@@ -168,21 +162,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   const fetchChat = async () => {
     const chat = await getChatById(params.chatid as string)
     if (!chat) return
-
-    if (chat.assistant_id) {
-      const assistant = assistants.find(
-        assistant => assistant.id === chat.assistant_id
-      )
-
-      if (assistant) {
-        setSelectedAssistant(assistant)
-
-        const assistantTools = (
-          await getAssistantToolsByAssistantId(assistant.id)
-        ).tools
-        setSelectedTools(assistantTools)
-      }
-    }
 
     setSelectedChat(chat)
     setChatSettings({

@@ -1,5 +1,4 @@
 import {
-  useAssistantStore,
   useChatInputStore,
   useChatRuntimeStore,
   useChatStore,
@@ -15,7 +14,6 @@ import {
   IconPlayerStopFilled,
   IconSend
 } from "@tabler/icons-react"
-import Image from "next/image"
 import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -39,11 +37,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
   const [isTyping, setIsTyping] = useState<boolean>(false)
 
-  const isAssistantPickerOpen = useChatInputStore(
-    state => state.isAssistantPickerOpen
-  )
-  const focusAssistant = useChatInputStore(state => state.focusAssistant)
-  const setFocusAssistant = useChatInputStore(state => state.setFocusAssistant)
   const focusPrompt = useChatInputStore(state => state.focusPrompt)
   const setFocusPrompt = useChatInputStore(state => state.setFocusPrompt)
   const focusFile = useChatInputStore(state => state.focusFile)
@@ -60,13 +53,12 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
   const isFilePickerOpen = useChatInputStore(state => state.isFilePickerOpen)
 
   const userInput = useChatStore(state => state.userInput)
+  const setUserInput = useChatStore(state => state.setUserInput)
   const chatMessages = useChatStore(state => state.chatMessages)
   const chatSettings = useChatStore(state => state.chatSettings)
 
   const isGenerating = useChatRuntimeStore(state => state.isGenerating)
   const selectedPreset = usePresetStore(state => state.selectedPreset)
-  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
-  const assistantImages = useAssistantStore(state => state.assistantImages)
   const selectedTools = useToolStore(state => state.selectedTools)
   const setSelectedTools = useToolStore(state => state.setSelectedTools)
 
@@ -77,7 +69,31 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     handleFocusChatInput
   } = useChatHandler()
 
-  const { handleInputChange } = usePromptAndCommand()
+  const handleInputChange = (value: string) => {
+    const slashTextRegex = /\/([^ ]*)$/
+    const hashtagTextRegex = /#([^ ]*)$/
+    const toolTextRegex = /!([^ ]*)$/
+    const slashMatch = value.match(slashTextRegex)
+    const hashtagMatch = value.match(hashtagTextRegex)
+    const toolMatch = value.match(toolTextRegex)
+
+    if (slashMatch) {
+      setIsPromptPickerOpen(true)
+      // setSlashCommand(slashMatch[1])
+    } else if (hashtagMatch) {
+      // setIsFilePickerOpen(true)
+      // setHashtagCommand(hashtagMatch[1])
+    } else if (toolMatch) {
+      // setIsToolPickerOpen(true)
+      // setToolCommand(toolMatch[1])
+    } else {
+      setIsPromptPickerOpen(false)
+      // setIsFilePickerOpen(false)
+      // setIsToolPickerOpen(false)
+    }
+
+    setUserInput(value)
+  }
 
   const { filesToAccept, handleSelectDeviceFile } = useSelectFileHandler()
 
@@ -92,7 +108,7 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     setTimeout(() => {
       handleFocusChatInput()
     }, 200) // FIX: hacky
-  }, [selectedPreset, selectedAssistant])
+  }, [selectedPreset])
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!isTyping && event.key === "Enter" && !event.shiftKey) {
@@ -102,12 +118,7 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     }
 
     // Consolidate conditions to avoid TypeScript error
-    if (
-      isPromptPickerOpen ||
-      isFilePickerOpen ||
-      isToolPickerOpen ||
-      isAssistantPickerOpen
-    ) {
+    if (isPromptPickerOpen || isFilePickerOpen || isToolPickerOpen) {
       if (
         event.key === "Tab" ||
         event.key === "ArrowUp" ||
@@ -118,7 +129,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
         if (isPromptPickerOpen) setFocusPrompt(!focusPrompt)
         if (isFilePickerOpen) setFocusFile(!focusFile)
         if (isToolPickerOpen) setFocusTool(!focusTool)
-        if (isAssistantPickerOpen) setFocusAssistant(!focusAssistant)
       }
     }
 
@@ -141,16 +151,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     if (event.key === "ArrowDown" && event.shiftKey && event.ctrlKey) {
       event.preventDefault()
       setNewMessageContentToNextUserMessage()
-    }
-
-    if (
-      isAssistantPickerOpen &&
-      (event.key === "Tab" ||
-        event.key === "ArrowUp" ||
-        event.key === "ArrowDown")
-    ) {
-      event.preventDefault()
-      setFocusAssistant(!focusAssistant)
     }
   }
 
@@ -200,28 +200,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
               </div>
             </div>
           ))}
-
-        {selectedAssistant && (
-          <div className="mx-auto flex w-fit items-center space-x-2 rounded-lg border border-primary p-1.5">
-            {selectedAssistant.image_path && (
-              <Image
-                className="rounded"
-                src={
-                  assistantImages.find(
-                    img => img.path === selectedAssistant.image_path
-                  )?.base64
-                }
-                width={28}
-                height={28}
-                alt={selectedAssistant.name}
-              />
-            )}
-
-            <div className="text-sm font-bold">
-              {t("assistant.talkingTo", { name: selectedAssistant.name })}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2 border-input">

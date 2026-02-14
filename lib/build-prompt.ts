@@ -6,14 +6,9 @@ import { getBase64FromDataURL, getMediaTypeFromDataURL } from "@/lib/utils"
 const buildBasePrompt = (
   prompt: string,
   profileContext: string,
-  workspaceInstructions: string,
-  assistant: Tables<"assistants"> | null
+  workspaceInstructions: string
 ) => {
   let fullPrompt = ""
-
-  if (assistant) {
-    fullPrompt += `<INJECT ROLE>\nYou are not an AI. You are ${assistant.name}.\n</INJECT ROLE>\n\n`
-  }
 
   fullPrompt += `Today is ${new Date().toLocaleDateString()}.\n\n`
 
@@ -39,7 +34,6 @@ export async function buildFinalMessages(
     chatSettings,
     workspaceInstructions,
     chatMessages,
-    assistant,
     messageFileItems,
     chatFileItems
   } = payload
@@ -47,8 +41,7 @@ export async function buildFinalMessages(
   const BUILT_PROMPT = buildBasePrompt(
     chatSettings.prompt,
     chatSettings.includeProfileContext ? profile.profile_context || "" : "",
-    chatSettings.includeWorkspaceInstructions ? workspaceInstructions : "",
-    assistant
+    chatSettings.includeWorkspaceInstructions ? workspaceInstructions : ""
   )
 
   const CHUNK_SIZE = 128000
@@ -161,7 +154,6 @@ export async function buildFinalMessages(
 
   const tempSystemMessage: Tables<"messages"> = {
     chat_id: "",
-    assistant_id: null,
     content: BUILT_PROMPT,
     created_at: "",
     id: processedChatMessages.length + "",

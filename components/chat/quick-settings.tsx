@@ -1,5 +1,4 @@
 import {
-  useAssistantStore,
   useAttachmentsStore,
   useChatStore,
   useItemsStore,
@@ -7,16 +6,11 @@ import {
   useToolStore,
   useWorkspaceStore
 } from "@/stores"
-import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
-import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
-import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
-import { getCollectionFilesByCollectionId } from "@/db/collection-files"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { Tables } from "@/supabase/types"
 import { LLMID } from "@/types"
-import { IconChevronDown, IconRobotFace } from "@tabler/icons-react"
-import Image from "next/image"
+import { IconChevronDown } from "@tabler/icons-react"
 import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ModelIcon } from "../models/model-icon"
@@ -28,7 +22,6 @@ import {
 } from "../ui/dropdown-menu"
 import { Input } from "../ui/input"
 import { QuickSettingOption } from "./quick-setting-option"
-import { set } from "date-fns"
 
 interface QuickSettingsProps {}
 
@@ -38,16 +31,10 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
   useHotkey("p", () => setIsOpen(prevState => !prevState))
 
   const presets = useItemsStore(state => state.presets)
-  const assistants = useItemsStore(state => state.assistants)
-  const selectedAssistant = useAssistantStore(state => state.selectedAssistant)
   const selectedPreset = usePresetStore(state => state.selectedPreset)
   const chatSettings = useChatStore(state => state.chatSettings)
   const setSelectedPreset = usePresetStore(state => state.setSelectedPreset)
-  const setSelectedAssistant = useAssistantStore(
-    state => state.setSelectedAssistant
-  )
   const setChatSettings = useChatStore(state => state.setChatSettings)
-  const assistantImages = useAssistantStore(state => state.assistantImages)
   const setChatFiles = useAttachmentsStore(state => state.setChatFiles)
   const setSelectedTools = useToolStore(state => state.setSelectedTools)
   const setShowFilesDisplay = useAttachmentsStore(
@@ -70,48 +57,15 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
   }, [isOpen])
 
   const handleSelectQuickSetting = async (
-    item: Tables<"presets"> | Tables<"assistants"> | null,
-    contentType: "presets" | "assistants" | "remove"
+    item: Tables<"presets"> | null,
+    contentType: "presets" | "remove"
   ) => {
-    console.log({ item, contentType })
-    if (contentType === "assistants" && item) {
-      setSelectedAssistant(item as Tables<"assistants">)
-      setLoading(true)
-      let allFiles = []
-      const assistantFiles = (await getAssistantFilesByAssistantId(item.id))
-        .files
-      allFiles = [...assistantFiles]
-      const assistantCollections = (
-        await getAssistantCollectionsByAssistantId(item.id)
-      ).collections
-      for (const collection of assistantCollections) {
-        const collectionFiles = (
-          await getCollectionFilesByCollectionId(collection.id)
-        ).files
-        allFiles = [...allFiles, ...collectionFiles]
-      }
-      const assistantTools = (await getAssistantToolsByAssistantId(item.id))
-        .tools
-      setSelectedTools(assistantTools)
-      setChatFiles(
-        allFiles.map(file => ({
-          id: file.id,
-          name: file.name,
-          type: file.type,
-          file: null
-        }))
-      )
-      if (allFiles.length > 0) setShowFilesDisplay(true)
-      setLoading(false)
-      setSelectedPreset(null)
-    } else if (contentType === "presets" && item) {
+    if (contentType === "presets" && item) {
       setSelectedPreset(item as Tables<"presets">)
-      setSelectedAssistant(null)
       setChatFiles([])
       setSelectedTools([])
     } else {
       setSelectedPreset(null)
-      setSelectedAssistant(null)
       setChatFiles([])
       setSelectedTools([])
       if (selectedWorkspace) {
@@ -150,15 +104,6 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
         selectedPreset.model !== chatSettings.model ||
         selectedPreset.prompt !== chatSettings.prompt
       )
-    } else if (selectedAssistant) {
-      return (
-        selectedAssistant.include_profile_context !==
-          chatSettings.includeProfileContext ||
-        selectedAssistant.include_workspace_instructions !==
-          chatSettings.includeWorkspaceInstructions ||
-        selectedAssistant.model !== chatSettings.model ||
-        selectedAssistant.prompt !== chatSettings.prompt
-      )
     }
 
     return false
@@ -167,18 +112,8 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
   const isModified = checkIfModified()
 
   const items = [
-    ...presets.map(preset => ({ ...preset, contentType: "presets" })),
-    ...assistants.map(assistant => ({
-      ...assistant,
-      contentType: "assistants"
-    }))
+    ...presets.map(preset => ({ ...preset, contentType: "presets" }))
   ]
-
-  const selectedAssistantImage = selectedPreset
-    ? ""
-    : assistantImages.find(
-        image => image.path === selectedAssistant?.image_path
-      )?.base64 || ""
 
   const modelDetails = LLM_LIST.find(
     model => model.modelId === selectedPreset?.model
@@ -202,22 +137,6 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
             />
           )}
 
-          {selectedAssistant &&
-            (selectedAssistantImage ? (
-              <Image
-                className="rounded"
-                src={selectedAssistantImage}
-                alt="Assistant"
-                width={28}
-                height={28}
-              />
-            ) : (
-              <IconRobotFace
-                className="rounded border-DEFAULT border-primary bg-primary p-1 text-secondary"
-                size={28}
-              />
-            ))}
-
           {loading ? (
             <div className="animate-pulse">
               {t("assistant.loadingAssistant")}
@@ -225,13 +144,9 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
           ) : (
             <>
               <div className="overflow-hidden text-ellipsis">
-                {isModified &&
-                  (selectedPreset || selectedAssistant) &&
-                  t("settings.modified")}
+                {isModified && selectedPreset && t("settings.modified")}
 
-                {selectedPreset?.name ||
-                  selectedAssistant?.name ||
-                  t("settings.quickSettings")}
+                {selectedPreset?.name || t("settings.quickSettings")}
               </div>
 
               <IconChevronDown className="ml-1" />
@@ -244,7 +159,7 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
         className="min-w-[300px] max-w-[500px] space-y-4"
         align="start"
       >
-        {presets.length === 0 && assistants.length === 0 ? (
+        {presets.length === 0 ? (
           <div className="p-8 text-center">{t("settings.noItemsFound")}</div>
         ) : (
           <>
@@ -257,20 +172,15 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
               onKeyDown={e => e.stopPropagation()}
             />
 
-            {!!(selectedPreset || selectedAssistant) && (
+            {!!selectedPreset && (
               <QuickSettingOption
-                contentType={selectedPreset ? "presets" : "assistants"}
+                contentType={"presets"}
                 isSelected={true}
-                item={
-                  selectedPreset ||
-                  (selectedAssistant as
-                    | Tables<"presets">
-                    | Tables<"assistants">)
-                }
+                item={selectedPreset}
                 onSelect={() => {
                   handleSelectQuickSetting(null, "remove")
                 }}
-                image={selectedPreset ? "" : selectedAssistantImage}
+                image={""}
               />
             )}
 
@@ -278,30 +188,21 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
               .filter(
                 item =>
                   item.name.toLowerCase().includes(search.toLowerCase()) &&
-                  item.id !== selectedPreset?.id &&
-                  item.id !== selectedAssistant?.id
+                  item.id !== selectedPreset?.id
               )
               .map(({ contentType, ...item }) => (
                 <QuickSettingOption
                   key={item.id}
-                  contentType={contentType as "presets" | "assistants"}
+                  contentType={contentType as "presets"}
                   isSelected={false}
-                  item={item}
+                  item={item as Tables<"presets">}
                   onSelect={() =>
                     handleSelectQuickSetting(
-                      item,
-                      contentType as "presets" | "assistants"
+                      item as Tables<"presets">,
+                      contentType as "presets"
                     )
                   }
-                  image={
-                    contentType === "assistants"
-                      ? assistantImages.find(
-                          image =>
-                            image.path ===
-                            (item as Tables<"assistants">).image_path
-                        )?.base64 || ""
-                      : ""
-                  }
+                  image={""}
                 />
               ))}
           </>

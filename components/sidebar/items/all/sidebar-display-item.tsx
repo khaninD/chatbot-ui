@@ -1,4 +1,4 @@
-import { useAssistantStore, useItemsStore, useWorkspaceStore } from "@/stores"
+import { useItemsStore, useWorkspaceStore } from "@/stores"
 import { createChat } from "@/db/chats"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
@@ -27,9 +27,6 @@ export const SidebarItem: FC<SidebarItemProps> = ({
   const selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const chats = useItemsStore(state => state.chats)
   const setChats = useItemsStore(state => state.setChats)
-  const setSelectedAssistant = useAssistantStore(
-    state => state.setSelectedAssistant
-  )
 
   const router = useRouter()
 
@@ -44,27 +41,6 @@ export const SidebarItem: FC<SidebarItemProps> = ({
       prompts: async () => {},
       files: async () => {},
       collections: async () => {},
-      assistants: (async (assistant: Tables<"assistants">) => {
-        if (!selectedWorkspace) return
-
-        const createdChat = await createChat({
-          user_id: assistant.user_id,
-          workspace_id: selectedWorkspace.id,
-          assistant_id: assistant.id,
-          include_profile_context: assistant.include_profile_context,
-          include_workspace_instructions:
-            assistant.include_workspace_instructions,
-          model: assistant.model,
-          name: `Chat with ${assistant.name}`,
-          prompt: assistant.prompt,
-          embeddings_provider: assistant.embeddings_provider
-        })
-
-        setChats([createdChat, ...chats])
-        setSelectedAssistant(assistant)
-
-        return router.push(`/${selectedWorkspace.id}/chat/${createdChat.id}`)
-      }) as (item: DataItemType) => Promise<void>,
       tools: async () => {},
       models: async () => {},
       mcp_servers: async () => {}

@@ -1,5 +1,4 @@
 import { useItemsStore } from "@/stores"
-import { updateAssistant } from "@/db/assistants"
 import { updateChat } from "@/db/chats"
 import { updateCollection } from "@/db/collections"
 import { updateFile } from "@/db/files"
@@ -14,7 +13,6 @@ import { ContentType, DataItemType, DataListType } from "@/types"
 import { FC, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Separator } from "../ui/separator"
-import { AssistantItem } from "./items/assistants/assistant-item"
 import { ChatItem } from "./items/chat/chat-item"
 import { CollectionItem } from "./items/collections/collection-item"
 import { FileItem } from "./items/files/file-item"
@@ -42,7 +40,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
-  const setAssistants = useItemsStore(state => state.setAssistants)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
@@ -74,14 +71,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
           <CollectionItem
             key={item.id}
             collection={item as Tables<"collections">}
-          />
-        )
-
-      case "assistants":
-        return (
-          <AssistantItem
-            key={item.id}
-            assistant={item as Tables<"assistants">}
           />
         )
 
@@ -147,7 +136,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     prompts: updatePrompt,
     files: updateFile,
     collections: updateCollection,
-    assistants: updateAssistant,
     tools: updateTool,
     models: updateModel,
     mcp_servers: updateMcpServer
@@ -184,9 +172,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
         break
       case "collections":
         setCollections(updatedItems as Tables<"collections">[])
-        break
-      case "assistants":
-        setAssistants(updatedItems as Tables<"assistants">[])
         break
       case "tools":
         setTools(updatedItems as Tables<"tools">[])

@@ -9,7 +9,6 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog"
 import { useItemsStore } from "@/stores"
-import { deleteAssistant } from "@/db/assistants"
 import { deleteChat } from "@/db/chats"
 import { deleteCollection } from "@/db/collections"
 import { deleteFile } from "@/db/files"
@@ -34,13 +33,11 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   contentType
 }) => {
   const { t } = useTranslation()
-  const chats = useItemsStore(state => state.chats)
   const setChats = useItemsStore(state => state.setChats)
   const setPresets = useItemsStore(state => state.setPresets)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setFiles = useItemsStore(state => state.setFiles)
   const setCollections = useItemsStore(state => state.setCollections)
-  const setAssistants = useItemsStore(state => state.setAssistants)
   const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
@@ -65,10 +62,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     },
     collections: async (collection: Tables<"collections">) => {
       await deleteCollection(collection.id)
-    },
-    assistants: async (assistant: Tables<"assistants">) => {
-      await deleteAssistant(assistant.id)
-      setChats(chats.filter(chat => chat.assistant_id !== assistant.id))
     },
     tools: async (tool: Tables<"tools">) => {
       await deleteTool(tool.id)
@@ -104,11 +97,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
       case "collections":
         setCollections(
           prev => updater(prev as DataItemType[]) as Tables<"collections">[]
-        )
-        break
-      case "assistants":
-        setAssistants(
-          prev => updater(prev as DataItemType[]) as Tables<"assistants">[]
         )
         break
       case "tools":

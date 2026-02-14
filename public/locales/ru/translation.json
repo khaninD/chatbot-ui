@@ -70,14 +70,6 @@
     "promptDescription": "Промпт...",
     "defaultPrompt": "Вы - полезный AI ассистент."
   },
-  "assistant": {
-    "noMatchingAssistants": "Совпадающие ассистенты не найдены.",
-    "loadingAssistant": "Загрузка ассистента...",
-    "assistantName": "Имя ассистента...",
-    "assistantDescription": "Описание ассистента...",
-    "searchTools": "Поиск инструментов...",
-    "talkingTo": "Общение с {{name}}"
-  },
   "file": {
     "noMatchingFiles": "Совпадающие файлы не найдены.",
     "fileName": "Имя файла...",

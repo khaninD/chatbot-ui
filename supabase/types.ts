@@ -34,221 +34,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      assistant_collections: {
-        Row: {
-          assistant_id: string
-          collection_id: string
-          created_at: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          assistant_id: string
-          collection_id: string
-          created_at?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          assistant_id?: string
-          collection_id?: string
-          created_at?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assistant_collections_assistant_id_fkey"
-            columns: ["assistant_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "assistant_collections_collection_id_fkey"
-            columns: ["collection_id"]
-            isOneToOne: false
-            referencedRelation: "collections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assistant_files: {
-        Row: {
-          assistant_id: string
-          created_at: string
-          file_id: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          assistant_id: string
-          created_at?: string
-          file_id: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          assistant_id?: string
-          created_at?: string
-          file_id?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assistant_files_assistant_id_fkey"
-            columns: ["assistant_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "assistant_files_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "files"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assistant_tools: {
-        Row: {
-          assistant_id: string
-          created_at: string
-          tool_id: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          assistant_id: string
-          created_at?: string
-          tool_id: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          assistant_id?: string
-          created_at?: string
-          tool_id?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assistant_tools_assistant_id_fkey"
-            columns: ["assistant_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "assistant_tools_tool_id_fkey"
-            columns: ["tool_id"]
-            isOneToOne: false
-            referencedRelation: "tools"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assistant_workspaces: {
-        Row: {
-          assistant_id: string
-          created_at: string
-          updated_at: string | null
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          assistant_id: string
-          created_at?: string
-          updated_at?: string | null
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          assistant_id?: string
-          created_at?: string
-          updated_at?: string | null
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assistant_workspaces_assistant_id_fkey"
-            columns: ["assistant_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "assistant_workspaces_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      assistants: {
-        Row: {
-          created_at: string
-          description: string
-          embeddings_provider: string
-          folder_id: string | null
-          id: string
-          image_path: string
-          include_profile_context: boolean
-          include_workspace_instructions: boolean
-          model: string
-          name: string
-          prompt: string
-          sharing: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          embeddings_provider: string
-          folder_id?: string | null
-          id?: string
-          image_path: string
-          include_profile_context: boolean
-          include_workspace_instructions: boolean
-          model: string
-          name: string
-          prompt: string
-          sharing?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          embeddings_provider?: string
-          folder_id?: string | null
-          id?: string
-          image_path?: string
-          include_profile_context?: boolean
-          include_workspace_instructions?: boolean
-          model?: string
-          name?: string
-          prompt?: string
-          sharing?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "assistants_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chat_files: {
         Row: {
           chat_id: string
@@ -290,7 +75,6 @@ export type Database = {
       }
       chats: {
         Row: {
-          assistant_id: string | null
           created_at: string
           embeddings_provider: string
           folder_id: string | null
@@ -311,7 +95,6 @@ export type Database = {
           image_model: string | null
         }
         Insert: {
-          assistant_id?: string | null
           created_at?: string
           embeddings_provider: string
           folder_id?: string | null
@@ -332,7 +115,6 @@ export type Database = {
           image_model?: string | null
         }
         Update: {
-          assistant_id?: string | null
           created_at?: string
           embeddings_provider?: string
           folder_id?: string | null
@@ -353,13 +135,6 @@ export type Database = {
           image_model?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "chats_assistant_id_fkey"
-            columns: ["assistant_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "chats_folder_id_fkey"
             columns: ["folder_id"]
@@ -716,7 +491,6 @@ export type Database = {
       }
       messages: {
         Row: {
-          assistant_id: string | null
           chat_id: string
           content: string
           created_at: string
@@ -729,7 +503,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          assistant_id?: string | null
           chat_id: string
           content: string
           created_at?: string
@@ -742,7 +515,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          assistant_id?: string | null
           chat_id?: string
           content?: string
           created_at?: string
@@ -755,13 +527,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "messages_assistant_id_fkey"
-            columns: ["assistant_id"]
-            isOneToOne: false
-            referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "messages_chat_id_fkey"
             columns: ["chat_id"]
@@ -1420,10 +1185,6 @@ export type Database = {
           similarity: number
           tokens: number
         }[]
-      }
-      non_private_assistant_exists: {
-        Args: { p_name: string }
-        Returns: boolean
       }
       non_private_file_exists: { Args: { p_name: string }; Returns: boolean }
       non_private_workspace_exists: {

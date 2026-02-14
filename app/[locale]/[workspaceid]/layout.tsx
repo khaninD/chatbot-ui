@@ -2,14 +2,12 @@
 
 import { Dashboard } from "@/components/ui/dashboard"
 import {
-  useAssistantStore,
   useAttachmentsStore,
   useChatRuntimeStore,
   useChatStore,
   useItemsStore,
   useWorkspaceStore
 } from "@/stores"
-import { getAssistantWorkspacesByWorkspaceId } from "@/db/assistants"
 import { getChatsByWorkspaceId } from "@/db/chats"
 import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
 import { getFileWorkspacesByWorkspaceId } from "@/db/files"
@@ -18,7 +16,6 @@ import { getMcpServerWorkspacesByWorkspaceId } from "@/db/mcp-servers"
 import { getModelWorkspacesByWorkspaceId } from "@/db/models"
 import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
-import { getAssistantImageFromStorage } from "@/db/storage/assistant-images"
 import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
 import { getWorkspaceById } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
@@ -40,10 +37,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const workspaceId = params.workspaceid as string
 
   const setChatSettings = useChatStore(state => state.setChatSettings)
-  const setAssistants = useItemsStore(state => state.setAssistants)
-  const setAssistantImages = useAssistantStore(
-    state => state.setAssistantImages
-  )
   const setChats = useItemsStore(state => state.setChats)
   const setCollections = useItemsStore(state => state.setCollections)
   const setFolders = useItemsStore(state => state.setFolders)
@@ -112,43 +105,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     const workspace = await getWorkspaceById(workspaceId)
     setSelectedWorkspace(workspace)
-
-    const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
-    setAssistants(assistantData.assistants)
-
-    for (const assistant of assistantData.assistants) {
-      let url = ""
-
-      if (assistant.image_path) {
-        url = (await getAssistantImageFromStorage(assistant.image_path)) || ""
-      }
-
-      if (url) {
-        const response = await fetch(url)
-        const blob = await response.blob()
-        const base64 = await convertBlobToBase64(blob)
-
-        setAssistantImages(prev => [
-          ...prev,
-          {
-            assistantId: assistant.id,
-            path: assistant.image_path,
-            base64,
-            url
-          }
-        ])
-      } else {
-        setAssistantImages(prev => [
-          ...prev,
-          {
-            assistantId: assistant.id,
-            path: assistant.image_path,
-            base64: "",
-            url
-          }
-        ])
-      }
-    }
 
     const chats = await getChatsByWorkspaceId(workspaceId)
     setChats(chats)

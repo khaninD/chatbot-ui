@@ -70,14 +70,6 @@
     "promptDescription": "Prompt...",
     "defaultPrompt": "You are a helpful AI assistant."
   },
-  "assistant": {
-    "noMatchingAssistants": "No matching assistants.",
-    "loadingAssistant": "Loading assistant...",
-    "assistantName": "Assistant name...",
-    "assistantDescription": "Assistant description...",
-    "searchTools": "Search tools...",
-    "talkingTo": "Talking to {{name}}"
-  },
   "file": {
     "noMatchingFiles": "No matching files.",
     "fileName": "File name...",
