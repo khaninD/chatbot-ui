@@ -44,17 +44,17 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           onContentTypeChange={onContentTypeChange}
         />
 
-        <SidebarSwitchItem
+        {/* <SidebarSwitchItem
           icon={<IconFile size={SIDEBAR_ICON_SIZE} />}
           contentType="files"
           onContentTypeChange={onContentTypeChange}
-        />
+        /> */}
 
-        <SidebarSwitchItem
+        {/* <SidebarSwitchItem
           icon={<IconBolt size={SIDEBAR_ICON_SIZE} />}
           contentType="tools"
           onContentTypeChange={onContentTypeChange}
-        />
+        /> */}
 
         <SidebarSwitchItem
           icon={<IconPlugConnected size={SIDEBAR_ICON_SIZE} />}

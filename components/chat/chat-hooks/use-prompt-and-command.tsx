@@ -46,13 +46,13 @@ export const usePromptAndCommand = () => {
     if (slashMatch) {
       setIsPromptPickerOpen(true)
       setSlashCommand(slashMatch[1])
-    } else if (hashtagMatch) {
+    } /* else if (hashtagMatch) {
       setIsFilePickerOpen(true)
       setHashtagCommand(hashtagMatch[1])
-    } else if (toolMatch) {
+    } */ /* else if (toolMatch) {
       setIsToolPickerOpen(true)
       setToolCommand(toolMatch[1])
-    } else {
+    } */ else {
       setIsPromptPickerOpen(false)
       setIsFilePickerOpen(false)
       setIsToolPickerOpen(false)

@@ -27,8 +27,8 @@ interface ChatFilesDisplayProps {}
 
 export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
   const { t } = useTranslation()
-  useHotkey("f", () => setShowFilesDisplay(prev => !prev))
-  useHotkey("e", () => setUseRetrieval(prev => !prev))
+  // useHotkey("f", () => setShowFilesDisplay(prev => !prev))
+  // useHotkey("e", () => setUseRetrieval(prev => !prev))
 
   const files = useItemsStore(state => state.files)
   const newMessageImages = useAttachmentsStore(state => state.newMessageImages)
