@@ -13,11 +13,12 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
-    checkApiKey(profile.openai_api_key, "OpenAI")
+    const apiKey = process.env.LLM_API_KEY
+    checkApiKey(apiKey || null, "LLM_API_KEY")
 
     const openai = new OpenAI({
-      apiKey: profile.openai_api_key || "",
-      organization: profile.openai_organization_id
+      apiKey: apiKey || "",
+      organization: process.env.NEXT_PUBLIC_OPENAI_ORGANIZATION_ID
     })
 
     const response = await openai.chat.completions.create({

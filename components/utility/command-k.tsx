@@ -47,39 +47,34 @@ export const CommandK: FC<CommandKProps> = ({}) => {
     isOpen && (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent onKeyDown={handleKeyDown}>
-          {profile.openai_api_key ? (
-            <div className="space-y-2">
-              <div>{content}</div>
+          <div className="space-y-2">
+            <div>{content}</div>
 
-              <div>turn dark mode on.</div>
-              <div>find my sql chat</div>
-              <div>i need a new assistant</div>
-              <div>start a chat with my 2024 resolutions file</div>
+            <div>turn dark mode on.</div>
+            <div>find my sql chat</div>
+            <div>start a chat with my 2024 resolutions file</div>
 
-              <div className="relative flex min-h-[50px] w-full items-center justify-center rounded-xl border-2 border-input">
-                <TextareaAutosize
-                  className="text-md flex w-full resize-none rounded-md border-none bg-transparent px-3 py-2 pr-14 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="create a prompt for writing sql code"
-                  value={value}
-                  onValueChange={setValue}
+            <div className="relative flex min-h-[50px] w-full items-center justify-center rounded-xl border-2 border-input">
+              <TextareaAutosize
+                className="text-md flex w-full resize-none rounded-md border-none bg-transparent px-3 py-2 pr-14 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="create a prompt for writing sql code"
+                value={value}
+                onValueChange={setValue}
+              />
+              {loading ? (
+                <IconLoader2
+                  className="absolute bottom-[8px] right-3 animate-spin cursor-pointer rounded p-1 hover:opacity-50"
+                  size={30}
                 />
-                {loading ? (
-                  <IconLoader2
-                    className="absolute bottom-[8px] right-3 animate-spin cursor-pointer rounded p-1 hover:opacity-50"
-                    size={30}
-                  />
-                ) : (
-                  <IconSend
-                    className="absolute bottom-[8px] right-3 cursor-pointer rounded bg-primary p-1 text-secondary hover:opacity-50"
-                    onClick={handleCommandK}
-                    size={30}
-                  />
-                )}
-              </div>
+              ) : (
+                <IconSend
+                  className="absolute bottom-[8px] right-3 cursor-pointer rounded bg-primary p-1 text-secondary hover:opacity-50"
+                  onClick={handleCommandK}
+                  size={30}
+                />
+              )}
             </div>
-          ) : (
-            <div>Add your OpenAI API key in the settings to unlock CMD+K.</div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
     )

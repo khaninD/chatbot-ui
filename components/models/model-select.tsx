@@ -171,9 +171,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
             return (
               <div key={provider}>
                 <div className="mb-1 ml-2 text-xs font-bold tracking-wide opacity-50">
-                  {provider === "openai" && profile.use_azure_openai
-                    ? "AZURE OPENAI"
-                    : provider.toLocaleUpperCase()}
+                  {provider.toLocaleUpperCase()}
                 </div>
 
                 <div className="mb-4">

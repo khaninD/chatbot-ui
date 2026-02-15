@@ -272,8 +272,8 @@ In environment variables, add the following from the values you got above:
 
 You can also add API keys as environment variables.
 
-- `OPENAI_API_KEY`
-- `AZURE_OPENAI_API_KEY`
+- `LLM_API_KEY` (Required for non-Ollama models)
+- `LLM_BASE_URL` (Optional, defaults to OpenAI)
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_GPT_45_VISION_NAME`
 

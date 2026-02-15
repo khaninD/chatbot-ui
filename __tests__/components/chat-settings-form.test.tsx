@@ -83,26 +83,7 @@ const mockProfile: Tables<"profiles"> = {
   display_name: "Test User",
   bio: "",
   profile_context: "",
-  use_azure_openai: false,
-  username: "testuser",
-  openai_api_key: null,
-  anthropic_api_key: null,
-  google_gemini_api_key: null,
-  mistral_api_key: null,
-  groq_api_key: null,
-  perplexity_api_key: null,
-  openai_organization_id: null,
-  azure_openai_api_key: null,
-  azure_openai_endpoint: null,
-  azure_openai_35_turbo_id: null,
-  azure_openai_45_turbo_id: null,
-  azure_openai_45_vision_id: null,
-  azure_openai_embeddings_id: null,
-  openrouter_api_key: null,
-  deepseek_api_key: null,
-  routerai_api_key: null,
-  comet_api_key: null,
-  openai_embedding_model: "text-embedding-3-small"
+  username: "testuser"
 }
 
 type ContextOverrides = Partial<{
