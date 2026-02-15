@@ -8,7 +8,6 @@ import { ServerRuntime } from "next"
 import { buildAgentServerStreamRequest } from "@/lib/agent-server/request"
 import { parseAgentServerSseBuffer } from "@/lib/agent-server/stream"
 import { AgentServerStreamEvent } from "@/types/agent-server"
-import { createRAGQueryEngine, queryRAG } from "@/lib/llamaindex/rag"
 
 export const runtime: ServerRuntime = "nodejs"
 

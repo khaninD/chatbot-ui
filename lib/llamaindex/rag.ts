@@ -1,3 +1,4 @@
+/*
 import {
   Document,
   MetadataMode,
@@ -11,9 +12,9 @@ import type { BaseNodePostprocessor, NodeWithScore } from "llamaindex"
 import { openai, OpenAIEmbedding } from "@llamaindex/openai"
 import { Tables } from "@/supabase/types"
 
-/**
+/ **
  * Custom LLM-based reranker that uses the LLM to score chunk relevance
- */
+ * /
 class LLMReranker implements BaseNodePostprocessor {
   private topN: number
   private llm: any
@@ -64,10 +65,10 @@ Relevance score (0-10):`
   }
 }
 
-/**
+/ **
  * Create a LlamaIndex RouterQueryEngine for advanced RAG
  * Uses both VectorStoreIndex (for specific questions) and SummaryIndex (for summarization)
- */
+ * /
 export async function createRAGQueryEngine(
   fileItems: Tables<"file_items">[],
   apiKey?: string,
@@ -184,9 +185,9 @@ export async function createRAGQueryEngine(
   return queryEngine
 }
 
-/**
+/ **
  * Query the RAG engine with a user question
- */
+ * /
 export async function queryRAG(
   queryEngine: RouterQueryEngine,
   query: string
@@ -205,3 +206,4 @@ export async function queryRAG(
     metadata: result.metadata
   }
 }
+*/

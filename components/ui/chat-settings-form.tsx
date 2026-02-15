@@ -246,7 +246,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center space-x-2">
+      {/* <div className="mt-4 flex items-center space-x-2">
         <Checkbox
           checked={chatSettings.useAdvancedRAG || false}
           onCheckedChange={(value: boolean) =>
@@ -304,7 +304,7 @@ const AdvancedContent: FC<AdvancedContentProps> = ({
             }
           />
         )}
-      </div>
+      </div> */}
 
       {isCometProvider && (
         <div className="mt-4 space-y-3">

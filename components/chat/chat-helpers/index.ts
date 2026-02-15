@@ -446,8 +446,8 @@ export const handleCreateChat = async (
     prompt: chatSettings.prompt,
     embeddings_provider: chatSettings.embeddingsProvider,
     mcp_server_ids: chatSettings.mcpServerIds || [],
-    use_advanced_rag: chatSettings.useAdvancedRAG || false,
-    use_reranking: chatSettings.useReranking || false,
+    // use_advanced_rag: chatSettings.useAdvancedRAG || false,
+    // use_reranking: chatSettings.useReranking || false,
     enable_image_generation: true, // Always enabled
     image_model: chatSettings.imageModel || "gpt-image-1.5"
   })
