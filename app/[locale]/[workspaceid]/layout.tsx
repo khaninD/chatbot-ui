@@ -14,9 +14,9 @@ import { getFoldersByWorkspaceId } from "@/db/folders"
 import { getMcpServerWorkspacesByWorkspaceId } from "@/db/mcp-servers"
 import { getModelWorkspacesByWorkspaceId } from "@/db/models"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
-import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
+//import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
 import { getWorkspaceById } from "@/db/workspaces"
-import { convertBlobToBase64 } from "@/lib/blob-to-b64"
+//import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
 import { LLMID } from "@/types"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
@@ -40,7 +40,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const setFiles = useItemsStore(state => state.setFiles)
   const setPrompts = useItemsStore(state => state.setPrompts)
   const setMcpServers = useItemsStore(state => state.setMcpServers)
-  const setTools = useItemsStore(state => state.setTools)
+  //const setTools = useItemsStore(state => state.setTools)
   const setModels = useItemsStore(state => state.setModels)
   const _selectedWorkspace = useWorkspaceStore(state => state.selectedWorkspace)
   const setSelectedWorkspace = useWorkspaceStore(
@@ -117,8 +117,8 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     const mcpServerData = await getMcpServerWorkspacesByWorkspaceId(workspaceId)
     setMcpServers(mcpServerData.mcp_servers)
 
-    const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
-    setTools(toolData.tools)
+    // const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
+    // setTools(toolData.tools)
 
     const modelData = await getModelWorkspacesByWorkspaceId(workspaceId)
     setModels(modelData.models)
