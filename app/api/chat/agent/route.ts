@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
     const profile = await getServerProfile()
 
-    const apiKey = process.env.LLM_API_KEY
+    const apiKey = chatSettings.modelApiKey || process.env.LLM_API_KEY
     if (!apiKey) {
       return new Response("Missing API key", { status: 400 })
     }
@@ -132,7 +132,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const baseURL = process.env.LLM_BASE_URL || undefined
+    const baseURL =
+      chatSettings.modelBaseURL || process.env.LLM_BASE_URL || undefined
 
     const agentServerUrl = process.env.AGENT_SERVER_URL || ""
 

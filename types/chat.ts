@@ -4,6 +4,8 @@ import { ChatMessage, LLMID } from "."
 export interface ChatSettings {
   model: LLMID
   modelProvider?: string // Provider of the selected model (e.g., "openai", "comet", "anthropic")
+  modelBaseURL?: string // Base URL override for custom models (stored in DB)
+  modelApiKey?: string // API key override for custom models (stored in DB)
   prompt: string
   includeProfileContext: boolean
   includeWorkspaceInstructions: boolean

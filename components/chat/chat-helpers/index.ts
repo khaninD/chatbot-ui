@@ -212,7 +212,11 @@ export const handleHostedChat = async (
   const requestBody = {
     chatSettings: {
       ...payload.chatSettings,
-      model: finalModelId as LLMID
+      model: finalModelId as LLMID,
+      modelBaseURL:
+        modelData?.provider === "custom" ? modelData.baseURL : undefined,
+      modelApiKey:
+        modelData?.provider === "custom" ? modelData.apiKey : undefined
     },
     messages: draftMessages,
     // Always pass file items for RAG support

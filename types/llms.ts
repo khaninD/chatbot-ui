@@ -135,6 +135,8 @@ export interface LLM {
   hostedId: string
   platformLink: string
   imageInput: boolean
+  baseURL?: string
+  apiKey?: string
   pricing?: {
     currency: string
     unit: string

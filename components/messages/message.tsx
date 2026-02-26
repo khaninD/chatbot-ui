@@ -141,7 +141,9 @@ export const Message: FC<MessageProps> = ({
       provider: "custom" as ModelProvider,
       hostedId: model.id,
       platformLink: "",
-      imageInput: false
+      imageInput: false,
+      baseURL: model.base_url,
+      apiKey: model.api_key
     })),
     ...LLM_LIST
   ].find(llm => llm.modelId === message.model) as LLM
