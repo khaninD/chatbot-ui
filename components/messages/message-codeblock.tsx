@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard"
 import { IconCheck, IconCopy, IconDownload } from "@tabler/icons-react"
+import Papa from "papaparse"
 import { FC, memo } from "react"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism"
@@ -70,7 +71,20 @@ export const MessageCodeBlock: FC<MessageCodeBlockProps> = memo(
         return
       }
 
-      const blob = new Blob([value], { type: "text/plain" })
+      let blob: Blob
+      if (language === "csv") {
+        const parsed = Papa.parse(value.trim(), { header: false })
+        const csvContent = Papa.unparse(parsed.data as string[][], {
+          delimiter: ";"
+        })
+        const bom = "\uFEFF"
+        blob = new Blob([bom + csvContent], {
+          type: "text/csv;charset=utf-8"
+        })
+      } else {
+        blob = new Blob([value], { type: "text/plain" })
+      }
+
       const url = URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.download = fileName

@@ -4,7 +4,8 @@
       "WebSearch",
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(grep:*)"
     ]
   }
 }
