@@ -301,10 +301,11 @@ export const Message: FC<MessageProps> = ({
                     }
                     return null
                   })}
-                  {/* Also render the accumulated text content */}
-                  {message.content && (
-                    <MessageMarkdown content={message.content} />
-                  )}
+                  {/* Fallback: render message.content if no text blocks cover it */}
+                  {message.content &&
+                    !contentBlocks.some(
+                      b => b.type === "text" && b.text.length > 0
+                    ) && <MessageMarkdown content={message.content} />}
                 </div>
               ) : (
                 <MessageMarkdown content={message.content} />

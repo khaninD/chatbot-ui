@@ -17,6 +17,7 @@ import {
   LLMID,
   MessageImage
 } from "@/types"
+import { ContentBlock } from "@/types/content-blocks"
 import i18next from "i18next"
 import React from "react"
 import { toast } from "sonner"
@@ -290,7 +291,11 @@ export const processResponse = async (
 ) => {
   let fullText = ""
   let contentToAdd = ""
-  let contentBlocks: any[] = []
+  let contentBlocks: ContentBlock[] = []
+  // Tracks which contentBlocks index corresponds to which array position
+  let blockIndexMap: Map<number, number> = new Map()
+  // Accumulates partial JSON for tool_use input deltas
+  let toolInputBuffers: Map<number, string> = new Map()
   // Buffer for incomplete SSE data (chunks may split across boundaries)
   let sseBuffer = ""
 
@@ -334,25 +339,70 @@ export const processResponse = async (
                   }
 
                   switch (eventData.type) {
-                    case "content_block_start":
-                      // New content block started (text or tool_use)
+                    case "content_block_start": {
+                      // New content block started (text, tool_use, or tool_result)
                       console.log(
                         "[SSE] content_block_start:",
                         eventData.content_block
                       )
+                      const arrayIdx = contentBlocks.length
                       contentBlocks.push(eventData.content_block)
+                      blockIndexMap.set(eventData.index, arrayIdx)
                       if (eventData.content_block.type === "tool_use") {
                         setToolInUse(eventData.content_block.name)
+                        toolInputBuffers.set(eventData.index, "")
                       }
                       break
+                    }
 
-                    case "content_block_delta":
+                    case "content_block_delta": {
                       // Content delta (text or tool input)
+                      let arrIdx = blockIndexMap.get(eventData.index)
                       if (eventData.delta.type === "text_delta") {
                         contentToAdd = eventData.delta.text
                         fullText += contentToAdd
+                        // If no block exists for this index, create a text block
+                        if (arrIdx === undefined) {
+                          arrIdx = contentBlocks.length
+                          contentBlocks.push({
+                            type: "text",
+                            text: ""
+                          })
+                          blockIndexMap.set(eventData.index, arrIdx)
+                        }
+                        // Update the corresponding text block in contentBlocks
+                        const block = contentBlocks[arrIdx]
+                        if (block && block.type === "text") {
+                          contentBlocks[arrIdx] = {
+                            ...block,
+                            text: block.text + eventData.delta.text
+                          }
+                        }
+                      } else if (eventData.delta.type === "input_json_delta") {
+                        // Accumulate tool input JSON
+                        if (arrIdx !== undefined) {
+                          const existing =
+                            toolInputBuffers.get(eventData.index) || ""
+                          const updated =
+                            existing + eventData.delta.partial_json
+                          toolInputBuffers.set(eventData.index, updated)
+                          // Try to parse accumulated JSON and update the block
+                          try {
+                            const parsed = JSON.parse(updated)
+                            const block = contentBlocks[arrIdx]
+                            if (block && block.type === "tool_use") {
+                              contentBlocks[arrIdx] = {
+                                ...block,
+                                input: parsed
+                              }
+                            }
+                          } catch {
+                            // Partial JSON, will be parsed when complete
+                          }
+                        }
                       }
                       break
+                    }
 
                     case "content_block_stop":
                       // Content block ended
@@ -397,10 +447,6 @@ export const processResponse = async (
         setChatMessages(prev =>
           prev.map(chatMessage => {
             if (chatMessage.message.id === lastChatMessage.message.id) {
-              console.log(
-                "[processResponse] Updating message with contentBlocks:",
-                contentBlocks.length
-              )
               const updatedChatMessage: ChatMessage = {
                 message: {
                   ...chatMessage.message,
@@ -408,7 +454,7 @@ export const processResponse = async (
                 },
                 fileItems: chatMessage.fileItems,
                 contentBlocks:
-                  contentBlocks.length > 0 ? contentBlocks : undefined
+                  contentBlocks.length > 0 ? [...contentBlocks] : undefined
               }
 
               return updatedChatMessage
