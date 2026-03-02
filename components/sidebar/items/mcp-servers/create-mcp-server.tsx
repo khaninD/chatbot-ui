@@ -26,6 +26,7 @@ export const CreateMcpServer: FC<CreateMcpServerProps> = ({
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [url, setUrl] = useState("")
+  const [type, setType] = useState("")
 
   if (!profile) return null
   if (!selectedWorkspace) return null
@@ -41,7 +42,8 @@ export const CreateMcpServer: FC<CreateMcpServerProps> = ({
           user_id: profile.user_id,
           name,
           description,
-          url
+          url,
+          type
         } as TablesInsert<"mcp_servers">
       }
       renderInputs={() => (
@@ -67,6 +69,19 @@ export const CreateMcpServer: FC<CreateMcpServerProps> = ({
               value={url}
               onChange={e => setUrl(e.target.value)}
               maxLength={MCP_SERVER_URL_MAX}
+              onCompositionStart={() => setIsTyping(true)}
+              onCompositionEnd={() => setIsTyping(false)}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>Type</Label>
+
+            <Input
+              placeholder="sse, streamable-http, ..."
+              value={type}
+              onChange={e => setType(e.target.value)}
+              maxLength={100}
               onCompositionStart={() => setIsTyping(true)}
               onCompositionEnd={() => setIsTyping(false)}
             />

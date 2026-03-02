@@ -14,13 +14,20 @@ export interface AgentServerSubAgent {
   toolNames?: string[]
 }
 
+export interface AgentServerMcpServer {
+  name: string
+  description: string
+  type: string
+  url: string
+}
+
 export interface AgentServerStreamRequest {
   sessionId: string
   workspaceId?: string
   query: string
   llmConfig: AgentServerLlmConfig
   systemPrompt?: string
-  mcpUrls?: string[]
+  mcpServers?: AgentServerMcpServer[]
   fileIds?: string[]
   subAgents?: AgentServerSubAgent[]
 }

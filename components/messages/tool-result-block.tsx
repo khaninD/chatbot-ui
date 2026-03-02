@@ -10,6 +10,7 @@ import {
 import React, { FC, useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { MessageMarkdown } from "./message-markdown"
+import { renderInputValue } from "./code-detect"
 
 interface ToolResultBlockProps {
   resultBlock: ToolResultContentBlock
@@ -65,7 +66,7 @@ const downloadImage = async (imageUrl: string, filename: string) => {
 
 export const ToolResultBlock: FC<ToolResultBlockProps> = ({ resultBlock }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  console.log("resultBlock", resultBlock)
+
   const content =
     typeof resultBlock.content === "string"
       ? resultBlock.content
@@ -75,7 +76,6 @@ export const ToolResultBlock: FC<ToolResultBlockProps> = ({ resultBlock }) => {
   const isImageGeneration =
     resultBlock.tool_name === "generate_image" ||
     resultBlock.tool_name === "edit_image"
-  console.log("isImageGeneration", isImageGeneration)
   // Parse image from content if it's an image generation result
   const imageResult = useMemo(() => {
     if (isImageGeneration && typeof content === "string") {
@@ -188,13 +188,17 @@ export const ToolResultBlock: FC<ToolResultBlockProps> = ({ resultBlock }) => {
 
       {isExpanded && (
         <div className="mt-3">
-          {/* Check if content contains markdown image */}
-          {content.includes("![") && content.includes("](data:image") ? (
+          {typeof resultBlock.content === "object" &&
+          resultBlock.content !== null ? (
+            <div className="space-y-2">
+              {Object.entries(
+                resultBlock.content as Record<string, unknown>
+              ).map(([key, value]) => renderInputValue(key, value))}
+            </div>
+          ) : content.includes("![") && content.includes("](data:image") ? (
             <MessageMarkdown content={content} />
           ) : (
-            <pre className="overflow-x-auto rounded bg-muted p-2 text-xs">
-              <code>{content}</code>
-            </pre>
+            renderInputValue("result", content)
           )}
         </div>
       )}

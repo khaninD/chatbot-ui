@@ -19,6 +19,7 @@ export const McpServerItem: FC<McpServerItemProps> = ({ mcpServer }) => {
   const [name, setName] = useState(mcpServer.name)
   const [description, setDescription] = useState(mcpServer.description)
   const [url, setUrl] = useState(mcpServer.url)
+  const [type, setType] = useState(mcpServer.type || "")
   const [isTyping, setIsTyping] = useState(false)
 
   return (
@@ -27,7 +28,7 @@ export const McpServerItem: FC<McpServerItemProps> = ({ mcpServer }) => {
       isTyping={isTyping}
       contentType="mcp_servers"
       icon={<IconPlugConnected size={30} />}
-      updateState={{ name, description, url }}
+      updateState={{ name, description, url, type }}
       renderInputs={() => (
         <>
           <div className="space-y-1">
@@ -51,6 +52,19 @@ export const McpServerItem: FC<McpServerItemProps> = ({ mcpServer }) => {
               value={url}
               onChange={e => setUrl(e.target.value)}
               maxLength={MCP_SERVER_URL_MAX}
+              onCompositionStart={() => setIsTyping(true)}
+              onCompositionEnd={() => setIsTyping(false)}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>Type</Label>
+
+            <Input
+              placeholder="sse, streamable-http, ..."
+              value={type}
+              onChange={e => setType(e.target.value)}
+              maxLength={100}
               onCompositionStart={() => setIsTyping(true)}
               onCompositionEnd={() => setIsTyping(false)}
             />

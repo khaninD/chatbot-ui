@@ -3,16 +3,16 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files and npm config
+COPY package.json package-lock.json .npmrc ./
 
 # Install dependencies without scripts (to skip husky) and with legacy peer deps
-# Then run only the sharp install script to let it download prebuilt binaries
-RUN npm ci --ignore-scripts --legacy-peer-deps || npm install --ignore-scripts --legacy-peer-deps && \
-    cd node_modules/sharp && npm run install || true && \
-    cd /app && \
+RUN npm ci --ignore-scripts --legacy-peer-deps
+
+# Run only the sharp install script to let it download prebuilt binaries
+RUN (cd node_modules/sharp && npm run install) || true && \
     if [ -d "node_modules/@xenova/transformers/node_modules/sharp" ]; then \
-      cd node_modules/@xenova/transformers/node_modules/sharp && npm run install || true; \
+      (cd node_modules/@xenova/transformers/node_modules/sharp && npm run install) || true; \
     fi
 
 # Copy all source files
@@ -20,7 +20,7 @@ COPY . .
 
 # Build Next.js application
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+RUN ./node_modules/.bin/next build
 
 # Production stage
 FROM node:20-slim

@@ -101,7 +101,12 @@ export async function POST(request: Request) {
         ? systemMessage.content
         : systemMessage?.content?.[0]?.text || ""
 
-    let mcpUrls: string[] = []
+    let mcpServers: {
+      name: string
+      description: string
+      type: string
+      url: string
+    }[] = []
     if (chatSettings.mcpServerIds && chatSettings.mcpServerIds.length > 0) {
       try {
         const cookieStore = await cookies()
@@ -117,15 +122,20 @@ export async function POST(request: Request) {
           }
         )
 
-        const { data: mcpServers, error } = await supabase
+        const { data: mcpServerRows, error } = await supabase
           .from("mcp_servers")
           .select("*")
           .in("id", chatSettings.mcpServerIds)
 
         if (error) {
           console.error("[AgentServer] Error fetching MCP servers:", error)
-        } else if (mcpServers) {
-          mcpUrls = mcpServers.map(server => server.url)
+        } else if (mcpServerRows) {
+          mcpServers = mcpServerRows.map(server => ({
+            name: server.name,
+            description: server.description,
+            type: server.type || "",
+            url: server.url
+          }))
         }
       } catch (error) {
         console.error("[AgentServer] Error fetching MCP servers:", error)
@@ -145,7 +155,7 @@ export async function POST(request: Request) {
       workspaceId,
       query: userQuery,
       systemPrompt,
-      mcpUrls,
+      mcpServers,
       fileIds,
       llmConfig: {
         provider: "openai",
@@ -159,7 +169,7 @@ export async function POST(request: Request) {
       workspaceId,
       query: userQuery,
       systemPrompt,
-      mcpUrls,
+      mcpServers,
       fileIds,
       llmConfig: {
         provider: "openai",

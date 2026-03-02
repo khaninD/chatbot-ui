@@ -5,7 +5,7 @@ interface BuildAgentServerRequestParams {
   workspaceId?: string
   query: string
   systemPrompt?: string
-  mcpUrls?: string[]
+  mcpServers?: AgentServerStreamRequest["mcpServers"]
   fileIds?: string[]
   llmConfig: AgentServerStreamRequest["llmConfig"]
   subAgents?: AgentServerStreamRequest["subAgents"]
@@ -19,7 +19,7 @@ export const buildAgentServerStreamRequest = (
   query: params.query,
   llmConfig: params.llmConfig,
   systemPrompt: params.systemPrompt,
-  mcpUrls: params.mcpUrls,
+  mcpServers: params.mcpServers,
   fileIds: params.fileIds,
   subAgents: params.subAgents
 })

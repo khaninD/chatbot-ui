@@ -640,6 +640,7 @@ export type Database = {
           name: string
           description: string
           url: string
+          type: string
           folder_id: string | null
           sharing: string
         }
@@ -651,6 +652,7 @@ export type Database = {
           name: string
           description?: string
           url: string
+          type?: string
           folder_id?: string | null
           sharing?: string
         }
@@ -662,6 +664,7 @@ export type Database = {
           name?: string
           description?: string
           url?: string
+          type?: string
           folder_id?: string | null
           sharing?: string
         }

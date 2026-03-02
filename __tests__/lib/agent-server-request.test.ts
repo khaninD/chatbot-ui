@@ -6,7 +6,7 @@ describe("buildAgentServerStreamRequest", () => {
       sessionId: "chat-123",
       query: "Hello",
       systemPrompt: "System prompt",
-      mcpUrls: ["https://mcp.example.com"],
+      mcpServers: [{ name: "test", description: "test server", type: "sse", url: "https://mcp.example.com" }],
       llmConfig: {
         provider: "openai",
         apiKey: "key",
