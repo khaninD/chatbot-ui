@@ -315,6 +315,7 @@ export const processResponse = async (
   if (response.body) {
     // Collect promises for confirm_required events to await
     let confirmPromise: Promise<void> | null = null
+    let confirmReject: (() => void) | null = null
 
     await consumeReadableStream(
       response.body,
@@ -426,6 +427,31 @@ export const processResponse = async (
                       if (eventData.delta.stop_reason === "tool_use") {
                         setToolInUse("none")
                       }
+                      if (eventData.delta.stop_reason === "timeout") {
+                        // Unblock pending confirm if waiting
+                        if (confirmReject) {
+                          confirmReject()
+                          confirmReject = null
+                        }
+
+                        const timeoutMsg =
+                          "\n\n⚠️ Соединение с агентом было разорвано по таймауту."
+                        fullText += timeoutMsg
+                        // Add or update text block
+                        const lastBlock =
+                          contentBlocks[contentBlocks.length - 1]
+                        if (lastBlock && lastBlock.type === "text") {
+                          contentBlocks[contentBlocks.length - 1] = {
+                            ...lastBlock,
+                            text: lastBlock.text + timeoutMsg
+                          }
+                        } else {
+                          contentBlocks.push({
+                            type: "text",
+                            text: timeoutMsg
+                          })
+                        }
+                      }
                       break
 
                     case "confirm_required": {
@@ -461,67 +487,95 @@ export const processResponse = async (
                         })
                       )
 
-                      // Pause stream: await user action via singleton resolver
-                      confirmPromise = new Promise<void>(outerResolve => {
-                        setConfirmResolver(
-                          confirmationId,
-                          async (result: ConfirmResult) => {
-                            // Send confirmation to agent server
-                            try {
-                              await fetch("/api/stream/confirm", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                  confirmationId,
-                                  confirmed: result.confirmed,
-                                  userInput: result.userInput
-                                })
-                              })
-                            } catch (err) {
-                              console.error(
-                                "[SSE] Failed to send confirm:",
-                                err
-                              )
-                            }
-
-                            // Update block status
-                            const updatedBlock: ConfirmRequiredContentBlock = {
-                              ...confirmBlock,
-                              status: result.confirmed
-                                ? "confirmed"
-                                : "rejected",
-                              userInput: result.userInput
-                            }
-                            contentBlocks[blockIdx] = updatedBlock
-
-                            setChatMessages(prev =>
-                              prev.map(chatMessage => {
-                                if (
-                                  chatMessage.message.id ===
-                                  lastChatMessage.message.id
-                                ) {
-                                  return {
-                                    message: {
-                                      ...chatMessage.message,
-                                      content: fullText
-                                    },
-                                    fileItems: chatMessage.fileItems,
-                                    contentBlocks: [...contentBlocks]
-                                  }
-                                }
-                                return chatMessage
-                              })
+                      // Register resolver via singleton — don't block event loop.
+                      // confirmPromise will be awaited after all events in this
+                      // chunk are processed, so message_delta:timeout in the same
+                      // chunk can call confirmReject() first.
+                      confirmPromise = new Promise<void>(
+                        (outerResolve, outerReject) => {
+                          confirmReject = () =>
+                            outerReject(
+                              new DOMException("Aborted", "AbortError")
                             )
 
-                            outerResolve()
+                          const onAbort = () => {
+                            confirmReject?.()
+                            confirmReject = null
                           }
-                        )
-                      })
+                          if (controller.signal.aborted) {
+                            onAbort()
+                            return
+                          }
+                          controller.signal.addEventListener("abort", onAbort, {
+                            once: true
+                          })
 
-                      await confirmPromise
-                      confirmPromise = null
+                          setConfirmResolver(
+                            confirmationId,
+                            async (result: ConfirmResult) => {
+                              confirmReject = null
+                              controller.signal.removeEventListener(
+                                "abort",
+                                onAbort
+                              )
+
+                              // Send confirmation to agent server
+                              try {
+                                await fetch("/api/stream/confirm", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json"
+                                  },
+                                  body: JSON.stringify({
+                                    confirmationId,
+                                    confirmed: result.confirmed,
+                                    userInput: result.userInput
+                                  })
+                                })
+                              } catch (err) {
+                                console.error(
+                                  "[SSE] Failed to send confirm:",
+                                  err
+                                )
+                              }
+
+                              // Update block status
+                              const updatedBlock: ConfirmRequiredContentBlock =
+                                {
+                                  ...confirmBlock,
+                                  status: result.confirmed
+                                    ? "confirmed"
+                                    : "rejected",
+                                  userInput: result.userInput
+                                }
+                              contentBlocks[blockIdx] = updatedBlock
+
+                              setChatMessages(prev =>
+                                prev.map(chatMessage => {
+                                  if (
+                                    chatMessage.message.id ===
+                                    lastChatMessage.message.id
+                                  ) {
+                                    return {
+                                      message: {
+                                        ...chatMessage.message,
+                                        content: fullText
+                                      },
+                                      fileItems: chatMessage.fileItems,
+                                      contentBlocks: [...contentBlocks]
+                                    }
+                                  }
+                                  return chatMessage
+                                })
+                              )
+
+                              outerResolve()
+                            }
+                          )
+                        }
+                      )
+                      // Don't await here — continue processing remaining
+                      // events in this chunk (e.g. message_delta:timeout)
                       break
                     }
 
@@ -551,6 +605,19 @@ export const processResponse = async (
           }
         } catch (error) {
           console.error("Error parsing response:", error)
+        }
+
+        // Await pending confirm after all events in this chunk are processed.
+        // This lets message_delta:timeout (same chunk) call confirmReject()
+        // before we block here.
+        if (confirmPromise) {
+          try {
+            await confirmPromise
+          } catch {
+            // Aborted or timed out while waiting for confirmation
+          }
+          confirmPromise = null
+          confirmReject = null
         }
 
         setChatMessages(prev =>
