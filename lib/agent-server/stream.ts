@@ -21,6 +21,7 @@ export const isAgentServerStreamEvent = (
     case "content_block_stop":
     case "message_delta":
     case "message_stop":
+    case "confirm_required":
       return true
     default:
       return false

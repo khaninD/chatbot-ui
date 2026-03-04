@@ -23,10 +23,20 @@ export interface ToolResultContentBlock {
   is_error?: boolean
 }
 
+export interface ConfirmRequiredContentBlock {
+  type: "confirm_required"
+  confirmationId: string
+  toolName: string
+  toolInput: Record<string, unknown>
+  status: "pending" | "confirmed" | "rejected"
+  userInput?: string
+}
+
 export type ContentBlock =
   | TextContentBlock
   | ToolUseContentBlock
   | ToolResultContentBlock
+  | ConfirmRequiredContentBlock
 
 // Tool result that gets sent back to the model
 export interface ToolResult {

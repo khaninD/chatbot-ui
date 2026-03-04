@@ -6,6 +6,7 @@ import { createMessageFileItems } from "@/db/message-file-items"
 import { createMessages, updateMessage } from "@/db/messages"
 import { uploadMessageImage } from "@/db/storage/message-images"
 import { buildFinalMessages } from "@/lib/build-prompt"
+import { setConfirmResolver } from "@/lib/confirm-resolvers"
 import { consumeReadableStream } from "@/lib/consume-stream"
 import { Json, Tables, TablesInsert } from "@/supabase/types"
 import {
@@ -17,7 +18,10 @@ import {
   LLMID,
   MessageImage
 } from "@/types"
-import { ContentBlock } from "@/types/content-blocks"
+import {
+  ContentBlock,
+  ConfirmRequiredContentBlock
+} from "@/types/content-blocks"
 import i18next from "i18next"
 import React from "react"
 import { toast } from "sonner"
@@ -280,6 +284,11 @@ export const fetchChatResponse = async (
   return response
 }
 
+export interface ConfirmResult {
+  confirmed: boolean
+  userInput?: string
+}
+
 export const processResponse = async (
   response: Response,
   lastChatMessage: ChatMessage,
@@ -304,9 +313,12 @@ export const processResponse = async (
   const isSSE = contentType.includes("text/event-stream")
 
   if (response.body) {
+    // Collect promises for confirm_required events to await
+    let confirmPromise: Promise<void> | null = null
+
     await consumeReadableStream(
       response.body,
-      chunk => {
+      async chunk => {
         setFirstTokenReceived(true)
         setToolInUse("none")
 
@@ -415,6 +427,103 @@ export const processResponse = async (
                         setToolInUse("none")
                       }
                       break
+
+                    case "confirm_required": {
+                      const { confirmationId, toolName, toolInput } =
+                        eventData.data || eventData
+                      const confirmBlock: ConfirmRequiredContentBlock = {
+                        type: "confirm_required",
+                        confirmationId,
+                        toolName,
+                        toolInput: toolInput || {},
+                        status: "pending"
+                      }
+                      const blockIdx = contentBlocks.length
+                      contentBlocks.push(confirmBlock)
+
+                      // Update UI immediately with the pending block
+                      setChatMessages(prev =>
+                        prev.map(chatMessage => {
+                          if (
+                            chatMessage.message.id ===
+                            lastChatMessage.message.id
+                          ) {
+                            return {
+                              message: {
+                                ...chatMessage.message,
+                                content: fullText
+                              },
+                              fileItems: chatMessage.fileItems,
+                              contentBlocks: [...contentBlocks]
+                            }
+                          }
+                          return chatMessage
+                        })
+                      )
+
+                      // Pause stream: await user action via singleton resolver
+                      confirmPromise = new Promise<void>(outerResolve => {
+                        setConfirmResolver(
+                          confirmationId,
+                          async (result: ConfirmResult) => {
+                            // Send confirmation to agent server
+                            try {
+                              await fetch("/api/stream/confirm", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                  confirmationId,
+                                  confirmed: result.confirmed,
+                                  userInput: result.userInput
+                                })
+                              })
+                            } catch (err) {
+                              console.error(
+                                "[SSE] Failed to send confirm:",
+                                err
+                              )
+                            }
+
+                            // Update block status
+                            const updatedBlock: ConfirmRequiredContentBlock = {
+                              ...confirmBlock,
+                              status: result.confirmed
+                                ? "confirmed"
+                                : "rejected",
+                              userInput: result.userInput
+                            }
+                            contentBlocks[blockIdx] = updatedBlock
+
+                            setChatMessages(prev =>
+                              prev.map(chatMessage => {
+                                if (
+                                  chatMessage.message.id ===
+                                  lastChatMessage.message.id
+                                ) {
+                                  return {
+                                    message: {
+                                      ...chatMessage.message,
+                                      content: fullText
+                                    },
+                                    fileItems: chatMessage.fileItems,
+                                    contentBlocks: [...contentBlocks]
+                                  }
+                                }
+                                return chatMessage
+                              })
+                            )
+
+                            outerResolve()
+                          }
+                        )
+                      })
+
+                      await confirmPromise
+                      confirmPromise = null
+                      break
+                    }
 
                     case "error":
                       console.error("[SSE] Error:", eventData.error)

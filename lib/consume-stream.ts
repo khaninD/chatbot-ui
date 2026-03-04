@@ -1,6 +1,6 @@
 export async function consumeReadableStream(
   stream: ReadableStream<Uint8Array>,
-  callback: (chunk: string) => void,
+  callback: (chunk: string) => void | Promise<void>,
   signal: AbortSignal
 ): Promise<void> {
   const reader = stream.getReader()
@@ -17,7 +17,10 @@ export async function consumeReadableStream(
       }
 
       if (value) {
-        callback(decoder.decode(value, { stream: true }))
+        const result = callback(decoder.decode(value, { stream: true }))
+        if (result && typeof result.then === "function") {
+          await result
+        }
       }
     }
   } catch (error) {

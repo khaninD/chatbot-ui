@@ -57,10 +57,18 @@ export interface AgentServerTextBlock {
   text: string
 }
 
+export interface AgentServerConfirmRequiredBlock {
+  type: "confirm_required"
+  confirmationId: string
+  toolName: string
+  toolInput: Record<string, unknown>
+}
+
 export type AgentServerContentBlock =
   | AgentServerTextBlock
   | AgentServerToolUseBlock
   | AgentServerToolResultBlock
+  | AgentServerConfirmRequiredBlock
 
 export interface AgentServerContentBlockStartEvent {
   type: "content_block_start"
@@ -90,9 +98,19 @@ export interface AgentServerMessageStopEvent {
   type: "message_stop"
 }
 
+export interface AgentServerConfirmRequiredEvent {
+  type: "confirm_required"
+  data: {
+    confirmationId: string
+    toolName: string
+    toolInput: Record<string, unknown>
+  }
+}
+
 export type AgentServerStreamEvent =
   | AgentServerContentBlockStartEvent
   | AgentServerContentBlockDeltaEvent
   | AgentServerContentBlockStopEvent
   | AgentServerMessageDeltaEvent
   | AgentServerMessageStopEvent
+  | AgentServerConfirmRequiredEvent
