@@ -107,6 +107,24 @@ export interface AgentServerConfirmRequiredEvent {
   }
 }
 
+export interface AgentServerPlanStep {
+  title: string
+  description?: string
+}
+
+export interface AgentServerPlanProposedEvent {
+  type: "plan_proposed"
+  planId: string
+  steps: AgentServerPlanStep[]
+}
+
+export interface AgentServerPlanStepProgressEvent {
+  type: "plan_step_progress"
+  planId: string
+  stepIndex: number
+  status: "in_progress" | "completed"
+}
+
 export type AgentServerStreamEvent =
   | AgentServerContentBlockStartEvent
   | AgentServerContentBlockDeltaEvent
@@ -114,3 +132,5 @@ export type AgentServerStreamEvent =
   | AgentServerMessageDeltaEvent
   | AgentServerMessageStopEvent
   | AgentServerConfirmRequiredEvent
+  | AgentServerPlanProposedEvent
+  | AgentServerPlanStepProgressEvent

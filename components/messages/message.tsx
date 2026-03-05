@@ -31,6 +31,7 @@ import { FilePreview } from "../ui/file-preview"
 import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
 import { ConfirmRequiredBlock } from "./confirm-required-block"
+import { PlanBlock } from "./plan-block"
 import { MessageActions } from "./message-actions"
 import { MessageMarkdown } from "./message-markdown"
 import { ToolCallBlock } from "./tool-call-block"
@@ -291,15 +292,32 @@ export const Message: FC<MessageProps> = ({
               {contentBlocks && contentBlocks.length > 0 ? (
                 <div className="space-y-2">
                   {contentBlocks.map((block, index) => {
+                    const blockKey =
+                      block.type === "tool_use"
+                        ? `tool_use_${block.id}`
+                        : block.type === "tool_result"
+                          ? `tool_result_${block.tool_use_id}`
+                          : block.type === "confirm_required"
+                            ? `confirm_${block.confirmationId}`
+                            : block.type === "plan"
+                              ? `plan_${block.planId}`
+                              : `text_${index}`
+
                     if (block.type === "tool_use") {
-                      return <ToolCallBlock key={index} toolBlock={block} />
+                      return <ToolCallBlock key={blockKey} toolBlock={block} />
                     } else if (block.type === "tool_result") {
-                      return <ToolResultBlock key={index} resultBlock={block} />
+                      return (
+                        <ToolResultBlock key={blockKey} resultBlock={block} />
+                      )
                     } else if (block.type === "confirm_required") {
-                      return <ConfirmRequiredBlock key={index} block={block} />
+                      return (
+                        <ConfirmRequiredBlock key={blockKey} block={block} />
+                      )
+                    } else if (block.type === "plan") {
+                      return <PlanBlock key={blockKey} block={block} />
                     } else if (block.type === "text") {
                       return (
-                        <MessageMarkdown key={index} content={block.text} />
+                        <MessageMarkdown key={blockKey} content={block.text} />
                       )
                     }
                     return null

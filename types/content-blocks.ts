@@ -32,11 +32,26 @@ export interface ConfirmRequiredContentBlock {
   userInput?: string
 }
 
+export interface PlanStep {
+  title: string
+  description?: string
+  status: "pending" | "in_progress" | "completed"
+}
+
+export interface PlanContentBlock {
+  type: "plan"
+  planId: string
+  steps: PlanStep[]
+  status: "pending" | "confirmed" | "rejected"
+  userInput?: string
+}
+
 export type ContentBlock =
   | TextContentBlock
   | ToolUseContentBlock
   | ToolResultContentBlock
   | ConfirmRequiredContentBlock
+  | PlanContentBlock
 
 // Tool result that gets sent back to the model
 export interface ToolResult {
