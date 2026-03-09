@@ -22,6 +22,8 @@ export const isAgentServerStreamEvent = (
     case "message_delta":
     case "message_stop":
     case "confirm_required":
+    case "plan_proposed":
+    case "plan_step_progress":
       return true
     default:
       return false

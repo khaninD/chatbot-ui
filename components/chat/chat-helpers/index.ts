@@ -20,7 +20,9 @@ import {
 } from "@/types"
 import {
   ContentBlock,
-  ConfirmRequiredContentBlock
+  ConfirmRequiredContentBlock,
+  PlanContentBlock,
+  PlanStep
 } from "@/types/content-blocks"
 import i18next from "i18next"
 import React from "react"
@@ -315,6 +317,7 @@ export const processResponse = async (
   if (response.body) {
     // Collect promises for confirm_required events to await
     let confirmPromise: Promise<void> | null = null
+    let confirmReject: (() => void) | null = null
 
     await consumeReadableStream(
       response.body,
@@ -357,11 +360,33 @@ export const processResponse = async (
                         "[SSE] content_block_start:",
                         eventData.content_block
                       )
+                      const cb = eventData.content_block
+
+                      // Hide internal tool blocks from UI
+                      const toolName =
+                        cb.type === "tool_use"
+                          ? cb.name
+                          : cb.type === "tool_result"
+                            ? cb.tool_name
+                            : ""
+                      const isFullyHidden =
+                        toolName === "update_plan_progress" ||
+                        toolName === "propose_plan"
+                      // For _execute_sql: hide tool_use (call) but show tool_result
+                      const isCallOnlyHidden =
+                        cb.type === "tool_use" &&
+                        toolName.endsWith("_execute_sql")
+                      if (isFullyHidden || isCallOnlyHidden) {
+                        // Don't add to contentBlocks, don't map index —
+                        // deltas for this index will be ignored
+                        break
+                      }
+
                       const arrayIdx = contentBlocks.length
-                      contentBlocks.push(eventData.content_block)
+                      contentBlocks.push(cb)
                       blockIndexMap.set(eventData.index, arrayIdx)
-                      if (eventData.content_block.type === "tool_use") {
-                        setToolInUse(eventData.content_block.name)
+                      if (cb.type === "tool_use") {
+                        setToolInUse(cb.name)
                         toolInputBuffers.set(eventData.index, "")
                       }
                       break
@@ -426,6 +451,31 @@ export const processResponse = async (
                       if (eventData.delta.stop_reason === "tool_use") {
                         setToolInUse("none")
                       }
+                      if (eventData.delta.stop_reason === "timeout") {
+                        // Unblock pending confirm if waiting
+                        if (confirmReject) {
+                          confirmReject()
+                          confirmReject = null
+                        }
+
+                        const timeoutMsg =
+                          "\n\n⚠️ Соединение с агентом было разорвано по таймауту."
+                        fullText += timeoutMsg
+                        // Add or update text block
+                        const lastBlock =
+                          contentBlocks[contentBlocks.length - 1]
+                        if (lastBlock && lastBlock.type === "text") {
+                          contentBlocks[contentBlocks.length - 1] = {
+                            ...lastBlock,
+                            text: lastBlock.text + timeoutMsg
+                          }
+                        } else {
+                          contentBlocks.push({
+                            type: "text",
+                            text: timeoutMsg
+                          })
+                        }
+                      }
                       break
 
                     case "confirm_required": {
@@ -461,67 +511,278 @@ export const processResponse = async (
                         })
                       )
 
-                      // Pause stream: await user action via singleton resolver
-                      confirmPromise = new Promise<void>(outerResolve => {
-                        setConfirmResolver(
-                          confirmationId,
-                          async (result: ConfirmResult) => {
-                            // Send confirmation to agent server
-                            try {
-                              await fetch("/api/stream/confirm", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                  confirmationId,
-                                  confirmed: result.confirmed,
-                                  userInput: result.userInput
-                                })
-                              })
-                            } catch (err) {
-                              console.error(
-                                "[SSE] Failed to send confirm:",
-                                err
-                              )
-                            }
-
-                            // Update block status
-                            const updatedBlock: ConfirmRequiredContentBlock = {
-                              ...confirmBlock,
-                              status: result.confirmed
-                                ? "confirmed"
-                                : "rejected",
-                              userInput: result.userInput
-                            }
-                            contentBlocks[blockIdx] = updatedBlock
-
-                            setChatMessages(prev =>
-                              prev.map(chatMessage => {
-                                if (
-                                  chatMessage.message.id ===
-                                  lastChatMessage.message.id
-                                ) {
-                                  return {
-                                    message: {
-                                      ...chatMessage.message,
-                                      content: fullText
-                                    },
-                                    fileItems: chatMessage.fileItems,
-                                    contentBlocks: [...contentBlocks]
-                                  }
-                                }
-                                return chatMessage
-                              })
+                      // Register resolver via singleton — don't block event loop.
+                      // confirmPromise will be awaited after all events in this
+                      // chunk are processed, so message_delta:timeout in the same
+                      // chunk can call confirmReject() first.
+                      confirmPromise = new Promise<void>(
+                        (outerResolve, outerReject) => {
+                          confirmReject = () =>
+                            outerReject(
+                              new DOMException("Aborted", "AbortError")
                             )
 
-                            outerResolve()
+                          const onAbort = () => {
+                            confirmReject?.()
+                            confirmReject = null
                           }
-                        )
-                      })
+                          if (controller.signal.aborted) {
+                            onAbort()
+                            return
+                          }
+                          controller.signal.addEventListener("abort", onAbort, {
+                            once: true
+                          })
 
-                      await confirmPromise
-                      confirmPromise = null
+                          setConfirmResolver(
+                            confirmationId,
+                            async (result: ConfirmResult) => {
+                              confirmReject = null
+                              controller.signal.removeEventListener(
+                                "abort",
+                                onAbort
+                              )
+
+                              // Send confirmation to agent server
+                              try {
+                                await fetch("/api/stream/confirm", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json"
+                                  },
+                                  body: JSON.stringify({
+                                    confirmationId,
+                                    confirmed: result.confirmed,
+                                    userInput: result.userInput
+                                  })
+                                })
+                              } catch (err) {
+                                console.error(
+                                  "[SSE] Failed to send confirm:",
+                                  err
+                                )
+                              }
+
+                              // Update block status
+                              const updatedBlock: ConfirmRequiredContentBlock =
+                                {
+                                  ...confirmBlock,
+                                  status: result.confirmed
+                                    ? "confirmed"
+                                    : "rejected",
+                                  userInput: result.userInput
+                                }
+                              contentBlocks[blockIdx] = updatedBlock
+
+                              setChatMessages(prev =>
+                                prev.map(chatMessage => {
+                                  if (
+                                    chatMessage.message.id ===
+                                    lastChatMessage.message.id
+                                  ) {
+                                    return {
+                                      message: {
+                                        ...chatMessage.message,
+                                        content: fullText
+                                      },
+                                      fileItems: chatMessage.fileItems,
+                                      contentBlocks: [...contentBlocks]
+                                    }
+                                  }
+                                  return chatMessage
+                                })
+                              )
+
+                              outerResolve()
+                            }
+                          )
+                        }
+                      )
+                      // Don't await here — continue processing remaining
+                      // events in this chunk (e.g. message_delta:timeout)
+                      break
+                    }
+
+                    case "plan_proposed": {
+                      const { planId, steps } = eventData
+                      console.log("[SSE] plan_proposed received:", {
+                        planId,
+                        stepsCount: steps?.length
+                      })
+                      const planSteps: PlanStep[] = (steps || []).map(
+                        (s: { title: string; description?: string }) => ({
+                          title: s.title,
+                          description: s.description,
+                          status: "pending" as const
+                        })
+                      )
+                      const planBlock: PlanContentBlock = {
+                        type: "plan",
+                        planId,
+                        steps: planSteps,
+                        status: "pending"
+                      }
+                      const planBlockIdx = contentBlocks.length
+                      contentBlocks.push(planBlock)
+
+                      // Update UI immediately with the pending plan block
+                      setChatMessages(prev =>
+                        prev.map(chatMessage => {
+                          if (
+                            chatMessage.message.id ===
+                            lastChatMessage.message.id
+                          ) {
+                            return {
+                              message: {
+                                ...chatMessage.message,
+                                content: fullText
+                              },
+                              fileItems: chatMessage.fileItems,
+                              contentBlocks: [...contentBlocks]
+                            }
+                          }
+                          return chatMessage
+                        })
+                      )
+
+                      // Register resolver via singleton — same pattern as confirm_required
+                      confirmPromise = new Promise<void>(
+                        (outerResolve, outerReject) => {
+                          confirmReject = () =>
+                            outerReject(
+                              new DOMException("Aborted", "AbortError")
+                            )
+
+                          const onAbort = () => {
+                            confirmReject?.()
+                            confirmReject = null
+                          }
+                          if (controller.signal.aborted) {
+                            onAbort()
+                            return
+                          }
+                          controller.signal.addEventListener("abort", onAbort, {
+                            once: true
+                          })
+
+                          setConfirmResolver(
+                            planId,
+                            async (result: ConfirmResult) => {
+                              confirmReject = null
+                              controller.signal.removeEventListener(
+                                "abort",
+                                onAbort
+                              )
+
+                              // Send confirmation to agent server
+                              try {
+                                await fetch("/api/stream/confirm", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json"
+                                  },
+                                  body: JSON.stringify({
+                                    confirmationId: planId,
+                                    confirmed: result.confirmed,
+                                    userInput: result.userInput
+                                  })
+                                })
+                              } catch (err) {
+                                console.error(
+                                  "[SSE] Failed to send plan confirm:",
+                                  err
+                                )
+                              }
+
+                              // Update block status — read current state
+                              // to preserve any step progress updates
+                              const currentPlanBlock = contentBlocks[
+                                planBlockIdx
+                              ] as PlanContentBlock
+                              contentBlocks[planBlockIdx] = {
+                                ...currentPlanBlock,
+                                status: result.confirmed
+                                  ? "confirmed"
+                                  : "rejected",
+                                userInput: result.userInput
+                              }
+
+                              setChatMessages(prev =>
+                                prev.map(chatMessage => {
+                                  if (
+                                    chatMessage.message.id ===
+                                    lastChatMessage.message.id
+                                  ) {
+                                    return {
+                                      message: {
+                                        ...chatMessage.message,
+                                        content: fullText
+                                      },
+                                      fileItems: chatMessage.fileItems,
+                                      contentBlocks: [...contentBlocks]
+                                    }
+                                  }
+                                  return chatMessage
+                                })
+                              )
+
+                              outerResolve()
+                            }
+                          )
+                        }
+                      )
+                      // Don't await here — continue processing remaining events
+                      break
+                    }
+
+                    case "plan_step_progress": {
+                      const { planId, stepIndex, status } = eventData
+                      console.log("[SSE] plan_step_progress:", {
+                        planId,
+                        stepIndex,
+                        status
+                      })
+                      // Find the existing plan block by planId
+                      const existingPlanIdx = contentBlocks.findIndex(
+                        b =>
+                          b.type === "plan" &&
+                          (b as PlanContentBlock).planId === planId
+                      )
+                      if (existingPlanIdx !== -1) {
+                        const existingPlan = contentBlocks[
+                          existingPlanIdx
+                        ] as PlanContentBlock
+                        const updatedSteps = [...existingPlan.steps]
+                        if (stepIndex >= 0 && stepIndex < updatedSteps.length) {
+                          updatedSteps[stepIndex] = {
+                            ...updatedSteps[stepIndex],
+                            status
+                          }
+                        }
+                        contentBlocks[existingPlanIdx] = {
+                          ...existingPlan,
+                          steps: updatedSteps
+                        }
+
+                        setChatMessages(prev =>
+                          prev.map(chatMessage => {
+                            if (
+                              chatMessage.message.id ===
+                              lastChatMessage.message.id
+                            ) {
+                              return {
+                                message: {
+                                  ...chatMessage.message,
+                                  content: fullText
+                                },
+                                fileItems: chatMessage.fileItems,
+                                contentBlocks: [...contentBlocks]
+                              }
+                            }
+                            return chatMessage
+                          })
+                        )
+                      }
                       break
                     }
 
@@ -551,6 +812,19 @@ export const processResponse = async (
           }
         } catch (error) {
           console.error("Error parsing response:", error)
+        }
+
+        // Await pending confirm after all events in this chunk are processed.
+        // This lets message_delta:timeout (same chunk) call confirmReject()
+        // before we block here.
+        if (confirmPromise) {
+          try {
+            await confirmPromise
+          } catch {
+            // Aborted or timed out while waiting for confirmation
+          }
+          confirmPromise = null
+          confirmReject = null
         }
 
         setChatMessages(prev =>

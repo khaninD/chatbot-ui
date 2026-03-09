@@ -133,6 +133,16 @@ export const useChatHandler = () => {
     if (abortController) {
       abortController.abort()
     }
+
+    if (selectedChat?.id) {
+      fetch("/api/stream/abort", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: selectedChat.id })
+      }).catch(err =>
+        console.error("[Abort] Failed to notify agent server:", err)
+      )
+    }
   }
 
   const handleSendMessage = async (
